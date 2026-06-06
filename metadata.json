@@ -1,0 +1,8 @@
+{
+  "name": "CalBuddy",
+  "description": "AI-powered calorie and nutrition estimator from meal photos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
