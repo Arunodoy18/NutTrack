@@ -84,8 +84,9 @@ export async function generateNutritionInsightAction(
   dailyGoals: { calories: number; protein: number; fat: number; fiber: number }
 ) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    const modelName = process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash";
+    if (!apiKey || apiKey === "YOUR_OPENROUTER_API_KEY") {
       return { success: true, insight: getFallbackInsight(todayTotals, dailyGoals) };
     }
 
@@ -104,20 +105,23 @@ Intake today:
 
 Make sure the tip is highly actionable, encouraging, and references their exact intake ratio values. Do not output markdown lists, just a single, cohesive paragraph of up to 2-3 sentences max. Do not exceed 50 words.`;
 
-    const modelName = "gemini-3.5-flash"; 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+    const url = "https://openrouter.ai/api/v1/chat/completions";
 
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }]
+        model: modelName,
+        messages: [{ role: "user", content: prompt }]
       })
     });
 
     if (res.ok) {
       const data = await res.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      const text = data.choices?.[0]?.message?.content;
       if (text) {
         return { success: true, insight: text.trim() };
       }
@@ -160,11 +164,12 @@ function getFallbackInsight(
 
 export async function analyzeMealImageAction(base64Image: string) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    const modelName = process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash";
     const usdaKey = process.env.USDA_API_KEY;
 
-    if (!apiKey || apiKey === "MY_GEMINI_API_KEY") {
-      throw new Error("GEMINI_API_KEY is not configured on the server. Please check your .env configuration.");
+    if (!apiKey || apiKey === "YOUR_OPENROUTER_API_KEY") {
+      throw new Error("OPENROUTER_API_KEY is not configured on the server. Please check your .env configuration.");
     }
     if (!usdaKey || usdaKey === "YOUR_USDA_API_KEY") {
       throw new Error("USDA_API_KEY is not configured on the server. Please check your .env configuration.");
@@ -181,35 +186,37 @@ export async function analyzeMealImageAction(base64Image: string) {
       ]
     }`;
 
-    const modelName = "gemini-3.5-flash"; 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+    const url = "https://openrouter.ai/api/v1/chat/completions";
+    const imageUri = base64Image.startsWith("data:image") ? base64Image : `data:image/jpeg;base64,${base64Image}`;
 
     const geminiRes = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
       body: JSON.stringify({
-        contents: [{
-          parts: [
-            { text: prompt },
-            {
-              inlineData: {
-                mimeType: "image/jpeg",
-                data: base64Image
-              }
-            }
-          ]
-        }]
+        model: modelName,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              { type: "image_url", image_url: { url: imageUri } }
+            ]
+          }
+        ]
       })
     });
 
     if (!geminiRes.ok) {
-      throw new Error(`Gemini API returned status ${geminiRes.status}`);
+      throw new Error(`OpenRouter API returned status ${geminiRes.status}`);
     }
 
     const data = await geminiRes.json();
-    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const rawText = data.choices?.[0]?.message?.content;
     if (!rawText) {
-      throw new Error("Failed to get response from Gemini API");
+      throw new Error("Failed to get response from OpenRouter API");
     }
 
     // Clean JSON string
