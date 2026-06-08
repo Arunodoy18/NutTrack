@@ -22,6 +22,7 @@ data class MealAnalysis(
     val summary: String
 )
 
+@JsonClass(generateAdapter = true)
 data class DailyTotals(
     val calories: Int = 0,
     val protein: Int = 0,
@@ -29,6 +30,7 @@ data class DailyTotals(
     val fiber: Int = 0
 )
 
+@JsonClass(generateAdapter = true)
 data class NutrientTargets(
     val calories: Int = 2000,
     val protein: Int = 80,

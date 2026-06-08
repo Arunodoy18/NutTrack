@@ -31,7 +31,7 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
-import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction } from "@/app/actions";
+import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, analyzeMealImageAction } from "@/app/actions";
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface FoodItemData {
@@ -153,6 +153,43 @@ export default function Dashboard({
   const [isSavingMeal, setIsSavingMeal] = useState(false);
   const [activeAnalysis, setActiveAnalysis] = useState<any>(null);
 
+  // Real AI scanning & paywall states
+  const [base64Image, setBase64Image] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+
+  // Load premium state on mount
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsPremium(localStorage.getItem("dietbuddy_premium") === "true");
+    }
+  }, []);
+
+  const checkScanLimit = () => {
+    if (typeof window === "undefined") return false;
+    if (isPremium) return false;
+
+    const todayStr = new Date().toDateString();
+    const lastScanDate = localStorage.getItem("dietbuddy_last_scan_date");
+    let count = parseInt(localStorage.getItem("dietbuddy_scan_count") || "0");
+
+    if (lastScanDate !== todayStr) {
+      count = 0;
+      localStorage.setItem("dietbuddy_last_scan_date", todayStr);
+      localStorage.setItem("dietbuddy_scan_count", "0");
+    }
+
+    return count >= 3;
+  };
+
+  const incrementScanCount = () => {
+    if (typeof window === "undefined") return;
+    const count = parseInt(localStorage.getItem("dietbuddy_scan_count") || "0");
+    localStorage.setItem("dietbuddy_scan_count", (count + 1).toString());
+  };
+
   const SCAN_MESSAGES = [
     "Detecting culinary ingredients...",
     "Estimating portion weights & sizes...",
@@ -219,7 +256,10 @@ export default function Dashboard({
           if (prev < SCAN_MESSAGES.length - 1) {
             return prev + 1;
           } else {
-            // Scanning completes, move to review step
+            // Wait until API call resolves before finishing animation step
+            if (isAnalyzing) {
+              return prev;
+            }
             clearInterval(interval);
             setUploadStep(2);
             return prev;
@@ -228,7 +268,47 @@ export default function Dashboard({
       }, 950);
     }
     return () => clearInterval(interval);
-  }, [uploadStep]);
+  }, [uploadStep, isAnalyzing]);
+
+  // Transition immediately if API finishes after animation is at the last message
+  React.useEffect(() => {
+    if (uploadStep === 1 && !isAnalyzing && activeAnalysis && scanningMsgIdx === SCAN_MESSAGES.length - 1) {
+      setUploadStep(2);
+    }
+    if (uploadStep === 1 && !isAnalyzing && analysisError && scanningMsgIdx === SCAN_MESSAGES.length - 1) {
+      setUploadStep(2);
+    }
+  }, [isAnalyzing, activeAnalysis, analysisError, uploadStep, scanningMsgIdx]);
+
+  const handleStartAnalysis = () => {
+    if (checkScanLimit()) {
+      setIsPaywallOpen(true);
+      return;
+    }
+    setUploadStep(1);
+    if (base64Image) {
+      runAiAnalysis(base64Image);
+    }
+  };
+
+  const runAiAnalysis = async (b64: string) => {
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    try {
+      const res = await analyzeMealImageAction(b64);
+      if (res.success && res.analysis) {
+        setActiveAnalysis(res.analysis);
+        setCustomMealName(res.analysis.name || customMealName);
+        incrementScanCount();
+      } else {
+        setAnalysisError(res.error || "Failed to analyze the meal image.");
+      }
+    } catch (err) {
+      setAnalysisError("Unexpected error during image analysis.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const handleSaveMeal = async () => {
     if (!activeAnalysis) return;
@@ -261,20 +341,33 @@ export default function Dashboard({
     if (file) {
       const url = URL.createObjectURL(file);
       setSelectedImage(url);
-      
-      // Select a random mock food composition preset for custom uploaded image to facilitate scanning
-      const preset = FOOD_PRESETS[Math.floor(Math.random() * FOOD_PRESETS.length)];
-      setActiveAnalysis({
-        ...preset,
-        name: file.name.replace(/\.[^/.]+$/, "").split("-").join(" ").split("_").join(" "), // clean filename
-      });
+      setCustomMealName(file.name.replace(/\.[^/.]+$/, "").split("-").join(" ").split("_").join(" "));
+      setAnalysisError(null);
+      setActiveAnalysis(null);
+
+      // Convert to Base64
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        // Strip out the data:image/*;base64, prefix
+        const base64 = result.split(",")[1];
+        setBase64Image(base64);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const startAnalysisWithPreset = (preset: typeof FOOD_PRESETS[0]) => {
+    setBase64Image(null); // No base64 for presets
+    setAnalysisError(null);
     setSelectedImage(preset.image);
     setActiveAnalysis(preset);
     setCustomMealName(preset.name);
+    
+    if (checkScanLimit()) {
+      setIsPaywallOpen(true);
+      return;
+    }
     setUploadStep(1); // triggers scanning beam
   };
 
@@ -351,9 +444,9 @@ export default function Dashboard({
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3">
                 <span className="flex items-center justify-center w-10 h-10 rounded-2xl bg-indigo-500 text-white font-extrabold text-xl shadow-lg shadow-indigo-500/20">
-                  C
+                  d
                 </span>
-                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">CalBuddy Dashboard</h1>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">dietBuddy Dashboard</h1>
               </div>
               <div className="inline-flex items-center gap-1.5 self-start sm:self-auto px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-extrabold text-xs shadow-md shadow-orange-500/5">
                 <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
@@ -928,11 +1021,11 @@ export default function Dashboard({
                   </div>
 
                   {/* Bottom Start Custom Trigger */}
-                  {selectedImage && activeAnalysis && (
+                  {selectedImage && (
                     <div className="flex justify-end pt-4 border-t border-slate-700/60">
                       <button
                         type="button"
-                        onClick={() => setUploadStep(1)}
+                        onClick={handleStartAnalysis}
                         className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 font-bold text-white text-sm rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex items-center gap-2"
                       >
                         <Sparkles className="w-4 h-4" />
@@ -1006,119 +1099,237 @@ export default function Dashboard({
               )}
 
               {/* STEP 2: Review and Edit analysis */}
-              {uploadStep === 2 && activeAnalysis && (
+              {uploadStep === 2 && (
                 <div className="space-y-6">
-                  {mealSaveError && (
-                    <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-xs text-red-300 flex items-center gap-2">
-                      <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
-                      <span>{mealSaveError}</span>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    {/* Left Side: Photo preview details */}
-                    <div className="md:col-span-5 space-y-4">
-                      <div className="relative h-44 rounded-2xl overflow-hidden border border-slate-700/60 shadow-lg bg-slate-900">
-                        <img 
-                          src={selectedImage || ""} 
-                          alt="Analyzed food" 
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute top-3 left-3 px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-black tracking-widest rounded-lg border border-emerald-500/20 backdrop-blur-sm shadow-sm uppercase">
-                          USDA Matched
-                        </div>
+                  {analysisError ? (
+                    <div className="p-6 bg-slate-900/40 rounded-3xl border border-red-500/20 text-center space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto border border-red-500/20">
+                        <AlertTriangle className="w-6 h-6" />
                       </div>
-
-                      {/* Calorie and Nutrient Highlights */}
-                      <div className="p-4 bg-slate-900/40 rounded-2xl border border-slate-700/40 space-y-3">
-                        <div className="flex justify-between items-baseline">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Total Energy</span>
-                          <span className="text-xl font-black text-white">{activeAnalysis.totalCalories} kcal</span>
-                        </div>
-                        <hr className="border-slate-800" />
-                        <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                          <div className="bg-emerald-500/5 p-2 rounded-xl border border-emerald-500/10">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase">Protein</p>
-                            <p className="text-sm font-extrabold text-emerald-400 mt-0.5">{activeAnalysis.totalProtein}g</p>
-                          </div>
-                          <div className="bg-amber-500/5 p-2 rounded-xl border border-amber-500/10">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase">Fat</p>
-                            <p className="text-sm font-extrabold text-amber-500 mt-0.5">{activeAnalysis.totalFat}g</p>
-                          </div>
-                          <div className="bg-blue-500/5 p-2 rounded-xl border border-blue-500/10">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase">Fiber</p>
-                            <p className="text-sm font-extrabold text-blue-400 mt-0.5">{activeAnalysis.totalFiber}g</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right Side: Customizable settings & item breakdown */}
-                    <div className="md:col-span-7 space-y-4">
-                      {/* Name input */}
                       <div>
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Meal Title</label>
-                        <input 
-                          type="text" 
-                          value={customMealName}
-                          onChange={(e) => setCustomMealName(e.target.value)}
-                          placeholder="My Gourmet Feast Bowl"
-                          className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        />
+                        <h4 className="text-sm font-bold text-white">AI Dissection Failed</h4>
+                        <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-sm mx-auto">
+                          {analysisError}
+                        </p>
                       </div>
+                      <button
+                        onClick={() => {
+                          setUploadStep(0);
+                          setSelectedImage(null);
+                          setBase64Image(null);
+                          setActiveAnalysis(null);
+                          setAnalysisError(null);
+                        }}
+                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl text-slate-300 transition-all"
+                      >
+                        Try Another Image
+                      </button>
+                    </div>
+                  ) : activeAnalysis ? (
+                    <>
+                      {mealSaveError && (
+                        <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-xs text-red-300 flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                          <span>{mealSaveError}</span>
+                        </div>
+                      )}
 
-                      {/* Items breakdown */}
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Estimated Plate Breakdown</label>
-                        <div className="space-y-2.5 max-h-36 overflow-y-auto pr-1">
-                          {activeAnalysis.items.map((item: any, idx: number) => (
-                            <div key={idx} className="flex justify-between items-center p-2.5 bg-slate-900/30 border border-slate-700/40 rounded-xl text-xs">
-                              <div className="space-y-0.5">
-                                <p className="font-bold text-slate-200">{item.name}</p>
-                                <p className="text-[10px] text-slate-500">Portion: {item.estimatedQuantity || "100g"}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                        {/* Left Side: Photo preview details */}
+                        <div className="md:col-span-5 space-y-4">
+                          <div className="relative h-44 rounded-2xl overflow-hidden border border-slate-700/60 shadow-lg bg-slate-900">
+                            <img 
+                              src={selectedImage || ""} 
+                              alt="Analyzed food" 
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute top-3 left-3 px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-black tracking-widest rounded-lg border border-emerald-500/20 backdrop-blur-sm shadow-sm uppercase">
+                              USDA Matched
+                            </div>
+                          </div>
+
+                          {/* Calorie and Nutrient Highlights */}
+                          <div className="p-4 bg-slate-900/40 rounded-2xl border border-slate-700/40 space-y-3">
+                            <div className="flex justify-between items-baseline">
+                              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Total Energy</span>
+                              <span className="text-xl font-black text-white">{activeAnalysis.totalCalories} kcal</span>
+                            </div>
+                            <hr className="border-slate-800" />
+                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                              <div className="bg-emerald-500/5 p-2 rounded-xl border border-emerald-500/10">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase">Protein</p>
+                                <p className="text-sm font-extrabold text-emerald-400 mt-0.5">{activeAnalysis.totalProtein}g</p>
                               </div>
-                              <div className="text-right">
-                                <p className="font-extrabold text-slate-300">{item.calories} kcal</p>
-                                <p className="text-[9px] text-slate-500">P:{item.protein}g | F:{item.fat}g | Fib:{item.fiber}g</p>
+                              <div className="bg-amber-500/5 p-2 rounded-xl border border-amber-500/10">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase">Fat</p>
+                                <p className="text-sm font-extrabold text-amber-500 mt-0.5">{activeAnalysis.totalFat}g</p>
+                              </div>
+                              <div className="bg-blue-500/5 p-2 rounded-xl border border-blue-500/10">
+                                <p className="text-[10px] font-bold text-slate-500 uppercase">Fiber</p>
+                                <p className="text-sm font-extrabold text-blue-400 mt-0.5">{activeAnalysis.totalFiber}g</p>
                               </div>
                             </div>
-                          ))}
+                          </div>
+                        </div>
+
+                        {/* Right Side: Customizable settings & item breakdown */}
+                        <div className="md:col-span-7 space-y-4">
+                          {/* Name input */}
+                          <div>
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Meal Title</label>
+                            <input 
+                              type="text" 
+                              value={customMealName}
+                              onChange={(e) => setCustomMealName(e.target.value)}
+                              placeholder="My Gourmet Feast Bowl"
+                              className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                          </div>
+
+                          {/* Items breakdown */}
+                          <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Estimated Plate Breakdown</label>
+                            <div className="space-y-2.5 max-h-36 overflow-y-auto pr-1">
+                              {activeAnalysis.items.map((item: any, idx: number) => (
+                                <div key={idx} className="flex justify-between items-center p-2.5 bg-slate-900/30 border border-slate-700/40 rounded-xl text-xs">
+                                  <div className="space-y-0.5">
+                                    <p className="font-bold text-slate-200">{item.name}</p>
+                                    <p className="text-[10px] text-slate-500">Portion: {item.estimatedQuantity || "100g"}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-extrabold text-slate-300">{item.calories} kcal</p>
+                                    <p className="text-[9px] text-slate-500">P:{item.protein}g | F:{item.fat}g | Fib:{item.fiber}g</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Actions Footer */}
-                  <div className="flex gap-3 justify-end pt-5 border-t border-slate-700 mt-6">
-                    <button
-                      type="button"
-                      onClick={() => setUploadStep(0)}
-                      className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-xl text-slate-300 font-semibold text-sm transition-all"
-                    >
-                      Back
-                    </button>
-                    <button
-                      type="button"
-                      disabled={isSavingMeal}
-                      onClick={handleSaveMeal}
-                      className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
-                    >
-                      {isSavingMeal ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          <span>Saving...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Check className="w-4 h-4" />
-                          <span>Log to History</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
+                      {/* Actions Footer */}
+                      <div className="flex gap-3 justify-end pt-5 border-t border-slate-700 mt-6">
+                        <button
+                          type="button"
+                          onClick={() => setUploadStep(0)}
+                          className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-xl text-slate-300 font-semibold text-sm transition-all"
+                        >
+                          Back
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isSavingMeal}
+                          onClick={handleSaveMeal}
+                          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
+                        >
+                          {isSavingMeal ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                              <span>Saving...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-4 h-4" />
+                              <span>Log to History</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
                 </div>
               )}
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Premium Paywall Modal */}
+      {isPaywallOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            className="w-full max-w-md bg-slate-900 border border-indigo-500/30 rounded-[32px] overflow-hidden shadow-2xl flex flex-col p-8 relative"
+          >
+            {/* Close button */}
+            <button 
+              onClick={() => setIsPaywallOpen(false)}
+              className="absolute top-6 right-6 p-1.5 text-slate-400 hover:text-slate-200 rounded-xl bg-slate-800/60 hover:bg-slate-800 transition-all"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Sparkle badge */}
+            <div className="mx-auto bg-indigo-500/10 text-indigo-400 p-3.5 rounded-2xl border border-indigo-500/20 mb-6">
+              <Zap className="w-8 h-8 animate-pulse text-indigo-400" />
+            </div>
+
+            {/* Title & Subtitle */}
+            <div className="text-center space-y-2 mb-6">
+              <h3 className="text-2xl font-black text-white tracking-tight">Upgrade to dietBuddy Premium</h3>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                You've reached your free daily scan limit. Unlock the full power of dietBuddy to crush your fitness goals.
+              </p>
+            </div>
+
+            {/* Features list */}
+            <div className="space-y-4 mb-8">
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-800/40 border border-slate-700/30">
+                <div className="p-1 rounded-lg bg-indigo-500/15 text-indigo-400 mt-0.5">
+                  <Check className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-200">Unlimited AI Plate Scans</h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Scan breakfast, lunch, dinner, and snacks with no limits.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-800/40 border border-slate-700/30">
+                <div className="p-1 rounded-lg bg-emerald-500/15 text-emerald-400 mt-0.5">
+                  <Check className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-200">Automated Cloud Sync</h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Seamless two-way synchronization between your Android app and Web portal.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-800/40 border border-slate-700/30">
+                <div className="p-1 rounded-lg bg-cyan-500/15 text-cyan-400 mt-0.5">
+                  <Check className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-200">Premium Macros Insights</h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Get in-depth AI coaching and nutrition trends updated dynamically.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Pricing Section */}
+            <div className="bg-slate-950/40 border border-slate-800 rounded-3xl p-5 text-center mb-6">
+              <span className="text-[10px] font-black tracking-widest text-indigo-400 uppercase">Premium Plan</span>
+              <div className="flex items-baseline justify-center gap-1.5 mt-1">
+                <span className="text-3xl font-black text-white">₹199</span>
+                <span className="text-slate-500 text-xs font-bold">/ month</span>
+              </div>
+              <p className="text-[10px] text-slate-500 mt-2">Cancel anytime. Risk-free subscription.</p>
+            </div>
+
+            {/* Checkout Action Button */}
+            <button
+              onClick={() => {
+                localStorage.setItem("dietbuddy_premium", "true");
+                setIsPremium(true);
+                setIsPaywallOpen(false);
+              }}
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 font-bold text-white text-sm rounded-2xl transition-all shadow-lg shadow-indigo-600/30 text-center flex items-center justify-center gap-2 group"
+            >
+              <span>Subscribe Now</span>
+              <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
           </motion.div>
         </div>
       )}

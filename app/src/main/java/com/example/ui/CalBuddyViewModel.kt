@@ -70,6 +70,21 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
     private val _searchError = MutableStateFlow<String?>(null)
     val searchError: StateFlow<String?> = _searchError.asStateFlow()
 
+    private val _isPremium = MutableStateFlow(repository.isPremium())
+    val isPremium: StateFlow<Boolean> = _isPremium.asStateFlow()
+
+    private val _isPaywallOpen = MutableStateFlow(false)
+    val isPaywallOpen: StateFlow<Boolean> = _isPaywallOpen.asStateFlow()
+
+    private val _isSyncing = MutableStateFlow(false)
+    val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
+
+    private val _syncError = MutableStateFlow<String?>(null)
+    val syncError: StateFlow<String?> = _syncError.asStateFlow()
+
+    private val _syncSuccess = MutableStateFlow(false)
+    val syncSuccess: StateFlow<Boolean> = _syncSuccess.asStateFlow()
+
     init {
         // Log API key configuration silently
         val key = BuildConfig.OPENROUTER_API_KEY
@@ -104,6 +119,10 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun analyzeMeal() {
+        if (repository.checkScanLimit()) {
+            _isPaywallOpen.value = true
+            return
+        }
         val bitmap = _selectedImageBitmap.value ?: return
         _analysisState.value = AnalysisState.Loading("Analyzing your meal...")
 
@@ -256,6 +275,7 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
 
                 _activeEditingMeal.value = mealAnalysis
                 _analysisState.value = AnalysisState.Success(mealAnalysis)
+                repository.incrementScanCount()
 
             } catch (e: IllegalStateException) {
                 _analysisState.value = AnalysisState.Error(e.message ?: "Configuration error")
@@ -456,5 +476,67 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
     fun updateNutrientTargets(targets: NutrientTargets) {
         repository.saveNutrientTargets(targets)
         _nutrientTargets.value = targets
+    }
+
+    fun setPremium(premium: Boolean) {
+        repository.setPremium(premium)
+        _isPremium.value = premium
+    }
+
+    fun dismissPaywall() {
+        _isPaywallOpen.value = false
+    }
+
+    fun clearSyncStatus() {
+        _syncError.value = null
+        _syncSuccess.value = false
+    }
+
+    fun performSync(userId: String = "guest-user-uuid") {
+        viewModelScope.launch {
+            _isSyncing.value = true
+            _syncError.value = null
+            _syncSuccess.value = false
+            try {
+                // 1. Sync Goals
+                val targets = repository.getNutrientTargets()
+                val goalsResponse = com.example.api.SyncRetrofitClient.service.syncGoals(
+                    com.example.api.SyncGoalsRequest(
+                        userId = userId,
+                        calories = targets.calories,
+                        protein = targets.protein,
+                        fat = targets.fat,
+                        fiber = targets.fiber
+                    )
+                )
+                if (goalsResponse.success && goalsResponse.goals != null) {
+                    repository.saveNutrientTargets(goalsResponse.goals)
+                    _nutrientTargets.value = goalsResponse.goals
+                } else if (goalsResponse.error != null) {
+                    throw Exception(goalsResponse.error)
+                }
+
+                // 2. Sync Meals
+                val localMeals = repository.getSavedMeals()
+                val mealsResponse = com.example.api.SyncRetrofitClient.service.syncMeals(
+                    com.example.api.SyncMealsRequest(
+                        userId = userId,
+                        meals = localMeals
+                    )
+                )
+                if (mealsResponse.success && mealsResponse.meals != null) {
+                    repository.saveMealsList(mealsResponse.meals)
+                    _savedMeals.value = repository.getSavedMeals()
+                    _syncSuccess.value = true
+                } else if (mealsResponse.error != null) {
+                    throw Exception(mealsResponse.error)
+                }
+            } catch (e: Exception) {
+                Log.e("CalBuddyViewModel", "Sync failed", e)
+                _syncError.value = e.message ?: "Failed to connect to the sync server. Make sure the backend is running."
+            } finally {
+                _isSyncing.value = false
+            }
+        }
     }
 }

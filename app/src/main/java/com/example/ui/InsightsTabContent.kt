@@ -57,7 +57,7 @@ fun InsightsTabContent(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f))
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
             ) {
                 Row(
                     modifier = Modifier
@@ -105,6 +105,15 @@ fun InsightsTabContent(
             "insights" -> {
                 item {
                     AppleHealthCoachInsights(savedMeals, dailyTotals, nutrientTargets)
+                }
+                item {
+                    WeeklyMacroChart(
+                        savedMeals = savedMeals,
+                        targetCalories = nutrientTargets.calories,
+                        targetProtein = nutrientTargets.protein,
+                        targetFat = nutrientTargets.fat,
+                        targetFiber = nutrientTargets.fiber
+                    )
                 }
                 item {
                     HistoricalMetricsAveragesCard(savedMeals)
@@ -173,7 +182,7 @@ fun AppleHealthCoachInsights(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -280,7 +289,7 @@ fun HistoricalMetricsAveragesCard(savedMeals: List<SavedMeal>) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -386,7 +395,7 @@ fun VisualGoalSlidersCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -561,7 +570,7 @@ fun StreaksAchievementCard(savedMeals: List<SavedMeal>) {
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -708,7 +717,7 @@ fun AwardsTrophyCaseCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
     ) {
         Column(
             modifier = Modifier.padding(20.dp),

@@ -184,37 +184,122 @@ fun CalBuddyApp(
         }
     }
 
+    val isPaywallOpen by viewModel.isPaywallOpen.collectAsState()
+
     if (showSettingsDialog) {
         SettingsDialog(
             initialTargets = nutrientTargets,
+            viewModel = viewModel,
             onDismiss = { showSettingsDialog = false },
             onSave = { newTargets -> viewModel.updateNutrientTargets(newTargets) }
+        )
+    }
+
+    if (isPaywallOpen) {
+        AlertDialog(
+            onDismissRequest = { viewModel.dismissPaywall() },
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Premium Icon",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Upgrade to dietBuddy Premium",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "You have reached the free limit of 3 scans per day.",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Text(
+                        text = "Unlock dietBuddy Premium for ₹199/month to get:",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("• Unlimited AI food & macro scans", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Text("• Two-way mobile-web cloud sync", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                        Text("• Comprehensive progress metrics", fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.setPremium(true)
+                        viewModel.dismissPaywall()
+                    }
+                ) {
+                    Text("Subscribe for ₹199/mo")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { viewModel.dismissPaywall() }) {
+                    Text("Cancel")
+                }
+            },
+            shape = RoundedCornerShape(28.dp),
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
+                modifier = Modifier.background(
+                    brush = Brush.horizontalGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp)
+                        )
+                    )
+                ),
                 title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Surface(
-                            color = MaterialTheme.colorScheme.primary,
-                            shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier.size(32.dp)
+                        Box(
+                            modifier = Modifier
+                                .size(32.dp)
+                                .background(
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            Color(0xFF22D3EE), // Cyan
+                                            Color(0xFF10B981)  // Emerald
+                                        )
+                                    ),
+                                    shape = RoundedCornerShape(10.dp)
+                                ),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Surface(
-                                    color = Color.White,
-                                    shape = CircleShape,
-                                    modifier = Modifier.size(14.dp)
-                                ) {}
-                            }
+                            Text(
+                                text = "d",
+                                color = Color.White,
+                                fontWeight = FontWeight.Black,
+                                fontSize = 18.sp,
+                                modifier = Modifier.offset(y = (-1).dp)
+                            )
                         }
                         Text(
-                            text = "CalBuddy",
+                            text = "dietBuddy",
                             fontWeight = FontWeight.ExtraBold,
                             fontSize = 20.sp,
                             color = MaterialTheme.colorScheme.onBackground
@@ -255,7 +340,7 @@ fun CalBuddyApp(
                     Spacer(modifier = Modifier.width(16.dp))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = Color.Transparent
                 )
             )
         },
@@ -402,16 +487,6 @@ fun ScanTabContent(
             )
         }
 
-        // Weekly Historical Performance Chart
-        item {
-            WeeklyMacroChart(
-                savedMeals = savedMeals,
-                targetCalories = targetCalories,
-                targetProtein = targetProtein,
-                targetFat = targetFat,
-                targetFiber = targetFiber
-            )
-        }
 
         // Photo picker Box Area
         item {
@@ -469,7 +544,7 @@ fun ScanTabContent(
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
                     ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Column(
@@ -706,8 +781,8 @@ private fun exportHistoryToCsv(context: Context, meals: List<SavedMeal>) {
         val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
             type = "text/csv"
             putExtra(android.content.Intent.EXTRA_STREAM, uri)
-            putExtra(android.content.Intent.EXTRA_SUBJECT, "CalBuddy Meal History Export")
-            putExtra(android.content.Intent.EXTRA_TEXT, "Here is your exported meal log history from CalBuddy!")
+            putExtra(android.content.Intent.EXTRA_SUBJECT, "dietBuddy Meal History Export")
+            putExtra(android.content.Intent.EXTRA_TEXT, "Here is your exported meal log history from dietBuddy!")
             addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         
@@ -927,7 +1002,7 @@ fun DailyTrackerWidget(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -1254,7 +1329,7 @@ fun RemindersCard(modifier: Modifier = Modifier) {
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
@@ -1511,12 +1586,21 @@ fun MealUploadWidget(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clickable { onCameraClick() },
-                color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f),
+                    .clickable { onCameraClick() }
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                                Color(0xFFE2F8FB).copy(alpha = 0.25f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(26.dp)
+                    ),
+                color = Color.Transparent,
                 shape = RoundedCornerShape(26.dp),
                 border = BorderStroke(
-                    width = 1.5.dp,
-                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                 )
             ) {
                 Column(
@@ -1561,12 +1645,21 @@ fun MealUploadWidget(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clickable { onPickClick() },
-                color = MaterialTheme.colorScheme.surface,
+                    .clickable { onPickClick() }
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.15f),
+                                Color(0xFFEEF2F6).copy(alpha = 0.2f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(26.dp)
+                    ),
+                color = Color.Transparent,
                 shape = RoundedCornerShape(26.dp),
                 border = BorderStroke(
-                    width = 1.5.dp,
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
                 )
             ) {
                 Column(
@@ -1855,7 +1948,7 @@ fun MealAnalysisResultWidget(
                 )
                 Column {
                     Text(
-                        text = "CALBUDDY SMART AI ANALYSIS",
+                        text = "DIETBUDDY SMART AI ANALYSIS",
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 1.sp,
@@ -2046,7 +2139,7 @@ fun MealAnalysisResultWidget(
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surface
             ),
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.25f))
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
         ) {
             Row(
                 modifier = Modifier
@@ -2331,7 +2424,7 @@ fun MealAnalysisResultWidget(
                     modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp),
                     shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.2f))
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxWidth(),
@@ -2560,7 +2653,7 @@ fun SavedMealLogCard(
             .animateContentSize(),
         color = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -2784,6 +2877,7 @@ private fun createTempPictureUri(context: Context): Uri {
 @Composable
 fun SettingsDialog(
     initialTargets: com.example.model.NutrientTargets,
+    viewModel: CalBuddyViewModel,
     onDismiss: () -> Unit,
     onSave: (com.example.model.NutrientTargets) -> Unit
 ) {
@@ -2857,6 +2951,119 @@ fun SettingsDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f), modifier = Modifier.padding(vertical = 4.dp))
+                
+                val isSyncing by viewModel.isSyncing.collectAsState()
+                val syncError by viewModel.syncError.collectAsState()
+                val syncSuccess by viewModel.syncSuccess.collectAsState()
+                val isPremium by viewModel.isPremium.collectAsState()
+
+                Text(
+                    text = "Cloud Synchronization",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                if (!isPremium) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = "☁ Sync requires dietBuddy Premium",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = "Upgrade to sync meals with the dietBuddy Web portal in real-time.",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Button(
+                                onClick = {
+                                    viewModel.setPremium(true)
+                                },
+                                modifier = Modifier.fillMaxWidth().height(36.dp),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text("Unlock Premium Now", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                } else {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Status: Connected as guest-user-uuid (dietBuddy Premium)",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        
+                        if (isSyncing) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                                Text("Syncing goals & logs...", fontSize = 11.sp, color = MaterialTheme.colorScheme.primary)
+                            }
+                        } else {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = { 
+                                        viewModel.performSync()
+                                    },
+                                    modifier = Modifier.weight(1f).height(38.dp),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Text("Sync Now", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                                
+                                if (syncSuccess || syncError != null) {
+                                    OutlinedButton(
+                                        onClick = { viewModel.clearSyncStatus() },
+                                        modifier = Modifier.height(38.dp),
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Text("Clear", fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+
+                        if (syncSuccess) {
+                            Text(
+                                text = "✓ Cloud data merged successfully!",
+                                fontSize = 11.sp,
+                                color = Color(0xFF10B981),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        if (syncError != null) {
+                            Text(
+                                text = syncError ?: "",
+                                fontSize = 10.sp,
+                                color = MaterialTheme.colorScheme.error,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {

@@ -90,7 +90,11 @@ class CalBuddyRepository(context: Context) {
     fun saveMeal(meal: SavedMeal) {
         val currentMeals = getSavedMeals().toMutableList()
         currentMeals.add(0, meal) // Add to the top of the history list
-        val json = mealListAdapter.toJson(currentMeals)
+        saveMealsList(currentMeals)
+    }
+
+    fun saveMealsList(meals: List<SavedMeal>) {
+        val json = mealListAdapter.toJson(meals)
         prefs.edit().putString(KEY_SAVED_MEALS, json).apply()
     }
 
@@ -103,5 +107,31 @@ class CalBuddyRepository(context: Context) {
 
     fun clearSavedMeals() {
         prefs.edit().remove(KEY_SAVED_MEALS).apply()
+    }
+
+    fun isPremium(): Boolean {
+        return prefs.getBoolean("is_premium", false)
+    }
+
+    fun setPremium(premium: Boolean) {
+        prefs.edit().putBoolean("is_premium", premium).apply()
+    }
+
+    fun checkScanLimit(): Boolean {
+        if (isPremium()) return false
+        val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+        val lastScanDate = prefs.getString("last_scan_date", "")
+        var count = prefs.getInt("scan_count", 0)
+        
+        if (lastScanDate != todayStr) {
+            count = 0
+            prefs.edit().putString("last_scan_date", todayStr).putInt("scan_count", 0).apply()
+        }
+        return count >= 3
+    }
+
+    fun incrementScanCount() {
+        val count = prefs.getInt("scan_count", 0)
+        prefs.edit().putInt("scan_count", count + 1).apply()
     }
 }
