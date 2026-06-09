@@ -481,7 +481,7 @@ export default function Dashboard({
               <span>Goals</span>
             </button>
             <button 
-              onClick={() => signOut({ callbackUrl: '/auth/login' })}
+              onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}
               className="flex-1 md:flex-none p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-all flex items-center justify-center gap-2 text-sm text-rose-400 hover:text-rose-300"
               title="Sign Out"
             >
@@ -964,21 +964,37 @@ export default function Dashboard({
               {/* STEP 0: Select / Upload */}
               {uploadStep === 0 && (
                 <div className="space-y-6">
-                  {/* File Upload Zone */}
-                  <div className="relative border-2 border-dashed border-slate-700 hover:border-indigo-500/60 transition-all rounded-3xl bg-slate-900/30 p-8 text-center flex flex-col items-center justify-center gap-3 group">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleFileChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-                    />
-                    <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 text-slate-400 group-hover:bg-indigo-600/10 group-hover:text-indigo-400 transition-all shadow-md">
-                      <Upload className="w-6 h-6" />
+                  {/* File Upload & Camera Zones */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Upload from Gallery */}
+                    <div className="relative border-2 border-dashed border-slate-700 hover:border-indigo-500/60 transition-all rounded-3xl bg-slate-900/30 p-6 text-center flex flex-col items-center justify-center gap-3 group">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleFileChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                      />
+                      <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 text-slate-400 group-hover:bg-indigo-600/10 group-hover:text-indigo-400 transition-all shadow-md">
+                        <Upload className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all">Upload Photo</p>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all">Click or drag plate photo here</p>
-                      <p className="text-xs text-slate-500 mt-1">Supports JPEG, PNG up to 8MB. Live analyzer parses items.</p>
+
+                    {/* Take Photo with Camera */}
+                    <div className="relative border-2 border-dashed border-slate-700 hover:border-emerald-500/60 transition-all rounded-3xl bg-slate-900/30 p-6 text-center flex flex-col items-center justify-center gap-3 group">
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        capture="environment"
+                        onChange={handleFileChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                      />
+                      <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 text-slate-400 group-hover:bg-emerald-600/10 group-hover:text-emerald-400 transition-all shadow-md">
+                        <Camera className="w-6 h-6" />
+                      </div>
+                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all">Take Photo</p>
                     </div>
+                  </div>
 
                     {selectedImage && (
                       <div className="mt-4 px-4 py-2 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold flex items-center gap-1.5 animate-bounce">
