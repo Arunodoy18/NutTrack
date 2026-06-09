@@ -463,3 +463,63 @@ export async function analyzeMealTextAction(text: string) {
     return { success: false, error: String(err) };
   }
 }
+
+export async function analyzeFridgeImageAction(base64Image: string) {
+  try {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    const modelName = process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash";
+
+    if (!apiKey || apiKey === "YOUR_OPENROUTER_API_KEY") {
+      throw new Error("OPENROUTER_API_KEY is missing. Please configure your .env file.");
+    }
+
+    const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
+
+    const prompt = "You are a Michelin-star fitness chef. Look at this photo of a refrigerator or pantry.\n1. Identify all the raw ingredients visible.\n2. Generate exactly 3 unique, highly delicious, macro-friendly recipes using ONLY these ingredients (plus basic pantry staples like salt, pepper, oil).\n3. Provide estimated macronutrients for 1 serving of each recipe.\n4. Return ONLY valid JSON format exactly like this:\n{\n  \"ingredients\": [\"eggs\", \"spinach\", \"milk\"],\n  \"recipes\": [\n    {\n      \"name\": \"Spinach Omelet\",\n      \"description\": \"A high-protein breakfast.\",\n      \"calories\": 250,\n      \"protein\": 18,\n      \"fat\": 15,\n      \"fiber\": 2,\n      \"steps\": [\"Beat eggs with milk.\", \"Sauté spinach.\", \"Cook eggs and fold in spinach.\"]\n    }\n  ]\n}";
+
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ",
+      },
+      body: JSON.stringify({
+        model: modelName,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              { type: "image_url", image_url: { url: "data:image/jpeg;base64," } }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(`OpenRouter API returned status `);
+    }
+
+    const data = await res.json();
+    const rawText = data.choices?.[0]?.message?.content;
+    
+    if (!rawText) throw new Error("Failed to get response from AI");
+
+    let cleaned = rawText.trim();
+    if (cleaned.startsWith("`json")) cleaned = cleaned.substring(7);
+    else if (cleaned.startsWith("``")) cleaned = cleaned.substring(3);
+    if (cleaned.endsWith("``")) cleaned = cleaned.substring(0, cleaned.length - 3);
+    cleaned = cleaned.trim();
+
+    const parsed = JSON.parse(cleaned);
+
+    return {
+      success: true,
+      data: parsed
+    };
+  } catch (err) {
+    console.error("AI Fridge scan error:", err);
+    return { success: false, error: String(err) };
+  }
+}

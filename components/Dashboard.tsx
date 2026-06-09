@@ -20,7 +20,8 @@ import {
   Trophy,
   Zap,
   Mic,
-  MicOff
+  MicOff,
+  Utensils
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -37,6 +38,7 @@ import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, a
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from "next-auth/react";
 import { useSpeech } from "@/components/useSpeech";
+import FridgeRaider from "@/components/FridgeRaider";
 
 export interface FoodItemData {
   id: string;
@@ -94,6 +96,7 @@ export default function Dashboard({
 }: DashboardProps) {
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFridgeRaiderOpen, setIsFridgeRaiderOpen] = useState(false);
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Fiber'>('Calories');
 
   // AI-generated Nutrition Insight & Toast flags
@@ -526,6 +529,14 @@ export default function Dashboard({
             >
               <X className="w-4 h-4" />
               <span className="hidden md:inline">Sign Out</span>
+            </button>
+            <button 
+              onClick={() => setIsFridgeRaiderOpen(true)}
+              className="flex-1 md:flex-none px-4 py-3 rounded-2xl bg-slate-900 border border-indigo-500/40 text-indigo-400 font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-indigo-500/10"
+              title="AI Fridge Raider"
+            >
+              <Utensils className="w-4 h-4" />
+              <span className="hidden sm:inline">Fridge Raider</span>
             </button>
             <button 
               onClick={onAddMealClick || (() => {
@@ -1497,6 +1508,9 @@ export default function Dashboard({
           </motion.div>
         </div>
       )}
+
+      {/* Fridge Raider Modal */}
+      {isFridgeRaiderOpen && <FridgeRaider onClose={() => setIsFridgeRaiderOpen(false)} />}
     </div>
   );
 }
