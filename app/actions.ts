@@ -475,13 +475,31 @@ export async function analyzeFridgeImageAction(base64Image: string) {
 
     const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
 
-    const prompt = "You are a Michelin-star fitness chef. Look at this photo of a refrigerator or pantry.\n1. Identify all the raw ingredients visible.\n2. Generate exactly 3 unique, highly delicious, macro-friendly recipes using ONLY these ingredients (plus basic pantry staples like salt, pepper, oil).\n3. Provide estimated macronutrients for 1 serving of each recipe.\n4. Return ONLY valid JSON format exactly like this:\n{\n  \"ingredients\": [\"eggs\", \"spinach\", \"milk\"],\n  \"recipes\": [\n    {\n      \"name\": \"Spinach Omelet\",\n      \"description\": \"A high-protein breakfast.\",\n      \"calories\": 250,\n      \"protein\": 18,\n      \"fat\": 15,\n      \"fiber\": 2,\n      \"steps\": [\"Beat eggs with milk.\", \"Sauté spinach.\", \"Cook eggs and fold in spinach.\"]\n    }\n  ]\n}";
+    const prompt = `You are a Michelin-star fitness chef. Look at this photo of a refrigerator or pantry.
+    1. Identify all the raw ingredients visible.
+    2. Generate exactly 3 unique, highly delicious, macro-friendly recipes using ONLY these ingredients (plus basic pantry staples like salt, pepper, oil).
+    3. Provide estimated macronutrients for 1 serving of each recipe.
+    4. Return ONLY valid JSON format exactly like this:
+    {
+      "ingredients": ["eggs", "spinach", "milk"],
+      "recipes": [
+        {
+          "name": "Spinach Omelet",
+          "description": "A high-protein breakfast.",
+          "calories": 250,
+          "protein": 18,
+          "fat": 15,
+          "fiber": 2,
+          "steps": ["Beat eggs with milk.", "SautÃ© spinach.", "Cook eggs and fold in spinach."]
+        }
+      ]
+    }`;
 
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Bearer ",
+        "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: modelName,
@@ -490,7 +508,7 @@ export async function analyzeFridgeImageAction(base64Image: string) {
             role: "user",
             content: [
               { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: "data:image/jpeg;base64," } }
+              { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64}` } }
             ]
           }
         ]
@@ -498,7 +516,7 @@ export async function analyzeFridgeImageAction(base64Image: string) {
     });
 
     if (!res.ok) {
-      throw new Error(`OpenRouter API returned status `);
+      throw new Error(`OpenRouter API returned status ${res.status}`);
     }
 
     const data = await res.json();
@@ -507,9 +525,9 @@ export async function analyzeFridgeImageAction(base64Image: string) {
     if (!rawText) throw new Error("Failed to get response from AI");
 
     let cleaned = rawText.trim();
-    if (cleaned.startsWith("`json")) cleaned = cleaned.substring(7);
-    else if (cleaned.startsWith("``")) cleaned = cleaned.substring(3);
-    if (cleaned.endsWith("``")) cleaned = cleaned.substring(0, cleaned.length - 3);
+    if (cleaned.startsWith("```json")) cleaned = cleaned.substring(7);
+    else if (cleaned.startsWith("```")) cleaned = cleaned.substring(3);
+    if (cleaned.endsWith("```")) cleaned = cleaned.substring(0, cleaned.length - 3);
     cleaned = cleaned.trim();
 
     const parsed = JSON.parse(cleaned);

@@ -6,12 +6,15 @@ export const metadata: Metadata = {
   title: "dietBuddy - Calorie & Nutrition Estimator",
   description: "AI-powered calorie and nutrition estimator from meal photos.",
   manifest: "/manifest.json",
-  themeColor: "#020617",
   appleWebApp: {
     capable: true,
     title: "dietBuddy",
     statusBarStyle: "black-translucent",
   },
+};
+
+export const viewport = {
+  themeColor: "#020617",
 };
 
 import { PwaRegistry } from "@/components/PwaRegistry";
