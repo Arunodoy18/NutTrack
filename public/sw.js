@@ -1,12 +1,29 @@
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
+const CACHE_NAME = 'dietbuddy-cache-v1';
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
+const urlsToCache = [
+  '/',
+  '/manifest.json',
+  '/icon.png',
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        return cache.addAll(urlsToCache);
+      })
+  );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Simple pass-through fetch handler required for PWA install prompt
-  event.respondWith(fetch(event.request));
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        // Cache hit - return response
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      })
+  );
 });

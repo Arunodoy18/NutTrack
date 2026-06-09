@@ -655,17 +655,34 @@ export default function Dashboard({
                   </div>
 
                   {/* Summary Callout Banner */}
-                  <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 flex gap-3 items-center">
-                    <Sparkles className="w-5 h-5 text-indigo-400 shrink-0" />
-                    <p className="text-xs text-indigo-200/90 leading-normal">
-                      {todayTotals.calories === 0 
-                        ? "Begin logging by snapping your meal with AI recognition to estimate coordinates!" 
-                        : isOverCal 
+                  {todayTotals.calories === 0 ? (
+                    <div className="p-5 rounded-2xl bg-indigo-600/10 border border-indigo-500/30 flex flex-col sm:flex-row gap-4 items-center justify-between group">
+                      <div className="flex gap-3 items-center">
+                        <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                          <Sparkles className="w-5 h-5 text-indigo-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-white">Ready to start tracking?</p>
+                          <p className="text-xs text-indigo-200/80 mt-0.5">Log your first meal using the AI scanner or voice.</p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={onAddMealClick || (() => setIsUploadModalOpen(true))}
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2 whitespace-nowrap animate-pulse"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Log Meal
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-2xl bg-indigo-950/40 border border-indigo-500/20 flex gap-3 items-center">
+                      <Sparkles className="w-5 h-5 text-indigo-400 shrink-0" />
+                      <p className="text-xs text-indigo-200/90 leading-normal">
+                        {isOverCal 
                           ? "You have surpassed your daily target calories of energy intake."
-                          : `Great job! You have reached ${calPercent}% of your active calorie tracking goal.`
-                      }
-                    </p>
-                  </div>
+                          : `Great job! You have reached ${calPercent}% of your active calorie tracking goal.`}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1159,14 +1176,14 @@ export default function Dashboard({
 
                     {/* Framer Motion lasers scanning beam overlay */}
                     <motion.div 
-                      className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_rgba(34,211,238,0.8)]"
+                      className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_rgba(34,211,238,0.8)]"
                       animate={{
-                        top: ["0%", "100%", "0%"]
+                        y: [0, 204, 0]
                       }}
                       transition={{
                         duration: 2.2,
                         repeat: Infinity,
-                        ease: "easeInOut"
+                        ease: "linear"
                       }}
                     />
 
