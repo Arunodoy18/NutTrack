@@ -7,6 +7,8 @@ export const users = pgTable("user", {
   name: text("name"),
   email: text("email").notNull().unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
+  password: text("password"),
+  isVerified: boolean("is_verified").default(false),
   image: text("image"),
 });
 
@@ -53,6 +55,15 @@ export const verificationTokens = pgTable(
     compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
   })
 );
+
+export const otpTokens = pgTable("otp_tokens", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: text("email").notNull(),
+  otp: text("otp").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  type: text("type").notNull(), // 'VERIFY_ACCOUNT' or 'RESET_PASSWORD'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 // --- App Specific tables: Meals, MealItems, DailyGoals ---
 
