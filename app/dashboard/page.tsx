@@ -19,6 +19,12 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
+  // Fetch the current user to check premium status
+  const currentUser = await db.query.users.findFirst({
+    where: eq(users.id, userId)
+  });
+  const isPremium = currentUser?.isPremium || false;
+
   // 1. Fetch user's Daily Nutrition Goals
   let currentGoals = await db.query.dailyGoals.findFirst({
     where: eq(dailyGoals.userId, userId),
@@ -112,6 +118,7 @@ export default async function DashboardPage() {
   return (
     <Dashboard 
       userId={userId}
+      isPremiumUser={isPremium}
       dailyGoals={{
         calories: currentGoals.calories,
         protein: currentGoals.protein,

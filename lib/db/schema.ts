@@ -9,6 +9,7 @@ export const users = pgTable("user", {
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   password: text("password"),
   isVerified: boolean("is_verified").default(false),
+  isPremium: boolean("is_premium").default(false),
   image: text("image"),
 });
 
@@ -107,6 +108,19 @@ export const dailyGoals = pgTable("daily_goals", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const payments = pgTable("payments", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  razorpayOrderId: text("razorpay_order_id").notNull(),
+  razorpayPaymentId: text("razorpay_payment_id"),
+  razorpaySignature: text("razorpay_signature"),
+  amount: integer("amount").notNull(), // Amount in paise
+  status: text("status").notNull().default("created"), // 'created', 'paid', 'failed'
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -132,6 +146,13 @@ export const mealItemsRelations = relations(mealItems, ({ one }) => ({
 export const dailyGoalsRelations = relations(dailyGoals, ({ one }) => ({
   user: one(users, {
     fields: [dailyGoals.userId],
+    references: [users.id],
+  }),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  user: one(users, {
+    fields: [payments.userId],
     references: [users.id],
   }),
 }));

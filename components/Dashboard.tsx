@@ -58,6 +58,7 @@ export interface MealLogData {
 
 export interface DashboardProps {
   userId?: string;
+  isPremiumUser?: boolean;
   dailyGoals: {
     calories: number;
     protein: number;
@@ -79,6 +80,7 @@ export interface DashboardProps {
 
 export default function Dashboard({
   userId = "guest-user-uuid",
+  isPremiumUser = false,
   dailyGoals = { calories: 2000, protein: 80, fat: 65, fiber: 30 },
   todayTotals = { calories: 0, protein: 0, fat: 0, fiber: 0 },
   todayMeals = [],
@@ -164,9 +166,10 @@ export default function Dashboard({
   // Load premium state on mount
   React.useEffect(() => {
     if (typeof window !== "undefined") {
-      setIsPremium(localStorage.getItem("dietbuddy_premium") === "true");
+      // Check server prop first, fallback to local storage for guest compatibility
+      setIsPremium(isPremiumUser || localStorage.getItem("dietbuddy_premium") === "true");
     }
-  }, []);
+  }, [isPremiumUser]);
 
   const checkScanLimit = () => {
     if (typeof window === "undefined") return false;
@@ -996,12 +999,11 @@ export default function Dashboard({
                     </div>
                   </div>
 
-                    {selectedImage && (
-                      <div className="mt-4 px-4 py-2 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold flex items-center gap-1.5 animate-bounce">
-                        <Check className="w-3.5 h-3.5 text-indigo-400" /> Custom file loaded! Click "Analyze" below
-                      </div>
-                    )}
-                  </div>
+                  {selectedImage && (
+                    <div className="mt-4 px-4 py-2 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold flex items-center gap-1.5 animate-bounce">
+                      <Check className="w-3.5 h-3.5 text-indigo-400" /> Custom file loaded! Click "Analyze" below
+                    </div>
+                  )}
 
                   {/* Healthy Gourmet Presets Title */}
                   <div className="text-center pt-2">
@@ -1345,10 +1347,78 @@ export default function Dashboard({
 
             {/* Checkout Action Button */}
             <button
-              onClick={() => {
-                localStorage.setItem("dietbuddy_premium", "true");
-                setIsPremium(true);
-                setIsPaywallOpen(false);
+              onClick={async () => {
+                try {
+                  // 1. Load Razorpay Script
+                  const loadRazorpayScript = () => {
+                    return new Promise((resolve) => {
+                      if ((window as any).Razorpay) return resolve(true);
+                      const script = document.createElement("script");
+                      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+                      script.onload = () => resolve(true);
+                      script.onerror = () => resolve(false);
+                      document.body.appendChild(script);
+                    });
+                  };
+
+                  const isLoaded = await loadRazorpayScript();
+                  if (!isLoaded) {
+                    alert("Failed to load Razorpay SDK. Please check your internet connection.");
+                    return;
+                  }
+
+                  // 2. Create Order from Backend
+                  const orderRes = await fetch("/api/razorpay/order", { method: "POST" });
+                  const orderData = await orderRes.json();
+
+                  if (!orderData.success) {
+                    alert(orderData.error || "Failed to initiate payment.");
+                    return;
+                  }
+
+                  // 3. Initialize Razorpay Checkout
+                  const options = {
+                    key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "", 
+                    amount: orderData.order.amount,
+                    currency: orderData.order.currency,
+                    name: "dietBuddy",
+                    description: "Lifetime Premium Upgrade",
+                    order_id: orderData.order.id,
+                    handler: async function (response: any) {
+                      // 4. Verify Payment on Backend
+                      const verifyRes = await fetch("/api/razorpay/verify", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          razorpay_order_id: response.razorpay_order_id,
+                          razorpay_payment_id: response.razorpay_payment_id,
+                          razorpay_signature: response.razorpay_signature,
+                        }),
+                      });
+                      
+                      const verifyData = await verifyRes.json();
+                      if (verifyData.success) {
+                        setIsPremium(true);
+                        setIsPaywallOpen(false);
+                        localStorage.setItem("dietbuddy_premium", "true");
+                        alert("🎉 Payment Successful! Welcome to dietBuddy Premium!");
+                      } else {
+                        alert("Payment verification failed. Please contact support.");
+                      }
+                    },
+                    theme: { color: "#4f46e5" },
+                  };
+
+                  const paymentObject = new (window as any).Razorpay(options);
+                  paymentObject.on('payment.failed', function (response: any) {
+                    alert(`Payment Failed: ${response.error.description}`);
+                  });
+                  paymentObject.open();
+
+                } catch (err) {
+                  console.error(err);
+                  alert("Something went wrong during checkout.");
+                }
               }}
               className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 font-bold text-white text-sm rounded-2xl transition-all shadow-lg shadow-indigo-600/30 text-center flex items-center justify-center gap-2 group"
             >
