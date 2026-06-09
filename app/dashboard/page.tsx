@@ -1,4 +1,5 @@
 import React from 'react';
+import { redirect } from 'next/navigation';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -12,29 +13,10 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
 
-  // Fallback / mock user for previewing when Google Sign-In is not configured yet
-  let userId = session?.user?.id;
-  let userEmail = session?.user?.email || "guest@example.com";
+  const userId = session?.user?.id;
 
   if (!userId) {
-    // Attempt to locate a guest/dummy user, or create one to facilitate offline visual flow
-    let guestUser = await db.query.users.findFirst({
-      where: eq(users.email, userEmail)
-    });
-
-    if (!guestUser) {
-      try {
-        const [newGuest] = await db.insert(users).values({
-          id: "guest-user-uuid",
-          name: "Guest Explorer",
-          email: userEmail,
-        }).returning();
-        guestUser = newGuest;
-      } catch (err) {
-        console.warn("Could not auto-insert guest user, using mock fallback id.");
-      }
-    }
-    userId = guestUser?.id || "guest-user-uuid";
+    redirect("/auth/login");
   }
 
   // 1. Fetch user's Daily Nutrition Goals

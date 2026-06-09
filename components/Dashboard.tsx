@@ -33,6 +33,7 @@ import {
 } from 'recharts';
 import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, analyzeMealImageAction } from "@/app/actions";
 import { motion, AnimatePresence } from 'framer-motion';
+import { signOut } from "next-auth/react";
 
 export interface FoodItemData {
   id: string;
@@ -478,6 +479,14 @@ export default function Dashboard({
             >
               <Settings className="w-4 h-4" />
               <span>Goals</span>
+            </button>
+            <button 
+              onClick={() => signOut({ callbackUrl: '/auth/login' })}
+              className="flex-1 md:flex-none p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-all flex items-center justify-center gap-2 text-sm text-rose-400 hover:text-rose-300"
+              title="Sign Out"
+            >
+              <X className="w-4 h-4" />
+              <span className="hidden md:inline">Sign Out</span>
             </button>
             <button 
               onClick={onAddMealClick || (() => {
