@@ -18,7 +18,9 @@ import {
   Upload,
   Award,
   Trophy,
-  Zap
+  Zap,
+  Mic,
+  MicOff
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -31,9 +33,10 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
-import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, analyzeMealImageAction } from "@/app/actions";
+import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, analyzeMealImageAction, analyzeMealTextAction } from "@/app/actions";
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from "next-auth/react";
+import { useSpeech } from "@/components/useSpeech";
 
 export interface FoodItemData {
   id: string;
@@ -309,6 +312,39 @@ export default function Dashboard({
       }
     } catch (err) {
       setAnalysisError("Unexpected error during image analysis.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const { isListening, transcript, startListening, stopListening, isSupported, error: speechError } = useSpeech();
+
+  // Watch transcript and trigger analysis when stopped
+  React.useEffect(() => {
+    if (!isListening && transcript.trim().length > 0 && uploadStep === 0) {
+      runVoiceAnalysis(transcript);
+    }
+  }, [isListening, transcript]);
+
+  const runVoiceAnalysis = async (text: string) => {
+    if (checkScanLimit()) {
+      setIsPaywallOpen(true);
+      return;
+    }
+    setUploadStep(1); // Show scanning animation
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    try {
+      const res = await analyzeMealTextAction(text);
+      if (res.success && res.analysis) {
+        setActiveAnalysis(res.analysis);
+        setCustomMealName(res.analysis.name || customMealName);
+        incrementScanCount();
+      } else {
+        setAnalysisError(res.error || "Failed to analyze the voice input.");
+      }
+    } catch (err) {
+      setAnalysisError("Unexpected error during voice analysis.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -967,8 +1003,8 @@ export default function Dashboard({
               {/* STEP 0: Select / Upload */}
               {uploadStep === 0 && (
                 <div className="space-y-6">
-                  {/* File Upload & Camera Zones */}
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* File Upload & Camera & Voice Zones */}
+                  <div className="grid grid-cols-3 gap-4">
                     {/* Upload from Gallery */}
                     <div className="relative border-2 border-dashed border-slate-700 hover:border-indigo-500/60 transition-all rounded-3xl bg-slate-900/30 p-6 text-center flex flex-col items-center justify-center gap-3 group">
                       <input 
@@ -980,7 +1016,7 @@ export default function Dashboard({
                       <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 text-slate-400 group-hover:bg-indigo-600/10 group-hover:text-indigo-400 transition-all shadow-md">
                         <Upload className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all">Upload Photo</p>
+                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all">Upload</p>
                     </div>
 
                     {/* Take Photo with Camera */}
@@ -995,9 +1031,35 @@ export default function Dashboard({
                       <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 text-slate-400 group-hover:bg-emerald-600/10 group-hover:text-emerald-400 transition-all shadow-md">
                         <Camera className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all">Take Photo</p>
+                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all">Photo</p>
+                    </div>
+
+                    {/* Voice Logging */}
+                    <div className="relative border-2 border-dashed border-slate-700 hover:border-red-500/60 transition-all rounded-3xl bg-slate-900/30 p-6 text-center flex flex-col items-center justify-center gap-3 group">
+                      <button 
+                        onPointerDown={startListening}
+                        onPointerUp={stopListening}
+                        onPointerLeave={stopListening}
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all shadow-md z-10 relative ${isListening ? 'bg-red-600/20 border-red-500 text-red-400 animate-pulse' : 'bg-slate-800 border-slate-700 text-slate-400 group-hover:bg-red-600/10 group-hover:text-red-400'}`}
+                      >
+                        {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+                      </button>
+                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all leading-tight">
+                        {isListening ? "Listening..." : "Hold to Speak"}
+                      </p>
                     </div>
                   </div>
+                  
+                  {transcript && isListening && (
+                    <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                       <p className="text-xs text-red-300 italic">"{transcript}"</p>
+                    </div>
+                  )}
+                  {speechError && (
+                    <div className="mt-2 p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-xs text-red-300">
+                       Speech Error: {speechError}. (Ensure microphone permissions are granted).
+                    </div>
+                  )}
 
                   {selectedImage && (
                     <div className="mt-4 px-4 py-2 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold flex items-center gap-1.5 animate-bounce">
@@ -1064,15 +1126,22 @@ export default function Dashboard({
               )}
 
               {/* STEP 1: Scanning Beam Overlay (Framer Motion Animation) */}
-              {uploadStep === 1 && selectedImage && (
+              {uploadStep === 1 && (
                 <div className="flex flex-col items-center justify-center p-8 space-y-8">
                   {/* Glowing Scanner Box */}
-                  <div className="relative w-72 h-52 rounded-[24px] overflow-hidden border border-slate-700 bg-slate-900 shadow-2xl shadow-cyan-500/10">
-                    <img 
-                      src={selectedImage} 
-                      alt="Analyzing..." 
-                      className="w-full h-full object-cover opacity-80"
-                    />
+                  <div className="relative w-72 h-52 rounded-[24px] overflow-hidden border border-slate-700 bg-slate-900 shadow-2xl shadow-cyan-500/10 flex items-center justify-center">
+                    {selectedImage ? (
+                      <img 
+                        src={selectedImage} 
+                        alt="Analyzing..." 
+                        className="w-full h-full object-cover opacity-80"
+                      />
+                    ) : (
+                      <div className="p-6 text-center z-20">
+                         <Mic className="w-12 h-12 text-cyan-400 mx-auto mb-4 animate-pulse" />
+                         <p className="text-xs font-semibold text-slate-300 italic">"{transcript}"</p>
+                      </div>
+                    )}
 
                     {/* Cyber Grid Backdrop Layer */}
                     <div className="absolute inset-0 bg-transparent bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
