@@ -3,16 +3,23 @@
   "short_name": "dietBuddy",
   "description": "Snap your food. Know your macros. Hit your goals.",
   "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#F5F0E8",
   "theme_color": "#E07A3A",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["health", "fitness", "food"],
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
-  "categories": ["health", "fitness", "food"],
   "screenshots": [
-    { "src": "/screenshots/dashboard.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow" }
+    { "src": "/screenshots/dashboard-mobile.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow", "label": "Dashboard" },
+    { "src": "/screenshots/scanner-mobile.png",   "sizes": "390x844", "type": "image/png", "form_factor": "narrow", "label": "AI Meal Scanner" }
+  ],
+  "shortcuts": [
+    { "name": "Scan a meal",  "url": "/dashboard?action=scan",  "icons": [{ "src": "/icons/scan.png", "sizes": "96x96" }] },
+    { "name": "Voice log",    "url": "/dashboard?action=voice", "icons": [{ "src": "/icons/voice.png", "sizes": "96x96" }] }
   ]
 }
