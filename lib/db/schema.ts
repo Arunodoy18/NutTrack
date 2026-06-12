@@ -10,6 +10,7 @@ export const users = pgTable("user", {
   password: text("password"),
   isVerified: boolean("is_verified").default(false),
   isPremium: boolean("is_premium").default(false),
+  premiumSince: timestamp("premium_since", { mode: "date" }),
   image: text("image"),
   otpLockedUntil: timestamp("otp_locked_until", { mode: "date" }),
 });
