@@ -141,18 +141,40 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
                 }
 
                 val prompt = """
-                    Analyze this meal image.
-                    Identify all visible food items.
-                    Return ONLY valid JSON.
+                    You are a precision nutrition AI embedded in dietBuddy, a calorie tracking app.
                     
-                    Format:
+                    The user has uploaded a photo of their meal. Your job is to identify every distinct food item visible on the plate, estimate its portion weight in grams, and return structured nutritional data.
+                    
+                    RULES:
+                    - Only identify food items you can see with reasonable confidence. Do not guess invisible items.
+                    - If the image is not a food photo (blurry, non-food subject, error), return { "error": "not_food", "message": "No meal detected in this image." }
+                    - Never hallucinate nutrition values. Use your trained knowledge of USDA nutritional data.
+                    - Weights are estimates — be conservative, not generous. A "medium chicken breast" is 150g, not 250g.
+                    - Always return valid JSON only. No markdown, no explanation, no preamble.
+                    
+                    OUTPUT FORMAT (strict JSON):
                     {
-                      "foods": [
+                      "meal_name": "Short descriptive name of the whole meal",
+                      "confidence": 0.87,
+                      "items": [
                         {
-                          "name": "Chicken Breast",
-                          "estimatedQuantity": "150g"
+                          "name": "Grilled Chicken Breast",
+                          "weight_g": 150,
+                          "calories": 248,
+                          "protein_g": 46.5,
+                          "fat_g": 5.4,
+                          "carbs_g": 0,
+                          "fiber_g": 0
                         }
-                      ]
+                      ],
+                      "totals": {
+                        "calories": 248,
+                        "protein_g": 46.5,
+                        "fat_g": 5.4,
+                        "carbs_g": 0,
+                        "fiber_g": 0
+                      },
+                      "notes": "Optional notes"
                     }
                 """.trimIndent()
 
@@ -199,70 +221,33 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
                     return@launch
                 }
 
-                if (detectedResponse.foods.isEmpty()) {
+                if (detectedResponse.error != null) {
+                    _analysisState.value = AnalysisState.Error(detectedResponse.message ?: "Invalid meal image.")
+                    return@launch
+                }
+
+                if (detectedResponse.items.isNullOrEmpty()) {
                     _analysisState.value = AnalysisState.Error("Unable to identify foods.")
                     return@launch
                 }
 
-                // 3. Obtain nutrition details from USDA for each food item
-                val foodItems = try {
-                    coroutineScope {
-                        detectedResponse.foods.map { food ->
-                            async(Dispatchers.IO) {
-                                val usdaSearch = UsdaRetrofitClient.service.searchFoods(
-                                    apiKey = usdaKey,
-                                    query = food.name,
-                                    pageSize = 5
-                                )
-                                val usdaFood = usdaSearch.foods?.firstOrNull()
-                                if (usdaFood != null) {
-                                    var rawKcal = 0.0
-                                    var rawProt = 0.0
-                                    var rawFat = 0.0
-                                    var rawFib = 0.0
-
-                                    usdaFood.foodNutrients?.forEach { nut ->
-                                        val name = nut.nutrientName?.lowercase() ?: ""
-                                        val valD = nut.value ?: 0.0
-                                        if (name.contains("energy") || name.contains("calories") || nut.nutrientId == 1008) {
-                                            rawKcal = valD
-                                        } else if (name.contains("protein") || nut.nutrientId == 1003) {
-                                            rawProt = valD
-                                        } else if (name.contains("fat") || name.contains("lipid") || nut.nutrientId == 1004) {
-                                            rawFat = valD
-                                        } else if (name.contains("fiber") || nut.nutrientId == 1079) {
-                                            rawFib = valD
-                                        }
-                                    }
-
-                                    val grams = parseGrams(food.estimatedQuantity)
-                                    val scale = grams / 100.0
-
-                                    FoodItem(
-                                        name = usdaFood.description,
-                                        calories = (rawKcal * scale).toInt(),
-                                        protein = (rawProt * scale).toInt(),
-                                        fat = (rawFat * scale).toInt(),
-                                        fiber = (rawFib * scale).toInt(),
-                                        isManual = false
-                                    )
-                                } else {
-                                    throw Exception("USDA search found no matches for ${food.name}")
-                                }
-                            }
-                        }.awaitAll()
-                    }
-                } catch (e: Exception) {
-                    Log.e("CalBuddyViewModel", "USDA search failed", e)
-                    _analysisState.value = AnalysisState.Error("Nutrition information unavailable.")
-                    return@launch
+                // Map detected items to FoodItem
+                val foodItems = detectedResponse.items.map { food ->
+                    FoodItem(
+                        name = food.name,
+                        calories = food.calories,
+                        protein = food.protein_g.toInt(),
+                        fat = food.fat_g.toInt(),
+                        fiber = food.fiber_g.toInt(),
+                        isManual = false
+                    )
                 }
 
-                val totalCalories = foodItems.sumOf { it.calories }
-                val totalProtein = foodItems.sumOf { it.protein }
-                val totalFat = foodItems.sumOf { it.fat }
-                val totalFiber = foodItems.sumOf { it.fiber }
-                val summary = "An elegant meal analyzed. ${foodItems.size} components identified and matched to national USDA guidelines."
+                val totalCalories = detectedResponse.totals?.calories ?: foodItems.sumOf { it.calories }
+                val totalProtein = detectedResponse.totals?.protein_g?.toInt() ?: foodItems.sumOf { it.protein }
+                val totalFat = detectedResponse.totals?.fat_g?.toInt() ?: foodItems.sumOf { it.fat }
+                val totalFiber = detectedResponse.totals?.fiber_g?.toInt() ?: foodItems.sumOf { it.fiber }
+                val summary = detectedResponse.notes ?: "AI Scanner identified ${foodItems.size} food items."
 
                 val mealAnalysis = MealAnalysis(
                     foods = foodItems,
