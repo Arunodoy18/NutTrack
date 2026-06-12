@@ -12,20 +12,42 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // Find the latest valid OTP for this email and type
-    const tokenRecord = await db.query.otpTokens.findFirst({
+    // Find the latest active OTP attempt (ignoring the actual otp value for a moment to track attempts)
+    const activeToken = await db.query.otpTokens.findFirst({
       where: and(
         eq(otpTokens.email, email),
-        eq(otpTokens.otp, otp),
         eq(otpTokens.type, type),
-        gt(otpTokens.expiresAt, new Date()) // Ensure it's not expired
+        gt(otpTokens.expiresAt, new Date())
       ),
       orderBy: [desc(otpTokens.createdAt)],
     });
 
-    if (!tokenRecord) {
+    if (!activeToken) {
       return NextResponse.json({ error: "Invalid or expired OTP" }, { status: 400 });
     }
+
+    if (activeToken.otp !== otp) {
+      const newAttempts = activeToken.attempts + 1;
+      
+      if (newAttempts >= 5) {
+        // Lock out the user for 15 minutes
+        const lockUntil = new Date(Date.now() + 15 * 60 * 1000);
+        await db.update(users)
+          .set({ otpLockedUntil: lockUntil })
+          .where(eq(users.email, email));
+          
+        await db.delete(otpTokens).where(eq(otpTokens.id, activeToken.id));
+        return NextResponse.json({ error: "Too many failed attempts. Account locked for 15 minutes." }, { status: 429 });
+      } else {
+        await db.update(otpTokens)
+          .set({ attempts: newAttempts })
+          .where(eq(otpTokens.id, activeToken.id));
+        return NextResponse.json({ error: `Invalid OTP. You have ${5 - newAttempts} attempts remaining.` }, { status: 400 });
+      }
+    }
+
+    // Token is valid
+    const tokenRecord = activeToken;
 
     if (type === "RESET_PASSWORD") {
       if (!newPassword) {

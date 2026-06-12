@@ -56,12 +56,32 @@ data class OpenRouterResponse(
 @JsonClass(generateAdapter = true)
 data class OpenRouterFoodDetection(
     val name: String,
-    val estimatedQuantity: String
+    val weight_g: Int = 100,
+    val calories: Int = 0,
+    val protein_g: Double = 0.0,
+    val fat_g: Double = 0.0,
+    val carbs_g: Double = 0.0,
+    val fiber_g: Double = 0.0
+)
+
+@JsonClass(generateAdapter = true)
+data class OpenRouterTotals(
+    val calories: Int = 0,
+    val protein_g: Double = 0.0,
+    val fat_g: Double = 0.0,
+    val carbs_g: Double = 0.0,
+    val fiber_g: Double = 0.0
 )
 
 @JsonClass(generateAdapter = true)
 data class OpenRouterFoodDetectionResponse(
-    val foods: List<OpenRouterFoodDetection>
+    val meal_name: String? = null,
+    val confidence: Double? = null,
+    val items: List<OpenRouterFoodDetection>? = null,
+    val totals: OpenRouterTotals? = null,
+    val notes: String? = null,
+    val error: String? = null,
+    val message: String? = null
 )
 
 interface OpenRouterApiService {

@@ -2,15 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { dailyGoals, users } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, calories, protein, fat, fiber } = body;
+    let { userId, calories, protein, fat, fiber } = body;
 
-    if (!userId) {
-      return NextResponse.json({ success: false, error: "userId is required" }, { status: 400 });
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
+    
+    // Hard override userId to the authenticated session
+    userId = session.user.id;
 
     // Ensure user exists in database
     let dbUser = await db.query.users.findFirst({
@@ -78,12 +84,13 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json({ success: false, error: "userId is required" }, { status: 400 });
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
+    
+    // Hard override userId to the authenticated session
+    const userId = session.user.id;
 
     // Fetch the latest goal
     const latestGoal = await db.query.dailyGoals.findFirst({

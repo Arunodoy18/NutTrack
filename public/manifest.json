@@ -1,21 +1,25 @@
 {
-  "name": "dietBuddy",
+  "name": "dietBuddy — AI Nutrition Tracker",
   "short_name": "dietBuddy",
-  "description": "AI-powered calorie and nutrition estimator from meal photos.",
+  "description": "Snap your food. Know your macros. Hit your goals.",
   "start_url": "/dashboard",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#020617",
-  "theme_color": "#020617",
+  "background_color": "#F5F0E8",
+  "theme_color": "#E07A3A",
+  "orientation": "portrait-primary",
+  "lang": "en",
+  "categories": ["health", "fitness", "food"],
   "icons": [
-    {
-      "src": "/icon.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [
+    { "src": "/screenshots/dashboard-mobile.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow", "label": "Dashboard" },
+    { "src": "/screenshots/scanner-mobile.png",   "sizes": "390x844", "type": "image/png", "form_factor": "narrow", "label": "AI Meal Scanner" }
+  ],
+  "shortcuts": [
+    { "name": "Scan a meal",  "url": "/dashboard?action=scan",  "icons": [{ "src": "/icons/scan.png", "sizes": "96x96" }] },
+    { "name": "Voice log",    "url": "/dashboard?action=voice", "icons": [{ "src": "/icons/voice.png", "sizes": "96x96" }] }
   ]
 }
