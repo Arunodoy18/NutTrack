@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, X, Upload, CheckCircle, Loader2, AlertCircle } from "lucide-react";
-import { analyzeMealImageAction } from "@/app/actions";
 
 interface MealScannerProps {
   isOpen: boolean;
@@ -24,6 +23,7 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
   const [uploadStep, setUploadStep] = useState(0); // 0: select, 1: scanning, 2: review
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
+  const [mimeType, setMimeType] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [activeAnalysis, setActiveAnalysis] = useState<any>(null);
@@ -71,7 +71,8 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
         const result = reader.result as string;
         const base64 = result.split(",")[1];
         setBase64Image(base64);
-        runAiAnalysis(base64);
+        setMimeType(file.type);
+        runAiAnalysis(base64, file.type);
       };
       reader.readAsDataURL(file);
       setAnalysisError(null);
@@ -79,19 +80,37 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
     }
   };
 
-  const runAiAnalysis = async (b64: string) => {
+  const runAiAnalysis = async (b64: string, mime: string) => {
     setIsAnalyzing(true);
     setAnalysisError(null);
     try {
-      const res = await analyzeMealImageAction(b64);
-      if (res.success && res.analysis) {
-        setActiveAnalysis(res.analysis);
+      const response = await fetch("/api/scan-meal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: b64, mimeType: mime }),
+      });
+
+      const res = await response.json();
+
+      if (!response.ok) {
+        if (res.error === "rate_limit") {
+          setAnalysisError(res.message || "Daily scan limit reached. Please upgrade to continue.");
+        } else if (res.error === "not_food") {
+          setAnalysisError(res.message || "Doesn't look like a meal. Try a photo of your plate.");
+        } else {
+          setAnalysisError(res.message || "We couldn't analyze this image.");
+        }
+        return;
+      }
+
+      if (res.success && res.data) {
+        setActiveAnalysis(res.data);
       } else {
-        setAnalysisError(res.error || "We couldn't analyze this image.");
+        setAnalysisError(res.error || "We couldn't parse the nutrition data.");
       }
     } catch (err) {
       console.error(err);
-      setAnalysisError("Something went wrong. Please try again.");
+      setAnalysisError("Network error. Please try again.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -107,6 +126,7 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
     setUploadStep(0);
     setSelectedImage(null);
     setBase64Image(null);
+    setMimeType(null);
     setActiveAnalysis(null);
     onClose();
   };
