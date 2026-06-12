@@ -21,3 +21,4 @@ debug.keystore
 node_modules/
 .next/
 .build-outputs/
+.env.local
