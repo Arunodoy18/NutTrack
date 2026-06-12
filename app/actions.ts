@@ -1,8 +1,36 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { dailyGoals, meals, mealItems } from "@/lib/db/schema";
+import { dailyGoals, meals, mealItems, users } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { checkScanRateLimit } from "@/lib/rateLimit";
+import { eq } from "drizzle-orm";
+import OpenAI from "openai";
+
+async function checkAiAccess() {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user) throw new Error("Unauthorized");
+  
+  const userId = session.user.id;
+  
+  const userRecord = await db.query.users.findFirst({
+    where: eq(users.id, userId)
+  });
+  
+  const { allowed } = await checkScanRateLimit(userId, userRecord?.isPremium ?? false);
+  
+  if (!allowed) {
+    if (userRecord?.isPremium) {
+      throw new Error("Premium rate limit exceeded (200 scans/day). Please try again later.");
+    } else {
+      throw new Error("Rate limit exceeded (5 scans/hour). Please upgrade to premium for more scans.");
+    }
+  }
+  
+  return true;
+}
 
 export async function saveDailyGoalsAction(
   userId: string,
@@ -84,9 +112,9 @@ export async function generateNutritionInsightAction(
   dailyGoals: { calories: number; protein: number; fat: number; fiber: number }
 ) {
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    const modelName = process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash";
-    if (!apiKey || apiKey === "YOUR_OPENROUTER_API_KEY") {
+    const apiKey = process.env.OPENAI_API_KEY;
+    const modelName = "gpt-4o";
+    if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") {
       return { success: true, insight: getFallbackInsight(todayTotals, dailyGoals) };
     }
 
@@ -96,31 +124,35 @@ export async function generateNutritionInsightAction(
     const gFat = dailyGoals.fat;
     const gFib = dailyGoals.fiber;
 
-    const prompt = `You are an expert sports nutritionist and dietitian. Based on the user's logged intake today and their goals, formulate exactly ONE encouraging daily tip (max 50 words) about balancing macronutrients.
-Intake today:
-- Calories: ${calories} kcal (Goal: ${gCals})
-- Protein: ${protein}g (Goal: ${gProt})
-- Fat: ${fat}g (Goal: ${gFat})
-- Fiber: ${fiber}g (Goal: ${gFib})
+    const now = new Date();
+    const timeOfDay = now.getHours() + ":" + now.getMinutes().toString().padStart(2, "0");
+    const inputData = {
+      goals: { calories: gCals, protein_g: gProt, fat_g: gFat, fiber_g: gFib },
+      today: { calories, protein_g: protein, fat_g: fat, fiber_g: fiber },
+      time_of_day: timeOfDay
+    };
 
-Make sure the tip is highly actionable, encouraging, and references their exact intake ratio values. Do not output markdown lists, just a single, cohesive paragraph of up to 2-3 sentences max. Do not exceed 50 words.`;
+    const prompt = `You are a concise, encouraging nutrition coach in dietBuddy.
 
-    const url = "https://openrouter.ai/api/v1/chat/completions";
+Given the user's today's nutrition data and their goals, generate one short insight (2-3 sentences max).
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [{ role: "user", content: prompt }]
-      })
+Be specific and actionable. Do not give generic advice. Reference their actual numbers.
+Do not be preachy or negative. Sound like a knowledgeable friend, not a medical professional.
+
+INPUT (JSON):
+${JSON.stringify(inputData, null, 2)}
+
+OUTPUT (plain text, 2-3 sentences):`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [{ role: "user", content: prompt }]
     });
-
-    if (res.ok) {
-      const data = await res.json();
+    
+    const text = completion.choices[0].message.content;
+    if (text) {
+      return { success: true, insight: text.trim() };
+    }
       const text = data.choices?.[0]?.message?.content;
       if (text) {
         return { success: true, insight: text.trim() };
@@ -164,59 +196,79 @@ function getFallbackInsight(
 
 export async function analyzeMealImageAction(base64Image: string) {
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    const modelName = process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash";
-    const usdaKey = process.env.USDA_API_KEY;
+    await checkAiAccess();
 
-    if (!apiKey || apiKey === "YOUR_OPENROUTER_API_KEY") {
-      throw new Error("OPENROUTER_API_KEY is not configured on the server. Please check your .env configuration.");
-    }
-    if (!usdaKey || usdaKey === "YOUR_USDA_API_KEY") {
-      throw new Error("USDA_API_KEY is not configured on the server. Please check your .env configuration.");
+    if (base64Image) {
+      const sizeInMB = (base64Image.length * 3) / 4 / 1024 / 1024;
+      if (sizeInMB > 10) throw new Error("Image exceeds 10MB limit");
+      
+      if (!base64Image.startsWith("data:image/")) {
+        throw new Error("Invalid file type. Only images are allowed.");
+      }
     }
 
-    const prompt = `Analyze this meal image. Identify all visible food items. Return ONLY valid JSON.
-    Format:
+    const apiKey = process.env.OPENAI_API_KEY;
+    const modelName = "gpt-4o";
+
+    if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") {
+      throw new Error("OPENAI_API_KEY is not configured on the server. Please check your .env configuration.");
+    }
+
+    const prompt = `You are a precision nutrition AI embedded in dietBuddy, a calorie tracking app.
+
+The user has uploaded a photo of their meal. Your job is to identify every distinct food item visible on the plate, estimate its portion weight in grams, and return structured nutritional data.
+
+RULES:
+- Only identify food items you can see with reasonable confidence. Do not guess invisible items.
+- If the image is not a food photo (blurry, non-food subject, error), return { "error": "not_food", "message": "No meal detected in this image." }
+- Never hallucinate nutrition values. Use your trained knowledge of USDA nutritional data.
+- Weights are estimates — be conservative, not generous. A "medium chicken breast" is 150g, not 250g.
+- Always return valid JSON only. No markdown, no explanation, no preamble.
+
+OUTPUT FORMAT (strict JSON):
+{
+  "meal_name": "Short descriptive name of the whole meal",
+  "confidence": 0.87,
+  "items": [
     {
-      "foods": [
-        {
-          "name": "Chicken Breast",
-          "estimatedQuantity": "150g"
-        }
-      ]
-    }`;
+      "name": "Grilled Chicken Breast",
+      "weight_g": 150,
+      "calories": 248,
+      "protein_g": 46.5,
+      "fat_g": 5.4,
+      "carbs_g": 0,
+      "fiber_g": 0
+    }
+  ],
+  "totals": {
+    "calories": 248,
+    "protein_g": 46.5,
+    "fat_g": 5.4,
+    "carbs_g": 0,
+    "fiber_g": 0
+  },
+  "notes": "Optional notes"
+}`;
 
-    const url = "https://openrouter.ai/api/v1/chat/completions";
     const imageUri = base64Image.startsWith("data:image") ? base64Image : `data:image/jpeg;base64,${base64Image}`;
 
-    const geminiRes = await fetch(url, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: imageUri } }
-            ]
-          }
-        ]
-      })
+        const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: imageUri } }
+          ]
+        }
+      ]
     });
 
-    if (!geminiRes.ok) {
-      throw new Error(`OpenRouter API returned status ${geminiRes.status}`);
-    }
-
-    const data = await geminiRes.json();
+    const data = { choices: completion.choices };
     const rawText = data.choices?.[0]?.message?.content;
     if (!rawText) {
-      throw new Error("Failed to get response from OpenRouter API");
+      throw new Error("Failed to get response from OpenAI API");
     }
 
     // Clean JSON string
@@ -235,101 +287,37 @@ export async function analyzeMealImageAction(base64Image: string) {
     cleaned = cleaned.trim();
 
     const parsed = JSON.parse(cleaned);
-    const detectedFoods = parsed.foods || [];
+    
+    if (parsed.error) {
+      throw new Error(parsed.message || "Invalid meal image.");
+    }
 
+    const detectedFoods = parsed.items || [];
     if (detectedFoods.length === 0) {
       throw new Error("No foods could be detected in the image.");
     }
 
-    // Query USDA API in parallel for each food item
-    const items = await Promise.all(
-      detectedFoods.map(async (food: any) => {
-        try {
-          const usdaUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${encodeURIComponent(usdaKey)}&query=${encodeURIComponent(food.name)}&pageSize=1`;
-          const usdaRes = await fetch(usdaUrl);
-          if (!usdaRes.ok) {
-            throw new Error(`USDA API returned status ${usdaRes.status}`);
-          }
-          const usdaData = await usdaRes.json();
-          const match = usdaData.foods?.[0];
+    const items = detectedFoods.map((food: any) => ({
+      name: food.name,
+      calories: Math.round(food.calories || 0),
+      protein: Math.round(food.protein_g || 0),
+      fat: Math.round(food.fat_g || 0),
+      fiber: Math.round(food.fiber_g || 0),
+      estimatedQuantity: `${food.weight_g || 100}g`,
+      isManual: false
+    }));
 
-          let calories = 0;
-          let protein = 0;
-          let fat = 0;
-          let fiber = 0;
-
-          if (match && match.foodNutrients) {
-            for (const nut of match.foodNutrients) {
-              const name = (nut.nutrientName || "").toLowerCase();
-              const val = Number(nut.value) || 0;
-              const id = nut.nutrientId;
-
-              if (name.includes("energy") || name.includes("calories") || id === 1008) {
-                calories = val;
-              } else if (name.includes("protein") || id === 1003) {
-                protein = val;
-              } else if (name.includes("lipid") || name.includes("fat") || id === 1004) {
-                fat = val;
-              } else if (name.includes("fiber") || id === 1079) {
-                fiber = val;
-              }
-            }
-          }
-
-          // Parse quantity (e.g. 150g)
-          let grams = 100;
-          const matchGrams = food.estimatedQuantity.match(/(\d+)\s*(g|gram)/i);
-          if (matchGrams) {
-            grams = parseFloat(matchGrams[1]) || 100;
-          } else {
-            const digitOnly = food.estimatedQuantity.match(/\d+/);
-            if (digitOnly) {
-              const parsedNum = parseFloat(digitOnly[0]);
-              if (parsedNum <= 5000) grams = parsedNum;
-            }
-          }
-
-          const scale = grams / 100.0;
-
-          return {
-            name: match?.description || food.name,
-            calories: Math.round(calories * scale),
-            protein: Math.round(protein * scale),
-            fat: Math.round(fat * scale),
-            fiber: Math.round(fiber * scale),
-            estimatedQuantity: food.estimatedQuantity,
-            isManual: false
-          };
-        } catch (itemErr) {
-          console.error(`Error fetching USDA for item ${food.name}:`, itemErr);
-          // Fallback to generic estimation if USDA fails
-          return {
-            name: food.name,
-            calories: 150,
-            protein: 5,
-            fat: 4,
-            fiber: 2,
-            estimatedQuantity: food.estimatedQuantity,
-            isManual: false
-          };
-        }
-      })
-    );
-
-    const totalCalories = items.reduce((acc, item) => acc + item.calories, 0);
-    const totalProtein = items.reduce((acc, item) => acc + item.protein, 0);
-    const totalFat = items.reduce((acc, item) => acc + item.fat, 0);
-    const totalFiber = items.reduce((acc, item) => acc + item.fiber, 0);
+    const totals = parsed.totals || { calories: 0, protein_g: 0, fat_g: 0, fiber_g: 0 };
 
     return {
       success: true,
       analysis: {
-        name: "AI Dissected Meal",
-        totalCalories,
-        totalProtein,
-        totalFat,
-        totalFiber,
-        summary: `AI Scanner identified ${items.length} food items. Calorie estimates matched against USDA Food Database guidelines.`,
+        name: parsed.meal_name || "AI Dissected Meal",
+        totalCalories: Math.round(totals.calories || items.reduce((acc: number, i: any) => acc + i.calories, 0)),
+        totalProtein: Math.round(totals.protein_g || items.reduce((acc: number, i: any) => acc + i.protein, 0)),
+        totalFat: Math.round(totals.fat_g || items.reduce((acc: number, i: any) => acc + i.fat, 0)),
+        totalFiber: Math.round(totals.fiber_g || items.reduce((acc: number, i: any) => acc + i.fiber, 0)),
+        summary: parsed.notes || `AI Scanner identified ${items.length} food items.`,
         items
       }
     };
@@ -341,24 +329,39 @@ export async function analyzeMealImageAction(base64Image: string) {
 
 export async function analyzeMealTextAction(text: string) {
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    const modelName = process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash";
-    const usdaKey = process.env.USDA_API_KEY;
+    await checkAiAccess();
 
-    if (!apiKey || apiKey === "YOUR_OPENROUTER_API_KEY") throw new Error("OPENROUTER_API_KEY is missing");
-    if (!usdaKey || usdaKey === "YOUR_USDA_API_KEY") throw new Error("USDA_API_KEY is missing");
+    const apiKey = process.env.OPENAI_API_KEY;
+    const modelName = "gpt-4o";
 
-    const prompt = `Analyze this spoken text. Extract all food items mentioned. Return ONLY valid JSON.
-    Text: "${text}"
-    Format:
-    {
-      "foods": [
-        {
-          "name": "Scrambled Eggs",
-          "estimatedQuantity": "2 large"
-        }
-      ]
-    }`;
+    if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") throw new Error("OPENAI_API_KEY is missing");
+
+    const prompt = `You are a precise food logging parser for dietBuddy.
+
+The user has described a meal in natural language. Extract every food item mentioned, infer portion sizes from context clues, and return structured nutrition data.
+
+RULES:
+- "A bowl of rice" = 200g cooked rice. "A plate of pasta" = 250g cooked pasta. Use standard USDA serving conventions.
+- If a quantity is ambiguous, use the most conservative common serving size and flag it.
+- Handle compound foods: "butter chicken with naan" = log both items separately.
+- If input contains no recognizable food, return { "error": "no_food_detected" }
+- Return valid JSON only.
+
+Text: "${text}"
+
+INPUT EXAMPLE: "I had two scrambled eggs and a slice of whole wheat toast with butter"
+
+OUTPUT FORMAT:
+{
+  "meal_name": "Scrambled eggs with toast",
+  "items": [
+    { "name": "Scrambled eggs", "quantity": "2 large eggs", "weight_g": 100, "calories": 182, "protein_g": 12, "fat_g": 14, "carbs_g": 1.4, "fiber_g": 0 },
+    { "name": "Whole wheat toast", "quantity": "1 slice", "weight_g": 28, "calories": 69, "protein_g": 3.6, "fat_g": 1, "carbs_g": 12, "fiber_g": 1.9 },
+    { "name": "Butter", "quantity": "1 tsp", "weight_g": 5, "calories": 36, "protein_g": 0, "fat_g": 4, "carbs_g": 0, "fiber_g": 0 }
+  ],
+  "totals": { "calories": 287, "protein_g": 15.6, "fat_g": 19, "carbs_g": 13.4, "fiber_g": 1.9 },
+  "assumptions": ["Used 2 large eggs as stated", "1 tsp butter assumed for toast"]
+}`;
 
     const geminiRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -369,7 +372,7 @@ export async function analyzeMealTextAction(text: string) {
       })
     });
 
-    if (!geminiRes.ok) throw new Error(`OpenRouter API returned status ${geminiRes.status}`);
+    if (!geminiRes.ok) 
 
     const data = await geminiRes.json();
     let rawText = data.choices?.[0]?.message?.content || "";
@@ -382,79 +385,35 @@ export async function analyzeMealTextAction(text: string) {
     cleaned = cleaned.trim();
 
     const parsed = JSON.parse(cleaned);
-    const detectedFoods = parsed.foods || [];
+    
+    if (parsed.error === "no_food_detected" || parsed.error) {
+      throw new Error(parsed.message || "No recognizable food items found in the text.");
+    }
+    
+    const detectedFoods = parsed.items || [];
     if (detectedFoods.length === 0) throw new Error("No foods detected in the text.");
 
-    // Query USDA API in parallel for each food item
-    const items = await Promise.all(
-      detectedFoods.map(async (food: any) => {
-        try {
-          const usdaUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${encodeURIComponent(usdaKey)}&query=${encodeURIComponent(food.name)}&pageSize=1`;
-          const usdaRes = await fetch(usdaUrl);
-          if (!usdaRes.ok) throw new Error(`USDA API returned status ${usdaRes.status}`);
-          const usdaData = await usdaRes.json();
-          const match = usdaData.foods?.[0];
+    const items = detectedFoods.map((food: any) => ({
+      name: food.name,
+      calories: Math.round(food.calories || 0),
+      protein: Math.round(food.protein_g || 0),
+      fat: Math.round(food.fat_g || 0),
+      fiber: Math.round(food.fiber_g || 0),
+      estimatedQuantity: food.quantity ? `${food.quantity} (${food.weight_g || 100}g)` : `${food.weight_g || 100}g`,
+      isManual: false
+    }));
 
-          let calories = 0, protein = 0, fat = 0, fiber = 0;
-
-          if (match && match.foodNutrients) {
-            for (const nut of match.foodNutrients) {
-              const name = (nut.nutrientName || "").toLowerCase();
-              const val = Number(nut.value) || 0;
-              const id = nut.nutrientId;
-
-              if (name.includes("energy") || name.includes("calories") || id === 1008) calories = val;
-              else if (name.includes("protein") || id === 1003) protein = val;
-              else if (name.includes("lipid") || name.includes("fat") || id === 1004) fat = val;
-              else if (name.includes("fiber") || id === 1079) fiber = val;
-            }
-          }
-
-          // Parse quantity
-          let grams = 100;
-          const matchGrams = food.estimatedQuantity.match(/(\d+)\s*(g|gram)/i);
-          if (matchGrams) {
-            grams = parseFloat(matchGrams[1]) || 100;
-          } else {
-            const digitOnly = food.estimatedQuantity.match(/\d+/);
-            if (digitOnly) {
-              const parsedNum = parseFloat(digitOnly[0]);
-              if (parsedNum <= 5000) grams = parsedNum;
-            }
-          }
-
-          const scale = grams / 100.0;
-
-          return {
-            name: match?.description || food.name,
-            calories: Math.round(calories * scale),
-            protein: Math.round(protein * scale),
-            fat: Math.round(fat * scale),
-            fiber: Math.round(fiber * scale),
-            estimatedQuantity: food.estimatedQuantity,
-            isManual: false
-          };
-        } catch (itemErr) {
-          console.error(`Error fetching USDA for item ${food.name}:`, itemErr);
-          return { name: food.name, calories: 150, protein: 5, fat: 4, fiber: 2, estimatedQuantity: food.estimatedQuantity, isManual: false };
-        }
-      })
-    );
-
-    const totalCalories = items.reduce((acc, item) => acc + item.calories, 0);
-    const totalProtein = items.reduce((acc, item) => acc + item.protein, 0);
-    const totalFat = items.reduce((acc, item) => acc + item.fat, 0);
-    const totalFiber = items.reduce((acc, item) => acc + item.fiber, 0);
+    const totals = parsed.totals || { calories: 0, protein_g: 0, fat_g: 0, fiber_g: 0 };
 
     return {
       success: true,
       analysis: {
-        name: "Voice Logged Meal",
-        totalCalories,
-        totalProtein,
-        totalFat,
-        totalFiber,
-        summary: `AI parsed voice input and identified ${items.length} food items. Calorie estimates matched against USDA.`,
+        name: parsed.meal_name || "Voice Logged Meal",
+        totalCalories: Math.round(totals.calories || items.reduce((acc: number, i: any) => acc + i.calories, 0)),
+        totalProtein: Math.round(totals.protein_g || items.reduce((acc: number, i: any) => acc + i.protein, 0)),
+        totalFat: Math.round(totals.fat_g || items.reduce((acc: number, i: any) => acc + i.fat, 0)),
+        totalFiber: Math.round(totals.fiber_g || items.reduce((acc: number, i: any) => acc + i.fiber, 0)),
+        summary: parsed.assumptions?.length ? parsed.assumptions.join(" ") : `AI parsed voice input and identified ${items.length} food items.`,
         items
       }
     };
@@ -466,34 +425,67 @@ export async function analyzeMealTextAction(text: string) {
 
 export async function analyzeFridgeImageAction(base64Image: string) {
   try {
-    const apiKey = process.env.OPENROUTER_API_KEY;
-    const modelName = process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash";
+    await checkAiAccess();
 
-    if (!apiKey || apiKey === "YOUR_OPENROUTER_API_KEY") {
-      throw new Error("OPENROUTER_API_KEY is missing. Please configure your .env file.");
+    if (base64Image) {
+      const sizeInMB = (base64Image.length * 3) / 4 / 1024 / 1024;
+      if (sizeInMB > 10) throw new Error("Image exceeds 10MB limit");
+      
+      if (!base64Image.startsWith("data:image/")) {
+        throw new Error("Invalid file type. Only images are allowed.");
+      }
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    const modelName = "gpt-4o";
+
+    if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") {
+      throw new Error("OPENAI_API_KEY is missing. Please configure your .env file.");
     }
 
     const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
 
-    const prompt = `You are a Michelin-star fitness chef. Look at this photo of a refrigerator or pantry.
-    1. Identify all the raw ingredients visible.
-    2. Generate exactly 3 unique, highly delicious, macro-friendly recipes using ONLY these ingredients (plus basic pantry staples like salt, pepper, oil).
-    3. Provide estimated macronutrients for 1 serving of each recipe.
-    4. Return ONLY valid JSON format exactly like this:
+    const prompt = `You are an expert macro-focused chef AI embedded in dietBuddy.
+
+The user has uploaded a photo of their fridge or pantry. Your job is:
+1. Identify all visible raw ingredients with reasonable confidence
+2. Generate exactly 3 complete recipes using ONLY those ingredients
+3. Each recipe must be realistic to cook and macro-optimized (high protein preferred)
+4. Include full step-by-step instructions and nutrition per serving
+
+RULES:
+- Only use ingredients actually visible in the image. Do not invent ingredients.
+- If the image shows no identifiable ingredients, return { "error": "no_ingredients" }
+- Recipes must be practical — 30 minutes or less unless stated.
+- Always return valid JSON only. No markdown, no preamble.
+
+OUTPUT FORMAT:
+{
+  "ingredients_found": ["eggs", "spinach", "feta cheese", "olive oil", "garlic"],
+  "recipes": [
     {
-      "ingredients": ["eggs", "spinach", "milk"],
-      "recipes": [
-        {
-          "name": "Spinach Omelet",
-          "description": "A high-protein breakfast.",
-          "calories": 250,
-          "protein": 18,
-          "fat": 15,
-          "fiber": 2,
-          "steps": ["Beat eggs with milk.", "Sauté spinach.", "Cook eggs and fold in spinach."]
-        }
+      "name": "Spinach & Feta Omelette",
+      "prep_time_min": 10,
+      "servings": 1,
+      "difficulty": "easy",
+      "macros_per_serving": {
+        "calories": 340,
+        "protein_g": 24,
+        "fat_g": 22,
+        "carbs_g": 4,
+        "fiber_g": 1
+      },
+      "ingredients_used": ["3 eggs", "50g spinach", "30g feta", "1 tsp olive oil", "1 garlic clove"],
+      "steps": [
+        "Whisk eggs with salt and pepper.",
+        "Sauté garlic in olive oil for 30 seconds.",
+        "Add spinach, cook until wilted.",
+        "Pour eggs over, cook on medium heat.",
+        "Add feta, fold omelette, serve immediately."
       ]
-    }`;
+    }
+  ]
+}`;
 
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -531,6 +523,10 @@ export async function analyzeFridgeImageAction(base64Image: string) {
     cleaned = cleaned.trim();
 
     const parsed = JSON.parse(cleaned);
+    
+    if (parsed.error === "no_ingredients") {
+      throw new Error("No identifiable ingredients found in the image.");
+    }
 
     return {
       success: true,
