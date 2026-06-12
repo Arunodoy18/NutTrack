@@ -1,0 +1,219 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Camera, X, Upload, CheckCircle } from "lucide-react";
+import { analyzeMealImageAction } from "@/app/actions";
+
+interface MealScannerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onScanSuccess: (data: any) => void;
+  isPremium?: boolean;
+}
+
+const SCAN_MESSAGES = [
+  "Detecting culinary ingredients...",
+  "Estimating portion weights & sizes...",
+  "Calculating protein & fibers...",
+  "Consulting USDA databases...",
+  "Formulating coaching suggestions..."
+];
+
+export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealScannerProps) {
+  const [uploadStep, setUploadStep] = useState(0); // 0: select, 1: scanning, 2: review
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [base64Image, setBase64Image] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [activeAnalysis, setActiveAnalysis] = useState<any>(null);
+  const [scanningMsgIdx, setScanningMsgIdx] = useState(0);
+
+  // Dynamic laser scanning progress ticker
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (uploadStep === 1) {
+      setScanningMsgIdx(0);
+      interval = setInterval(() => {
+        setScanningMsgIdx((prev) => {
+          if (prev < SCAN_MESSAGES.length - 1) {
+            return prev + 1;
+          } else {
+            if (isAnalyzing) return prev;
+            clearInterval(interval);
+            setUploadStep(2);
+            return prev;
+          }
+        });
+      }, 950);
+    }
+    return () => clearInterval(interval);
+  }, [uploadStep, isAnalyzing]);
+
+  useEffect(() => {
+    if (uploadStep === 1 && !isAnalyzing && activeAnalysis && scanningMsgIdx === SCAN_MESSAGES.length - 1) {
+      setUploadStep(2);
+    }
+  }, [isAnalyzing, activeAnalysis, uploadStep, scanningMsgIdx]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setSelectedImage(url);
+      setActiveAnalysis(null);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        const base64 = result.split(",")[1];
+        setBase64Image(base64);
+        runAiAnalysis(base64);
+      };
+      reader.readAsDataURL(file);
+      setUploadStep(1);
+    }
+  };
+
+  const runAiAnalysis = async (b64: string) => {
+    setIsAnalyzing(true);
+    try {
+      const res = await analyzeMealImageAction(b64);
+      if (res.success && res.analysis) {
+        setActiveAnalysis(res.analysis);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleSaveMeal = () => {
+    if (!activeAnalysis) return;
+    onScanSuccess(activeAnalysis);
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setUploadStep(0);
+    setSelectedImage(null);
+    setBase64Image(null);
+    setActiveAnalysis(null);
+    onClose();
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-bg/60 backdrop-blur-sm"
+            onClick={handleClose}
+          />
+          <motion.div 
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed inset-x-0 bottom-0 z-50 w-full max-w-2xl mx-auto bg-card border-t border-s rounded-t-[32px] overflow-hidden shadow-[0_-10px_40px_rgba(44,42,37,0.1)] flex flex-col max-h-[85vh]"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-s/60 bg-col">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-orange-l text-orange">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-txt">Meal Scanner</h3>
+                  <p className="text-xs text-txt-2">Upload a photo to extract macros.</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleClose}
+                className="p-1.5 text-txt-2 hover:text-txt rounded-xl bg-input transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content Switcher */}
+            <div className="p-6 flex-1 overflow-y-auto">
+              {uploadStep === 0 && (
+                <div className="relative border-2 border-dashed border-s hover:border-orange transition-all rounded-3xl bg-col p-8 text-center flex flex-col items-center justify-center gap-3 group cursor-pointer">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleFileChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                  />
+                  <div className="w-14 h-14 rounded-2xl bg-input flex items-center justify-center border border-s text-txt-2 group-hover:bg-orange-l group-hover:text-orange transition-all shadow-custom">
+                    <Upload className="w-7 h-7" />
+                  </div>
+                  <p className="text-sm font-bold text-txt group-hover:text-orange transition-all">Tap to Upload Photo</p>
+                </div>
+              )}
+
+              {uploadStep === 1 && (
+                <div className="flex flex-col items-center py-8">
+                  <div className="relative w-48 h-48 rounded-3xl overflow-hidden border-2 border-orange/30 shadow-2xl">
+                    {selectedImage && <img src={selectedImage} alt="Scanning" className="w-full h-full object-cover" />}
+                    <motion.div 
+                      className="absolute inset-x-0 h-1 bg-orange shadow-[0_0_15px_rgba(224,122,58,0.8)]"
+                      animate={{ top: ["0%", "100%", "0%"] }}
+                      transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
+                    />
+                  </div>
+                  <p className="mt-6 text-sm font-medium text-txt animate-pulse">
+                    {SCAN_MESSAGES[scanningMsgIdx]}
+                  </p>
+                </div>
+              )}
+
+              {uploadStep === 2 && activeAnalysis && (
+                <div className="space-y-6">
+                  <div className="flex gap-4 items-start">
+                    <img src={selectedImage || ""} className="w-24 h-24 rounded-2xl object-cover border border-s shadow-custom" />
+                    <div className="flex-1">
+                      <h4 className="text-xl font-bold text-txt">{activeAnalysis.name || "Custom Meal"}</h4>
+                      <p className="text-sm text-txt-2 mt-1">{activeAnalysis.summary || "Extracted from your photo."}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="bg-col border border-s p-3 rounded-2xl text-center">
+                      <div className="text-xs text-txt-2 mb-1">Cals</div>
+                      <div className="text-lg font-black text-txt">{activeAnalysis.totalCalories}</div>
+                    </div>
+                    <div className="bg-col border border-s p-3 rounded-2xl text-center">
+                      <div className="text-xs text-txt-2 mb-1">Protein</div>
+                      <div className="text-lg font-black text-green">{activeAnalysis.totalProtein}g</div>
+                    </div>
+                    <div className="bg-col border border-s p-3 rounded-2xl text-center">
+                      <div className="text-xs text-txt-2 mb-1">Fat</div>
+                      <div className="text-lg font-black text-orange">{activeAnalysis.totalFat}g</div>
+                    </div>
+                    <div className="bg-col border border-s p-3 rounded-2xl text-center">
+                      <div className="text-xs text-txt-2 mb-1">Fiber</div>
+                      <div className="text-lg font-black text-blue">{activeAnalysis.totalFiber}g</div>
+                    </div>
+                  </div>
+
+                  <button 
+                    onClick={handleSaveMeal}
+                    className="w-full py-4 bg-txt text-white rounded-xl font-bold hover:bg-txt-2 transition-all shadow-custom flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle className="w-5 h-5" />
+                    Log Meal
+                  </button>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
