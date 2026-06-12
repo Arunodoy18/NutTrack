@@ -113,7 +113,7 @@ export async function generateNutritionInsightAction(
 ) {
   try {
     const apiKey = process.env.OPENAI_API_KEY;
-    const modelName = "gpt-4o";
+
     if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") {
       return { success: true, insight: getFallbackInsight(todayTotals, dailyGoals) };
     }
@@ -203,7 +203,7 @@ export async function analyzeMealImageAction(base64Image: string) {
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const modelName = "gpt-4o";
+
 
     if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") {
       throw new Error("OPENAI_API_KEY is not configured on the server. Please check your .env configuration.");
@@ -327,7 +327,7 @@ export async function analyzeMealTextAction(text: string) {
     await checkAiAccess();
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const modelName = "gpt-4o";
+
 
     if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") throw new Error("OPENAI_API_KEY is missing");
 
@@ -358,19 +358,12 @@ OUTPUT FORMAT:
   "assumptions": ["Used 2 large eggs as stated", "1 tsp butter assumed for toast"]
 }`;
 
-    const geminiRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [{ role: "user", content: prompt }]
-      })
+    const completion = await openai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [{ role: "user", content: prompt }]
     });
 
-    if (!geminiRes.ok) 
-
-    const data = await geminiRes.json();
-    let rawText = data.choices?.[0]?.message?.content || "";
+    let rawText = completion.choices[0].message.content || "";
     
     // Clean JSON string
     let cleaned = rawText.trim();
@@ -432,7 +425,7 @@ export async function analyzeFridgeImageAction(base64Image: string) {
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
-    const modelName = "gpt-4o";
+
 
     if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") {
       throw new Error("OPENAI_API_KEY is missing. Please configure your .env file.");
@@ -482,32 +475,20 @@ OUTPUT FORMAT:
   ]
 }`;
 
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64}` } }
-            ]
-          }
-        ]
-      })
+    const completion = await openai.chat.completions.create({
+      model: AI_MODEL,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64}` } }
+          ]
+        }
+      ]
     });
 
-    if (!res.ok) {
-      throw new Error(`OpenRouter API returned status ${res.status}`);
-    }
-
-    const data = await res.json();
-    const rawText = data.choices?.[0]?.message?.content;
+    const rawText = completion.choices[0].message.content;
     
     if (!rawText) throw new Error("Failed to get response from AI");
 
