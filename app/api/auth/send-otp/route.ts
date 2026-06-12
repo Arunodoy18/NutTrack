@@ -14,6 +14,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email and type are required" }, { status: 400 });
     }
 
+    // Check if user is locked out
+    const user = await db.query.users.findFirst({
+      where: eq(users.email, email)
+    });
+
+    if (user && user.otpLockedUntil && new Date(user.otpLockedUntil) > new Date()) {
+      const remainingMins = Math.ceil((new Date(user.otpLockedUntil).getTime() - Date.now()) / 60000);
+      return NextResponse.json({ error: `Account locked due to too many failed attempts. Try again in ${remainingMins} minutes.` }, { status: 429 });
+    }
+
     // Generate a 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 

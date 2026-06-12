@@ -478,32 +478,32 @@ export default function Dashboard({
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-card text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-6xl mx-auto space-y-8">
         
         {/* Header Block */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-800/40 p-6 rounded-3xl border border-slate-700/50 backdrop-blur-sm">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-col/40 p-6 rounded-3xl border border-s/50 backdrop-blur-sm">
           <div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-center gap-3">
-                <span className="flex items-center justify-center w-10 h-10 rounded-2xl bg-indigo-500 text-white font-extrabold text-xl shadow-lg shadow-indigo-500/20">
+                <span className="flex items-center justify-center w-10 h-10 rounded-2xl bg-indigo-500 text-txt font-extrabold text-xl shadow-lg shadow-indigo-500/20">
                   d
                 </span>
-                <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">dietBuddy Dashboard</h1>
+                <h1 className="text-2xl md:text-3xl font-extrabold text-txt tracking-tight">dietBuddy Dashboard</h1>
               </div>
               <div className="inline-flex items-center gap-1.5 self-start sm:self-auto px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-extrabold text-xs shadow-md shadow-orange-500/5">
                 <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
                 <span>{activeStreak} DAY STREAK</span>
               </div>
             </div>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-txt-2 text-sm mt-1">
               Your real-time nutritional tracking, USDA verified guidelines and AI meal recognition.
             </p>
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
             <button 
               onClick={onRefreshClick}
-              className="flex-1 md:flex-none p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-all flex items-center justify-center gap-2 text-sm"
+              className="flex-1 md:flex-none p-3 rounded-2xl bg-col hover:bg-input border border-s text-txt-2 transition-all flex items-center justify-center gap-2 text-sm"
               title="Refresh Stats"
             >
               <RefreshCw className="w-4 h-4" />
@@ -517,14 +517,14 @@ export default function Dashboard({
                 setTargetFiber(dailyGoals.fiber.toString());
                 setIsModalOpen(true);
               }}
-              className="flex-1 md:flex-none p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-all flex items-center justify-center gap-2 text-sm"
+              className="flex-1 md:flex-none p-3 rounded-2xl bg-col hover:bg-input border border-s text-txt-2 transition-all flex items-center justify-center gap-2 text-sm"
             >
               <Settings className="w-4 h-4" />
               <span>Goals</span>
             </button>
             <button 
               onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}
-              className="flex-1 md:flex-none p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 transition-all flex items-center justify-center gap-2 text-sm text-rose-400 hover:text-rose-300"
+              className="flex-1 md:flex-none p-3 rounded-2xl bg-col hover:bg-input border border-s text-txt-2 transition-all flex items-center justify-center gap-2 text-sm text-red hover:text-rose-300"
               title="Sign Out"
             >
               <X className="w-4 h-4" />
@@ -532,7 +532,7 @@ export default function Dashboard({
             </button>
             <button 
               onClick={() => setIsFridgeRaiderOpen(true)}
-              className="flex-1 md:flex-none px-4 py-3 rounded-2xl bg-slate-900 border border-indigo-500/40 text-indigo-400 font-bold hover:bg-slate-800 transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-indigo-500/10"
+              className="flex-1 md:flex-none px-4 py-3 rounded-2xl bg-card border border-indigo-500/40 text-indigo-400 font-bold hover:bg-col transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-indigo-500/10"
               title="AI Fridge Raider"
             >
               <Utensils className="w-4 h-4" />
@@ -545,7 +545,7 @@ export default function Dashboard({
                 setUploadStep(0);
                 setIsUploadModalOpen(true);
               })}
-              className="flex-2 md:flex-none px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-600/30"
+              className="flex-2 md:flex-none px-5 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-txt font-semibold transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-600/30"
             >
               <Plus className="w-4 h-4" />
               <span>Log Meal</span>
@@ -558,11 +558,11 @@ export default function Dashboard({
           
           {/* Left Column: Concentric Progress Card & Primary Indicator */}
           <div className="lg:col-span-8 space-y-6">
-            <div className="bg-slate-800/80 rounded-[32px] border border-slate-700/60 p-6 md:p-8 shadow-xl relative overflow-hidden">
+            <div className="bg-col/80 rounded-[32px] border border-s/60 p-6 md:p-8 shadow-xl relative overflow-hidden">
               
               {/* Highlight background elements */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-green/5 rounded-full blur-3xl -z-10 pointer-events-none" />
 
               <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
                 {/* Visual Radial Chart Ring Simulation with SVG */}
@@ -611,8 +611,8 @@ export default function Dashboard({
                   
                   {/* Inside Center Display */}
                   <div className="absolute text-center">
-                    <span className="text-3xl font-black block text-white leading-none">{calPercent}%</span>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Cals Met</span>
+                    <span className="text-3xl font-black block text-txt leading-none">{calPercent}%</span>
+                    <span className="text-[10px] uppercase font-bold text-txt-2 tracking-wider">Cals Met</span>
                   </div>
                 </div>
 
@@ -625,8 +625,8 @@ export default function Dashboard({
                       </span>
                       <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
                         isOverCal 
-                        ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30' 
-                        : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/20'
+                        ? 'bg-red/20 text-rose-300 border border-rose-500/30' 
+                        : 'bg-green/20 text-emerald-300 border border-emerald-500/20'
                       }`}>
                         {isOverCal ? (
                           <>
@@ -641,12 +641,12 @@ export default function Dashboard({
                     </div>
 
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-4xl font-extrabold text-white tracking-tight">{todayTotals.calories}</span>
-                      <span className="text-slate-400 text-sm font-medium">/ {dailyGoals.calories} kcal Goal</span>
+                      <span className="text-4xl font-extrabold text-txt tracking-tight">{todayTotals.calories}</span>
+                      <span className="text-txt-2 text-sm font-medium">/ {dailyGoals.calories} kcal Goal</span>
                     </div>
 
                     {/* Styled Track Bar */}
-                    <div className="w-full h-3 bg-slate-700/50 rounded-full mt-4 overflow-hidden border border-slate-700">
+                    <div className="w-full h-3 bg-input/50 rounded-full mt-4 overflow-hidden border border-s">
                       <div 
                         className={`h-full rounded-full transition-all duration-500 ${isOverCal ? 'bg-gradient-to-r from-indigo-500 to-rose-500' : 'bg-gradient-to-r from-indigo-500 to-indigo-400'}`} 
                         style={{ width: `${calPercent}%` }}
@@ -662,13 +662,13 @@ export default function Dashboard({
                           <Sparkles className="w-5 h-5 text-indigo-400" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-white">Ready to start tracking?</p>
+                          <p className="text-sm font-bold text-txt">Ready to start tracking?</p>
                           <p className="text-xs text-indigo-200/80 mt-0.5">Log your first meal using the AI scanner or voice.</p>
                         </div>
                       </div>
                       <button 
                         onClick={onAddMealClick || (() => setIsUploadModalOpen(true))}
-                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2 whitespace-nowrap animate-pulse"
+                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-txt text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2 whitespace-nowrap animate-pulse"
                       >
                         <Plus className="w-3.5 h-3.5" /> Log Meal
                       </button>
@@ -687,57 +687,57 @@ export default function Dashboard({
               </div>
 
               {/* Sub Progress Bars for macronutrients (protein, fat, fiber) */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-slate-700/50 pt-8 mt-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t border-s/50 pt-8 mt-8">
                 
                 {/* Protein progress card */}
-                <div className="bg-slate-900/40 border border-slate-700/40 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="bg-card/40 border border-s/40 rounded-2xl p-4 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-bold text-slate-300">Protein</span>
-                    <span className="text-xs font-bold text-emerald-400">{protPercent}%</span>
+                    <span className="text-sm font-bold text-txt-2">Protein</span>
+                    <span className="text-xs font-bold text-green">{protPercent}%</span>
                   </div>
                   <div className="flex items-baseline gap-1 mb-3">
-                    <span className="text-xl font-bold text-white">{todayTotals.protein}g</span>
-                    <span className="text-slate-400 text-xs">/ {dailyGoals.protein}g</span>
+                    <span className="text-xl font-bold text-txt">{todayTotals.protein}g</span>
+                    <span className="text-txt-2 text-xs">/ {dailyGoals.protein}g</span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-700/20 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-input/20 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-emerald-500 rounded-full transition-all duration-500" 
+                      className="h-full bg-green rounded-full transition-all duration-500" 
                       style={{ width: `${protPercent}%` }}
                     />
                   </div>
                 </div>
 
                 {/* Fat progress card */}
-                <div className="bg-slate-900/40 border border-slate-700/40 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="bg-card/40 border border-s/40 rounded-2xl p-4 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-bold text-slate-300">Fats</span>
-                    <span className="text-xs font-bold text-amber-500">{fatPercent}%</span>
+                    <span className="text-sm font-bold text-txt-2">Fats</span>
+                    <span className="text-xs font-bold text-orange">{fatPercent}%</span>
                   </div>
                   <div className="flex items-baseline gap-1 mb-3">
-                    <span className="text-xl font-bold text-white">{todayTotals.fat}g</span>
-                    <span className="text-slate-400 text-xs">/ {dailyGoals.fat}g</span>
+                    <span className="text-xl font-bold text-txt">{todayTotals.fat}g</span>
+                    <span className="text-txt-2 text-xs">/ {dailyGoals.fat}g</span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-700/20 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-input/20 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-amber-500 rounded-full transition-all duration-500" 
+                      className="h-full bg-orange rounded-full transition-all duration-500" 
                       style={{ width: `${fatPercent}%` }}
                     />
                   </div>
                 </div>
 
                 {/* Fiber progress card */}
-                <div className="bg-slate-900/40 border border-slate-700/40 rounded-2xl p-4 flex flex-col justify-between">
+                <div className="bg-card/40 border border-s/40 rounded-2xl p-4 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-bold text-slate-300">Dietary Fiber</span>
-                    <span className="text-xs font-bold text-blue-400">{fibPercent}%</span>
+                    <span className="text-sm font-bold text-txt-2">Dietary Fiber</span>
+                    <span className="text-xs font-bold text-blue">{fibPercent}%</span>
                   </div>
                   <div className="flex items-baseline gap-1 mb-3">
-                    <span className="text-xl font-bold text-white">{todayTotals.fiber}g</span>
-                    <span className="text-slate-400 text-xs">/ {dailyGoals.fiber}g</span>
+                    <span className="text-xl font-bold text-txt">{todayTotals.fiber}g</span>
+                    <span className="text-txt-2 text-xs">/ {dailyGoals.fiber}g</span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-700/20 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-input/20 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-blue-500 rounded-full transition-all duration-500" 
+                      className="h-full bg-blue rounded-full transition-all duration-500" 
                       style={{ width: `${fibPercent}%` }}
                     />
                   </div>
@@ -747,21 +747,21 @@ export default function Dashboard({
             </div>
 
             {/* Weekly Macro Performance Chart (Recharts) */}
-            <div className="bg-slate-800/80 rounded-[32px] border border-slate-700/60 p-6 shadow-xl relative">
+            <div className="bg-col/80 rounded-[32px] border border-s/60 p-6 shadow-xl relative">
               <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Weekly Performance Report</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">Visualize your daily macro levels relative to target benchmarks.</p>
+                  <h3 className="text-lg font-bold text-txt">Weekly Performance Report</h3>
+                  <p className="text-xs text-txt-2 mt-0.5">Visualize your daily macro levels relative to target benchmarks.</p>
                 </div>
-                <div className="flex rounded-xl bg-slate-900/50 p-1 border border-slate-700">
+                <div className="flex rounded-xl bg-card/50 p-1 border border-s">
                   {(['Calories', 'Protein', 'Fats', 'Fiber'] as const).map((m) => (
                     <button
                       key={m}
                       onClick={() => setActiveMetric(m)}
                       className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
                         activeMetric === m
-                          ? 'bg-slate-800 text-white shadow-sm'
-                          : 'text-slate-400 hover:text-slate-300'
+                          ? 'bg-col text-txt shadow-sm'
+                          : 'text-txt-2 hover:text-txt-2'
                       }`}
                     >
                       {m}
@@ -802,25 +802,25 @@ export default function Dashboard({
 
           {/* Right Column: Historical / Today Meal Log Stream */}
           <div className="lg:col-span-4 space-y-6">
-            <div className="bg-slate-800/80 rounded-[32px] border border-slate-700/60 p-6 shadow-xl h-full flex flex-col justify-between">
+            <div className="bg-col/80 rounded-[32px] border border-s/60 p-6 shadow-xl h-full flex flex-col justify-between">
               
               <div>
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-txt flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-indigo-400" /> Today's Meals
                   </h3>
-                  <span className="text-xs font-semibold px-2 py-1 bg-slate-700/60 rounded-lg text-slate-300">
+                  <span className="text-xs font-semibold px-2 py-1 bg-input/60 rounded-lg text-txt-2">
                     {todayMeals.length} logged
                   </span>
                 </div>
 
                 {todayMeals.length === 0 ? (
                   <div className="py-12 text-center flex flex-col items-center justify-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-slate-700/20 flex items-center justify-center border border-slate-700/50 text-slate-500">
+                    <div className="w-12 h-12 rounded-full bg-input/20 flex items-center justify-center border border-s/50 text-txt-h">
                       <Activity className="w-6 h-6" />
                     </div>
-                    <p className="text-sm font-semibold text-slate-400">No meals logged today</p>
-                    <p className="text-xs text-slate-500 max-w-[200px] leading-relaxed mx-auto">
+                    <p className="text-sm font-semibold text-txt-2">No meals logged today</p>
+                    <p className="text-xs text-txt-h max-w-[200px] leading-relaxed mx-auto">
                       All meals captured via AI scanner or logged manually will be stored here.
                     </p>
                   </div>
@@ -831,35 +831,35 @@ export default function Dashboard({
                       return (
                         <div 
                           key={meal.id}
-                          className="bg-slate-900/50 hover:bg-slate-900 border border-slate-700/60 rounded-2xl overflow-hidden transition-all duration-200 cursor-pointer"
+                          className="bg-card/50 hover:bg-card border border-s/60 rounded-2xl overflow-hidden transition-all duration-200 cursor-pointer"
                           onClick={() => setSelectedMeal(isExpanded ? null : meal.id)}
                         >
                           <div className="p-4 flex justify-between items-start">
                             <div>
-                              <p className="text-sm font-bold text-white line-clamp-1">{meal.summary}</p>
-                              <p className="text-xs text-slate-500 mt-0.5">
+                              <p className="text-sm font-bold text-txt line-clamp-1">{meal.summary}</p>
+                              <p className="text-xs text-txt-h mt-0.5">
                                 {new Date(meal.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             </div>
                             <div className="text-right">
-                              <span className="text-sm font-extrabold text-white">{meal.totalCalories} kcal</span>
-                              <p className="text-[10px] text-emerald-400 font-bold">{meal.totalProtein}g protein</p>
+                              <span className="text-sm font-extrabold text-txt">{meal.totalCalories} kcal</span>
+                              <p className="text-[10px] text-green font-bold">{meal.totalProtein}g protein</p>
                             </div>
                           </div>
 
                           {isExpanded && (
-                            <div className="border-t border-slate-700/50 bg-slate-950/40 p-4 space-y-3">
+                            <div className="border-t border-s/50 bg-bg/40 p-4 space-y-3">
                               <p className="text-xs font-bold uppercase tracking-wider text-indigo-400">Items Breakdown</p>
                               <div className="space-y-2">
                                 {meal.items.map((item) => (
                                   <div key={item.id} className="flex justify-between items-center text-xs">
                                     <div className="space-y-0.5">
                                       <p className="font-semibold text-slate-200">{item.name}</p>
-                                      <p className="text-[10px] text-slate-500">{item.estimatedQuantity}</p>
+                                      <p className="text-[10px] text-txt-h">{item.estimatedQuantity}</p>
                                     </div>
-                                    <div className="text-right text-slate-400">
-                                      <span className="font-semibold text-slate-300">{item.calories} kcal</span>
-                                      <p className="text-[9px] text-slate-500">
+                                    <div className="text-right text-txt-2">
+                                      <span className="font-semibold text-txt-2">{item.calories} kcal</span>
+                                      <p className="text-[9px] text-txt-h">
                                         P: {item.protein}g | F: {item.fat}g | Fib: {item.fiber}g
                                       </p>
                                     </div>
@@ -876,7 +876,7 @@ export default function Dashboard({
               </div>
 
               {todayMeals.length > 0 && (
-                <div className="pt-4 mt-4 border-t border-slate-700/50 flex justify-between text-xs text-slate-400">
+                <div className="pt-4 mt-4 border-t border-s/50 flex justify-between text-xs text-txt-2">
                   <span>Cumulative metrics:</span>
                   <span className="font-bold text-indigo-400">{todayTotals.calories} kcal total</span>
                 </div>
@@ -891,17 +891,17 @@ export default function Dashboard({
 
       {/* Target Nutritional Goals Setup Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden bg-slate-800 border border-slate-700 rounded-[28px] shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg/80 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden bg-col border border-s rounded-[28px] shadow-2xl">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-700">
+            <div className="flex items-center justify-between p-6 border-b border-s">
               <div className="flex items-center gap-3">
                 <Settings className="w-6 h-6 text-indigo-400" />
-                <h3 className="text-lg font-bold text-white">Daily Nutritional Goals</h3>
+                <h3 className="text-lg font-bold text-txt">Daily Nutritional Goals</h3>
               </div>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-200 rounded-lg bg-slate-700/50 transition-all"
+                className="p-1 text-txt-2 hover:text-slate-200 rounded-lg bg-input/50 transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -909,7 +909,7 @@ export default function Dashboard({
 
             {/* Modal Content */}
             <form onSubmit={handleSaveGoals} className="p-6 space-y-4">
-              <p className="text-xs text-slate-400 leading-normal">
+              <p className="text-xs text-txt-2 leading-normal">
                 Personalize your daily targets. The charts and indicators will adapt to your choices immediately.
               </p>
 
@@ -922,52 +922,52 @@ export default function Dashboard({
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Calories Target (kcal)</label>
+                  <label className="text-xs font-bold text-txt-2 block mb-1">Calories Target (kcal)</label>
                   <input
                     type="number"
                     value={targetCals}
                     onChange={(e) => setTargetCals(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2.5 bg-card border border-s rounded-xl text-txt text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="2000"
                     min="1"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Protein Target (g)</label>
+                  <label className="text-xs font-bold text-txt-2 block mb-1">Protein Target (g)</label>
                   <input
                     type="number"
                     value={targetProtein}
                     onChange={(e) => setTargetProtein(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2.5 bg-card border border-s rounded-xl text-txt text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="80"
                     min="1"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Fat Target (g)</label>
+                  <label className="text-xs font-bold text-txt-2 block mb-1">Fat Target (g)</label>
                   <input
                     type="number"
                     value={targetFat}
                     onChange={(e) => setTargetFat(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2.5 bg-card border border-s rounded-xl text-txt text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="65"
                     min="1"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Fiber Target (g)</label>
+                  <label className="text-xs font-bold text-txt-2 block mb-1">Fiber Target (g)</label>
                   <input
                     type="number"
                     value={targetFiber}
                     onChange={(e) => setTargetFiber(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2.5 bg-card border border-s rounded-xl text-txt text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     placeholder="30"
                     min="1"
                   />
@@ -975,19 +975,19 @@ export default function Dashboard({
               </div>
 
               {/* Actions Footer */}
-              <div className="flex gap-3 justify-end pt-4 border-t border-slate-700 mt-6">
+              <div className="flex gap-3 justify-end pt-4 border-t border-s mt-6">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   disabled={isSaving}
-                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-xl text-slate-300 hover:text-white font-semibold text-sm transition-all"
+                  className="px-4 py-2.5 bg-col hover:bg-slate-750 border border-s rounded-xl text-txt-2 hover:text-txt font-semibold text-sm transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-txt font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
                 >
                   {isSaving ? "Saving..." : "Save Goals"}
                 </button>
@@ -999,28 +999,28 @@ export default function Dashboard({
 
       {/* Meal Upload & AI Image Scanning Modal */}
       {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-bg/85 backdrop-blur-md overflow-y-auto">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className="w-full max-w-2xl bg-slate-800 border border-slate-700/80 rounded-[32px] overflow-hidden shadow-2xl flex flex-col my-8"
+            className="w-full max-w-2xl bg-col border border-s/80 rounded-[32px] overflow-hidden shadow-2xl flex flex-col my-8"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-slate-700/60">
+            <div className="flex items-center justify-between p-6 border-b border-s/60">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400">
                   <Camera className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-white">AI Vision Meal Scanner</h3>
-                  <p className="text-xs text-slate-400">Upload or select a nutritional plate snapshot to auto-extract macros.</p>
+                  <h3 className="text-lg font-bold text-txt">AI Vision Meal Scanner</h3>
+                  <p className="text-xs text-txt-2">Upload or select a nutritional plate snapshot to auto-extract macros.</p>
                 </div>
               </div>
               <button 
                 onClick={() => setIsUploadModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-200 rounded-xl bg-slate-700/45 transition-all focus:ring-2 focus:ring-indigo-500"
+                className="p-1.5 text-txt-2 hover:text-slate-200 rounded-xl bg-input/45 transition-all focus:ring-2 focus:ring-indigo-500"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1034,21 +1034,21 @@ export default function Dashboard({
                   {/* File Upload & Camera & Voice Zones */}
                   <div className="grid grid-cols-3 gap-4">
                     {/* Upload from Gallery */}
-                    <div className="relative border-2 border-dashed border-slate-700 hover:border-indigo-500/60 transition-all rounded-3xl bg-slate-900/30 p-6 text-center flex flex-col items-center justify-center gap-3 group">
+                    <div className="relative border-2 border-dashed border-s hover:border-indigo-500/60 transition-all rounded-3xl bg-card/30 p-6 text-center flex flex-col items-center justify-center gap-3 group">
                       <input 
                         type="file" 
                         accept="image/*" 
                         onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                       />
-                      <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 text-slate-400 group-hover:bg-indigo-600/10 group-hover:text-indigo-400 transition-all shadow-md">
+                      <div className="w-12 h-12 rounded-2xl bg-col flex items-center justify-center border border-s text-txt-2 group-hover:bg-indigo-600/10 group-hover:text-indigo-400 transition-all shadow-md">
                         <Upload className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all">Upload</p>
+                      <p className="text-sm font-bold text-slate-200 group-hover:text-txt transition-all">Upload</p>
                     </div>
 
                     {/* Take Photo with Camera */}
-                    <div className="relative border-2 border-dashed border-slate-700 hover:border-emerald-500/60 transition-all rounded-3xl bg-slate-900/30 p-6 text-center flex flex-col items-center justify-center gap-3 group">
+                    <div className="relative border-2 border-dashed border-s hover:border-emerald-500/60 transition-all rounded-3xl bg-card/30 p-6 text-center flex flex-col items-center justify-center gap-3 group">
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -1056,30 +1056,30 @@ export default function Dashboard({
                         onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                       />
-                      <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 text-slate-400 group-hover:bg-emerald-600/10 group-hover:text-emerald-400 transition-all shadow-md">
+                      <div className="w-12 h-12 rounded-2xl bg-col flex items-center justify-center border border-s text-txt-2 group-hover:bg-green/10 group-hover:text-green transition-all shadow-md">
                         <Camera className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all">Photo</p>
+                      <p className="text-sm font-bold text-slate-200 group-hover:text-txt transition-all">Photo</p>
                     </div>
 
                     {/* Voice Logging */}
-                    <div className="relative border-2 border-dashed border-slate-700 hover:border-red-500/60 transition-all rounded-3xl bg-slate-900/30 p-6 text-center flex flex-col items-center justify-center gap-3 group">
+                    <div className="relative border-2 border-dashed border-s hover:border-red-500/60 transition-all rounded-3xl bg-card/30 p-6 text-center flex flex-col items-center justify-center gap-3 group">
                       <button 
                         onPointerDown={startListening}
                         onPointerUp={stopListening}
                         onPointerLeave={stopListening}
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all shadow-md z-10 relative ${isListening ? 'bg-red-600/20 border-red-500 text-red-400 animate-pulse' : 'bg-slate-800 border-slate-700 text-slate-400 group-hover:bg-red-600/10 group-hover:text-red-400'}`}
+                        className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all shadow-md z-10 relative ${isListening ? 'bg-red-600/20 border-red-500 text-red-400 animate-pulse' : 'bg-col border-s text-txt-2 group-hover:bg-red-600/10 group-hover:text-red-400'}`}
                       >
                         {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                       </button>
-                      <p className="text-sm font-bold text-slate-200 group-hover:text-white transition-all leading-tight">
+                      <p className="text-sm font-bold text-slate-200 group-hover:text-txt transition-all leading-tight">
                         {isListening ? "Listening..." : "Hold to Speak"}
                       </p>
                     </div>
                   </div>
                   
                   {transcript && isListening && (
-                    <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                    <div className="mt-2 p-3 bg-red/10 border border-red-500/20 rounded-xl">
                        <p className="text-xs text-red-300 italic">"{transcript}"</p>
                     </div>
                   )}
@@ -1097,8 +1097,8 @@ export default function Dashboard({
 
                   {/* Healthy Gourmet Presets Title */}
                   <div className="text-center pt-2">
-                    <div className="h-[1px] w-full bg-slate-700/50 flex items-center justify-center">
-                      <span className="px-4 bg-slate-800 text-[10px] font-black uppercase text-indigo-400 tracking-widest">
+                    <div className="h-[1px] w-full bg-input/50 flex items-center justify-center">
+                      <span className="px-4 bg-col text-[10px] font-black uppercase text-indigo-400 tracking-widest">
                         Or select a visual preset
                       </span>
                     </div>
@@ -1110,7 +1110,7 @@ export default function Dashboard({
                       <div 
                         key={preset.id}
                         onClick={() => startAnalysisWithPreset(preset)}
-                        className="bg-slate-900/40 hover:bg-slate-900 border border-slate-700/60 hover:border-indigo-500/50 rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-lg shadow-slate-950/20 hover:-translate-y-1"
+                        className="bg-card/40 hover:bg-card border border-s/60 hover:border-indigo-500/50 rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-lg shadow-slate-950/20 hover:-translate-y-1"
                       >
                         <div className="relative h-28 w-full overflow-hidden">
                           <img 
@@ -1118,19 +1118,19 @@ export default function Dashboard({
                             alt={preset.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" 
                           />
-                          <div className="absolute top-2 right-2 px-2 py-0.5 bg-slate-950/80 rounded-lg text-[9px] font-bold text-indigo-300 backdrop-blur-sm border border-indigo-500/20">
+                          <div className="absolute top-2 right-2 px-2 py-0.5 bg-bg/80 rounded-lg text-[9px] font-bold text-indigo-300 backdrop-blur-sm border border-indigo-500/20">
                             {preset.totalCalories} kcal
                           </div>
                         </div>
                         <div className="p-3.5 space-y-2 flex-grow flex flex-col justify-between">
                           <div>
-                            <h4 className="text-xs font-black text-slate-200 line-clamp-1 group-hover:text-white">{preset.name}</h4>
-                            <p className="text-[10px] text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">{preset.summary}</p>
+                            <h4 className="text-xs font-black text-slate-200 line-clamp-1 group-hover:text-txt">{preset.name}</h4>
+                            <p className="text-[10px] text-txt-h line-clamp-2 mt-0.5 leading-relaxed">{preset.summary}</p>
                           </div>
-                          <div className="flex justify-between items-center text-[9px] font-bold text-slate-400 border-t border-slate-800 pt-2 mt-1">
-                            <span className="text-emerald-400">P: {preset.totalProtein}g</span>
-                            <span className="text-amber-500">F: {preset.totalFat}g</span>
-                            <span className="text-blue-400">Fib: {preset.totalFiber}g</span>
+                          <div className="flex justify-between items-center text-[9px] font-bold text-txt-2 border-t border pt-2 mt-1">
+                            <span className="text-green">P: {preset.totalProtein}g</span>
+                            <span className="text-orange">F: {preset.totalFat}g</span>
+                            <span className="text-blue">Fib: {preset.totalFiber}g</span>
                           </div>
                         </div>
                       </div>
@@ -1139,11 +1139,11 @@ export default function Dashboard({
 
                   {/* Bottom Start Custom Trigger */}
                   {selectedImage && (
-                    <div className="flex justify-end pt-4 border-t border-slate-700/60">
+                    <div className="flex justify-end pt-4 border-t border-s/60">
                       <button
                         type="button"
                         onClick={handleStartAnalysis}
-                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 font-bold text-white text-sm rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex items-center gap-2"
+                        className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 font-bold text-txt text-sm rounded-xl transition-all shadow-lg shadow-indigo-600/30 flex items-center gap-2"
                       >
                         <Sparkles className="w-4 h-4" />
                         <span>Run AI Analyzer</span>
@@ -1157,7 +1157,7 @@ export default function Dashboard({
               {uploadStep === 1 && (
                 <div className="flex flex-col items-center justify-center p-8 space-y-8">
                   {/* Glowing Scanner Box */}
-                  <div className="relative w-72 h-52 rounded-[24px] overflow-hidden border border-slate-700 bg-slate-900 shadow-2xl shadow-cyan-500/10 flex items-center justify-center">
+                  <div className="relative w-72 h-52 rounded-[24px] overflow-hidden border border-s bg-card shadow-2xl shadow-cyan-500/10 flex items-center justify-center">
                     {selectedImage ? (
                       <img 
                         src={selectedImage} 
@@ -1167,7 +1167,7 @@ export default function Dashboard({
                     ) : (
                       <div className="p-6 text-center z-20">
                          <Mic className="w-12 h-12 text-cyan-400 mx-auto mb-4 animate-pulse" />
-                         <p className="text-xs font-semibold text-slate-300 italic">"{transcript}"</p>
+                         <p className="text-xs font-semibold text-txt-2 italic">"{transcript}"</p>
                       </div>
                     )}
 
@@ -1195,7 +1195,7 @@ export default function Dashboard({
                   <div className="text-center space-y-2">
                     <div className="flex items-center justify-center gap-2">
                       <RefreshCw className="w-4 h-4 text-cyan-400 animate-spin" />
-                      <span className="text-sm font-black text-white tracking-wide uppercase">
+                      <span className="text-sm font-black text-txt tracking-wide uppercase">
                         AI Dissection Live
                       </span>
                     </div>
@@ -1207,11 +1207,11 @@ export default function Dashboard({
                     >
                       {SCAN_MESSAGES[scanningMsgIdx]}
                     </motion.p>
-                    <p className="text-xs text-slate-500">Wait a few seconds for computer-vision calorie estimation...</p>
+                    <p className="text-xs text-txt-h">Wait a few seconds for computer-vision calorie estimation...</p>
                   </div>
 
                   {/* Pulsing Loading line */}
-                  <div className="w-48 h-1 bg-slate-900/80 rounded-full overflow-hidden border border-slate-700/50">
+                  <div className="w-48 h-1 bg-card/80 rounded-full overflow-hidden border border-s/50">
                     <motion.div 
                       className="h-full bg-gradient-to-r from-cyan-400 to-indigo-500"
                       initial={{ width: "10%" }}
@@ -1226,13 +1226,13 @@ export default function Dashboard({
               {uploadStep === 2 && (
                 <div className="space-y-6">
                   {analysisError ? (
-                    <div className="p-6 bg-slate-900/40 rounded-3xl border border-red-500/20 text-center space-y-4">
-                      <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-400 flex items-center justify-center mx-auto border border-red-500/20">
+                    <div className="p-6 bg-card/40 rounded-3xl border border-red-500/20 text-center space-y-4">
+                      <div className="w-12 h-12 rounded-full bg-red/10 text-red-400 flex items-center justify-center mx-auto border border-red-500/20">
                         <AlertTriangle className="w-6 h-6" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-white">AI Dissection Failed</h4>
-                        <p className="text-xs text-slate-400 mt-1 leading-relaxed max-w-sm mx-auto">
+                        <h4 className="text-sm font-bold text-txt">AI Dissection Failed</h4>
+                        <p className="text-xs text-txt-2 mt-1 leading-relaxed max-w-sm mx-auto">
                           {analysisError}
                         </p>
                       </div>
@@ -1244,7 +1244,7 @@ export default function Dashboard({
                           setActiveAnalysis(null);
                           setAnalysisError(null);
                         }}
-                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-semibold rounded-xl text-slate-300 transition-all"
+                        className="px-4 py-2 bg-col hover:bg-input text-xs font-semibold rounded-xl text-txt-2 transition-all"
                       >
                         Try Another Image
                       </button>
@@ -1261,36 +1261,36 @@ export default function Dashboard({
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                         {/* Left Side: Photo preview details */}
                         <div className="md:col-span-5 space-y-4">
-                          <div className="relative h-44 rounded-2xl overflow-hidden border border-slate-700/60 shadow-lg bg-slate-900">
+                          <div className="relative h-44 rounded-2xl overflow-hidden border border-s/60 shadow-lg bg-card">
                             <img 
                               src={selectedImage || ""} 
                               alt="Analyzed food" 
                               className="w-full h-full object-cover"
                             />
-                            <div className="absolute top-3 left-3 px-2 py-0.5 bg-emerald-500/20 text-emerald-300 text-[10px] font-black tracking-widest rounded-lg border border-emerald-500/20 backdrop-blur-sm shadow-sm uppercase">
+                            <div className="absolute top-3 left-3 px-2 py-0.5 bg-green/20 text-emerald-300 text-[10px] font-black tracking-widest rounded-lg border border-emerald-500/20 backdrop-blur-sm shadow-sm uppercase">
                               USDA Matched
                             </div>
                           </div>
 
                           {/* Calorie and Nutrient Highlights */}
-                          <div className="p-4 bg-slate-900/40 rounded-2xl border border-slate-700/40 space-y-3">
+                          <div className="p-4 bg-card/40 rounded-2xl border border-s/40 space-y-3">
                             <div className="flex justify-between items-baseline">
-                              <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Total Energy</span>
-                              <span className="text-xl font-black text-white">{activeAnalysis.totalCalories} kcal</span>
+                              <span className="text-[10px] font-extrabold text-txt-2 uppercase tracking-widest">Total Energy</span>
+                              <span className="text-xl font-black text-txt">{activeAnalysis.totalCalories} kcal</span>
                             </div>
-                            <hr className="border-slate-800" />
+                            <hr className="border" />
                             <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                              <div className="bg-emerald-500/5 p-2 rounded-xl border border-emerald-500/10">
-                                <p className="text-[10px] font-bold text-slate-500 uppercase">Protein</p>
-                                <p className="text-sm font-extrabold text-emerald-400 mt-0.5">{activeAnalysis.totalProtein}g</p>
+                              <div className="bg-green/5 p-2 rounded-xl border border-emerald-500/10">
+                                <p className="text-[10px] font-bold text-txt-h uppercase">Protein</p>
+                                <p className="text-sm font-extrabold text-green mt-0.5">{activeAnalysis.totalProtein}g</p>
                               </div>
-                              <div className="bg-amber-500/5 p-2 rounded-xl border border-amber-500/10">
-                                <p className="text-[10px] font-bold text-slate-500 uppercase">Fat</p>
-                                <p className="text-sm font-extrabold text-amber-500 mt-0.5">{activeAnalysis.totalFat}g</p>
+                              <div className="bg-orange/5 p-2 rounded-xl border border-amber-500/10">
+                                <p className="text-[10px] font-bold text-txt-h uppercase">Fat</p>
+                                <p className="text-sm font-extrabold text-orange mt-0.5">{activeAnalysis.totalFat}g</p>
                               </div>
-                              <div className="bg-blue-500/5 p-2 rounded-xl border border-blue-500/10">
-                                <p className="text-[10px] font-bold text-slate-500 uppercase">Fiber</p>
-                                <p className="text-sm font-extrabold text-blue-400 mt-0.5">{activeAnalysis.totalFiber}g</p>
+                              <div className="bg-blue/5 p-2 rounded-xl border border-blue-500/10">
+                                <p className="text-[10px] font-bold text-txt-h uppercase">Fiber</p>
+                                <p className="text-sm font-extrabold text-blue mt-0.5">{activeAnalysis.totalFiber}g</p>
                               </div>
                             </div>
                           </div>
@@ -1300,29 +1300,29 @@ export default function Dashboard({
                         <div className="md:col-span-7 space-y-4">
                           {/* Name input */}
                           <div>
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Meal Title</label>
+                            <label className="text-[10px] font-black text-txt-2 uppercase tracking-widest block mb-1">Meal Title</label>
                             <input 
                               type="text" 
                               value={customMealName}
                               onChange={(e) => setCustomMealName(e.target.value)}
                               placeholder="My Gourmet Feast Bowl"
-                              className="w-full px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                              className="w-full px-4 py-2.5 bg-card border border-s rounded-xl text-txt text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                           </div>
 
                           {/* Items breakdown */}
                           <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Estimated Plate Breakdown</label>
+                            <label className="text-[10px] font-black text-txt-2 uppercase tracking-widest block mb-1">Estimated Plate Breakdown</label>
                             <div className="space-y-2.5 max-h-36 overflow-y-auto pr-1">
                               {activeAnalysis.items.map((item: any, idx: number) => (
-                                <div key={idx} className="flex justify-between items-center p-2.5 bg-slate-900/30 border border-slate-700/40 rounded-xl text-xs">
+                                <div key={idx} className="flex justify-between items-center p-2.5 bg-card/30 border border-s/40 rounded-xl text-xs">
                                   <div className="space-y-0.5">
                                     <p className="font-bold text-slate-200">{item.name}</p>
-                                    <p className="text-[10px] text-slate-500">Portion: {item.estimatedQuantity || "100g"}</p>
+                                    <p className="text-[10px] text-txt-h">Portion: {item.estimatedQuantity || "100g"}</p>
                                   </div>
                                   <div className="text-right">
-                                    <p className="font-extrabold text-slate-300">{item.calories} kcal</p>
-                                    <p className="text-[9px] text-slate-500">P:{item.protein}g | F:{item.fat}g | Fib:{item.fiber}g</p>
+                                    <p className="font-extrabold text-txt-2">{item.calories} kcal</p>
+                                    <p className="text-[9px] text-txt-h">P:{item.protein}g | F:{item.fat}g | Fib:{item.fiber}g</p>
                                   </div>
                                 </div>
                               ))}
@@ -1332,11 +1332,11 @@ export default function Dashboard({
                       </div>
 
                       {/* Actions Footer */}
-                      <div className="flex gap-3 justify-end pt-5 border-t border-slate-700 mt-6">
+                      <div className="flex gap-3 justify-end pt-5 border-t border-s mt-6">
                         <button
                           type="button"
                           onClick={() => setUploadStep(0)}
-                          className="px-5 py-2.5 bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-xl text-slate-300 font-semibold text-sm transition-all"
+                          className="px-5 py-2.5 bg-col hover:bg-slate-750 border border-s rounded-xl text-txt-2 font-semibold text-sm transition-all"
                         >
                           Back
                         </button>
@@ -1344,7 +1344,7 @@ export default function Dashboard({
                           type="button"
                           disabled={isSavingMeal}
                           onClick={handleSaveMeal}
-                          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
+                          className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-txt font-semibold text-sm rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center gap-2"
                         >
                           {isSavingMeal ? (
                             <>
@@ -1370,18 +1370,18 @@ export default function Dashboard({
 
       {/* Premium Paywall Modal */}
       {isPaywallOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-bg/85 backdrop-blur-md overflow-y-auto">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className="w-full max-w-md bg-slate-900 border border-indigo-500/30 rounded-[32px] overflow-hidden shadow-2xl flex flex-col p-8 relative"
+            className="w-full max-w-md bg-card border border-indigo-500/30 rounded-[32px] overflow-hidden shadow-2xl flex flex-col p-8 relative"
           >
             {/* Close button */}
             <button 
               onClick={() => setIsPaywallOpen(false)}
-              className="absolute top-6 right-6 p-1.5 text-slate-400 hover:text-slate-200 rounded-xl bg-slate-800/60 hover:bg-slate-800 transition-all"
+              className="absolute top-6 right-6 p-1.5 text-txt-2 hover:text-slate-200 rounded-xl bg-col/60 hover:bg-col transition-all"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1393,53 +1393,53 @@ export default function Dashboard({
 
             {/* Title & Subtitle */}
             <div className="text-center space-y-2 mb-6">
-              <h3 className="text-2xl font-black text-white tracking-tight">Upgrade to dietBuddy Premium</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
+              <h3 className="text-2xl font-black text-txt tracking-tight">Upgrade to dietBuddy Premium</h3>
+              <p className="text-xs text-txt-2 leading-relaxed">
                 You've reached your free daily scan limit. Unlock the full power of dietBuddy to crush your fitness goals.
               </p>
             </div>
 
             {/* Features list */}
             <div className="space-y-4 mb-8">
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-800/40 border border-slate-700/30">
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-col/40 border border-s/30">
                 <div className="p-1 rounded-lg bg-indigo-500/15 text-indigo-400 mt-0.5">
                   <Check className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-200">Unlimited AI Plate Scans</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Scan breakfast, lunch, dinner, and snacks with no limits.</p>
+                  <p className="text-[10px] text-txt-h mt-0.5">Scan breakfast, lunch, dinner, and snacks with no limits.</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-800/40 border border-slate-700/30">
-                <div className="p-1 rounded-lg bg-emerald-500/15 text-emerald-400 mt-0.5">
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-col/40 border border-s/30">
+                <div className="p-1 rounded-lg bg-green/15 text-green mt-0.5">
                   <Check className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-200">Automated Cloud Sync</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Seamless two-way synchronization between your Android app and Web portal.</p>
+                  <p className="text-[10px] text-txt-h mt-0.5">Seamless two-way synchronization between your Android app and Web portal.</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-3 rounded-2xl bg-slate-800/40 border border-slate-700/30">
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-col/40 border border-s/30">
                 <div className="p-1 rounded-lg bg-cyan-500/15 text-cyan-400 mt-0.5">
                   <Check className="w-4 h-4" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-slate-200">Premium Macros Insights</h4>
-                  <p className="text-[10px] text-slate-500 mt-0.5">Get in-depth AI coaching and nutrition trends updated dynamically.</p>
+                  <p className="text-[10px] text-txt-h mt-0.5">Get in-depth AI coaching and nutrition trends updated dynamically.</p>
                 </div>
               </div>
             </div>
 
             {/* Pricing Section */}
-            <div className="bg-slate-950/40 border border-slate-800 rounded-3xl p-5 text-center mb-6">
+            <div className="bg-bg/40 border border rounded-3xl p-5 text-center mb-6">
               <span className="text-[10px] font-black tracking-widest text-indigo-400 uppercase">Premium Plan</span>
               <div className="flex items-baseline justify-center gap-1.5 mt-1">
-                <span className="text-3xl font-black text-white">₹199</span>
-                <span className="text-slate-500 text-xs font-bold">/ month</span>
+                <span className="text-3xl font-black text-txt">₹199</span>
+                <span className="text-txt-h text-xs font-bold">/ month</span>
               </div>
-              <p className="text-[10px] text-slate-500 mt-2">Cancel anytime. Risk-free subscription.</p>
+              <p className="text-[10px] text-txt-h mt-2">Cancel anytime. Risk-free subscription.</p>
             </div>
 
             {/* Checkout Action Button */}
@@ -1517,7 +1517,7 @@ export default function Dashboard({
                   alert("Something went wrong during checkout.");
                 }
               }}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 font-bold text-white text-sm rounded-2xl transition-all shadow-lg shadow-indigo-600/30 text-center flex items-center justify-center gap-2 group"
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 font-bold text-txt text-sm rounded-2xl transition-all shadow-lg shadow-indigo-600/30 text-center flex items-center justify-center gap-2 group"
             >
               <span>Subscribe Now</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
