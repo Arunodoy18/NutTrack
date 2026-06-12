@@ -19,6 +19,15 @@ const SCAN_MESSAGES = [
   "Formulating coaching suggestions..."
 ];
 
+const ERROR_MESSAGES: Record<string, string> = {
+  not_food:     "Doesn't look like a meal — try a photo of your plate.",
+  rate_limit:   "You've used your 5 free scans today. Upgrade for unlimited.",
+  ai_error:     "AI is resting — try again in a moment.",
+  parse_error:  "Couldn't read that clearly. Try better lighting or a closer shot.",
+  network:      "Connection hiccup — check your signal and tap retry.",
+  invalid_mime: "Please upload a JPEG, PNG, or WebP image.",
+};
+
 export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealScannerProps) {
   const [uploadStep, setUploadStep] = useState(0); // 0: select, 1: scanning, 2: review
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -93,24 +102,19 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
       const res = await response.json();
 
       if (!response.ok) {
-        if (res.error === "rate_limit") {
-          setAnalysisError(res.message || "Daily scan limit reached. Please upgrade to continue.");
-        } else if (res.error === "not_food") {
-          setAnalysisError(res.message || "Doesn't look like a meal. Try a photo of your plate.");
-        } else {
-          setAnalysisError(res.message || "We couldn't analyze this image.");
-        }
+        const errorKey = res.error as keyof typeof ERROR_MESSAGES;
+        setAnalysisError(ERROR_MESSAGES[errorKey] || res.message || ERROR_MESSAGES.ai_error);
         return;
       }
 
       if (res.success && res.data) {
         setActiveAnalysis(res.data);
       } else {
-        setAnalysisError(res.error || "We couldn't parse the nutrition data.");
+        setAnalysisError(ERROR_MESSAGES.parse_error);
       }
     } catch (err) {
       console.error(err);
-      setAnalysisError("Network error. Please try again.");
+      setAnalysisError(ERROR_MESSAGES.network);
     } finally {
       setIsAnalyzing(false);
     }
