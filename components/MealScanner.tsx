@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera, X, Upload, CheckCircle } from "lucide-react";
+import { Camera, X, Upload, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { analyzeMealImageAction } from "@/app/actions";
 
 interface MealScannerProps {
@@ -25,6 +25,7 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [activeAnalysis, setActiveAnalysis] = useState<any>(null);
   const [scanningMsgIdx, setScanningMsgIdx] = useState(0);
 
@@ -53,7 +54,10 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
     if (uploadStep === 1 && !isAnalyzing && activeAnalysis && scanningMsgIdx === SCAN_MESSAGES.length - 1) {
       setUploadStep(2);
     }
-  }, [isAnalyzing, activeAnalysis, uploadStep, scanningMsgIdx]);
+    if (uploadStep === 1 && !isAnalyzing && analysisError && scanningMsgIdx === SCAN_MESSAGES.length - 1) {
+      setUploadStep(2);
+    }
+  }, [isAnalyzing, activeAnalysis, analysisError, uploadStep, scanningMsgIdx]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -70,19 +74,24 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
         runAiAnalysis(base64);
       };
       reader.readAsDataURL(file);
+      setAnalysisError(null);
       setUploadStep(1);
     }
   };
 
   const runAiAnalysis = async (b64: string) => {
     setIsAnalyzing(true);
+    setAnalysisError(null);
     try {
       const res = await analyzeMealImageAction(b64);
       if (res.success && res.analysis) {
         setActiveAnalysis(res.analysis);
+      } else {
+        setAnalysisError(res.error || "We couldn't analyze this image.");
       }
     } catch (err) {
       console.error(err);
+      setAnalysisError("Something went wrong. Please try again.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -166,18 +175,48 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
                       transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
                     />
                   </div>
-                  <p className="mt-6 text-sm font-medium text-txt animate-pulse">
-                    {SCAN_MESSAGES[scanningMsgIdx]}
-                  </p>
+                  <div className="mt-6 flex items-center gap-2">
+                    {isAnalyzing && <Loader2 className="w-4 h-4 text-orange animate-spin" />}
+                    <p className="text-sm font-medium text-txt animate-pulse">
+                      {SCAN_MESSAGES[scanningMsgIdx]}
+                    </p>
+                  </div>
                 </div>
               )}
 
-              {uploadStep === 2 && activeAnalysis && (
+              {uploadStep === 2 && analysisError && (
+                <div className="flex flex-col items-center text-center py-8 space-y-4">
+                  <div className="w-16 h-16 bg-red-l text-red rounded-full flex items-center justify-center">
+                    <AlertCircle className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-txt">Oops!</h4>
+                    <p className="text-sm text-txt-2 mt-1">{analysisError}</p>
+                  </div>
+                  <button 
+                    onClick={() => setUploadStep(0)}
+                    className="mt-4 px-6 py-2.5 bg-col border border-s rounded-xl font-semibold text-txt text-sm hover:bg-input transition-all"
+                  >
+                    Try Another Photo
+                  </button>
+                </div>
+              )}
+
+              {uploadStep === 2 && activeAnalysis && !analysisError && (
                 <div className="space-y-6">
                   <div className="flex gap-4 items-start">
                     <img src={selectedImage || ""} className="w-24 h-24 rounded-2xl object-cover border border-s shadow-custom" />
                     <div className="flex-1">
-                      <h4 className="text-xl font-bold text-txt">{activeAnalysis.name || "Custom Meal"}</h4>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xl font-bold text-txt">{activeAnalysis.name || "Custom Meal"}</h4>
+                        {activeAnalysis.confidence && (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                            activeAnalysis.confidence > 0.8 ? 'bg-green-l text-green' : 'bg-orange-l text-orange'
+                          }`}>
+                            {(activeAnalysis.confidence * 100).toFixed(0)}% Match
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-txt-2 mt-1">{activeAnalysis.summary || "Extracted from your photo."}</p>
                     </div>
                   </div>
