@@ -153,11 +153,6 @@ OUTPUT (plain text, 2-3 sentences):`;
     if (text) {
       return { success: true, insight: text.trim() };
     }
-      const text = data.choices?.[0]?.message?.content;
-      if (text) {
-        return { success: true, insight: text.trim() };
-      }
-    }
     
     return { success: true, insight: getFallbackInsight(todayTotals, dailyGoals) };
   } catch (err) {
