@@ -11,6 +11,7 @@ export const users = pgTable("user", {
   isVerified: boolean("is_verified").default(false),
   isPremium: boolean("is_premium").default(false),
   image: text("image"),
+  otpLockedUntil: timestamp("otp_locked_until", { mode: "date" }),
 });
 
 export const accounts = pgTable(
@@ -64,6 +65,7 @@ export const otpTokens = pgTable("otp_tokens", {
   expiresAt: timestamp("expires_at").notNull(),
   type: text("type").notNull(), // 'VERIFY_ACCOUNT' or 'RESET_PASSWORD'
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  attempts: integer("attempts").default(0).notNull(),
 });
 
 // --- App Specific tables: Meals, MealItems, DailyGoals ---
