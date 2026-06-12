@@ -34,7 +34,7 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
-import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, analyzeMealImageAction, analyzeMealTextAction } from "@/app/actions";
+import { saveDailyGoalsAction, saveMealAction, analyzeMealTextAction } from "@/app/actions";
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from "next-auth/react";
 import { useSpeech } from "@/components/useSpeech";
@@ -117,10 +117,23 @@ export default function Dashboard({
         return;
       }
 
-      const response = await generateNutritionInsightAction(userId, todayTotals, dailyGoals);
-      if (response.success && response.insight) {
-        setAiTip(response.insight);
-        localStorage.setItem(cacheKey, response.insight);
+      try {
+        const res = await fetch("/api/insight", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ goals: dailyGoals, today: todayTotals }),
+        });
+        const response = await res.json();
+        
+        if (response.success && response.insight) {
+          setAiTip(response.insight);
+          localStorage.setItem(cacheKey, response.insight);
+        } else {
+          setAiTip("Keep an eye on your protein intake for the rest of the day!");
+        }
+      } catch (err) {
+        console.error(err);
+        setAiTip("Keep an eye on your protein intake for the rest of the day!");
       }
       setAiTipLoading(false);
     }
