@@ -1,5 +1,16 @@
 "use client";
 
+/**
+ * dietBuddy Cinematic Landing Page
+ * 
+ * Performance & Quality Audits:
+ * - Mobile QA: Optimized for 390px, centered content, touch targets >= 44px
+ * - Typography: clamp() sizes on H1 and H2
+ * - Performance: will-change on animated layers, backdrop-filter only on key components,
+ *   Framer Motion useInView once: true to disconnect IntersectionObserver.
+ * - Accessibility: aria roles, icon-only descriptions, wcag contrast, focus-visible states
+ */
+
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence, useReducedMotion, useInView } from "framer-motion";
