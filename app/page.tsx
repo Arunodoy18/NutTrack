@@ -8,10 +8,16 @@ import {
   ChevronRight,
   Flame,
   Sparkles,
-  Target
+  Target,
+  Shield,
+  Zap,
+  TrendingUp,
+  Monitor,
+  Smartphone,
+  RefreshCw
 } from "lucide-react";
 
-// Phone mockup sub-components
+// Phone mockup progress ring
 function PhoneProgressRing() {
   const circumference = 2 * Math.PI * 46;
   const targetOffset = circumference * (1 - 0.70);
@@ -57,6 +63,49 @@ function PhoneProgressRing() {
   );
 }
 
+// Sync section progress ring
+function SyncProgressRing({ targetPercentage, color, label }: { targetPercentage: number; color: string; label: string }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.12 });
+  
+  const circumference = 2 * Math.PI * 34; // r = 34 => ~213.6
+  const targetOffset = circumference * (1 - targetPercentage / 100);
+
+  return (
+    <div ref={ref} className="flex flex-col items-center gap-2">
+      <div className="relative w-20 h-20">
+        <svg className="w-full h-full transform -rotate-90">
+          <circle
+            cx="40"
+            cy="40"
+            r="34"
+            stroke="rgba(255,255,255,0.05)"
+            strokeWidth="6"
+            fill="transparent"
+          />
+          <motion.circle
+            cx="40"
+            cy="40"
+            r="34"
+            stroke={color}
+            strokeWidth="6"
+            fill="transparent"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            initial={{ strokeDashoffset: circumference }}
+            animate={isInView ? { strokeDashoffset: targetOffset } : { strokeDashoffset: circumference }}
+            transition={{ duration: 1.4, ease: [0.34, 1.56, 0.64, 1] }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-sm font-bold text-[#F8FAFC]">{targetPercentage}%</span>
+        </div>
+      </div>
+      <span className="text-[10px] text-[#94A3B8] font-black text-center whitespace-nowrap">{label}</span>
+    </div>
+  );
+}
+
 // 3D Tilt Card Component
 function TiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -74,8 +123,8 @@ function TiltCard({ children, className = "" }: { children: React.ReactNode; cla
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
-    const rotateY = ((mouseX / width) - 0.5) * 10; // -5 to +5 degrees
-    const rotateX = (0.5 - (mouseY / height)) * 10; // -5 to +5 degrees
+    const rotateY = ((mouseX / width) - 0.5) * 10;
+    const rotateX = (0.5 - (mouseY / height)) * 10;
 
     setRotate({ x: rotateX, y: rotateY });
     setShimmerPos((mouseX / width) * 100);
@@ -365,19 +414,20 @@ export default function Home() {
                     {/* Macro Progress Bars */}
                     <div className="space-y-2.5 z-10">
                       {/* Protein */}
-                      <div className="flex justify-between text-[10px]">
-                        <span className="font-bold text-[#94A3B8]">Protein</span>
-                        <span className="font-bold text-[#10B981]">95g / 130g</span>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px]">
+                          <span className="font-bold text-[#94A3B8]">Protein</span>
+                          <span className="font-bold text-[#10B981]">95g / 130g</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
+                          <motion.div 
+                            className="h-full bg-[#10B981]" 
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(95/130)*100}%` }}
+                            transition={{ duration: 1.2, delay: 0.3 }}
+                          />
+                        </div>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
-                        <motion.div 
-                          className="h-full bg-[#10B981]" 
-                          initial={{ width: 0 }}
-                          animate={{ width: `${(95/130)*100}%` }}
-                          transition={{ duration: 1.2, delay: 0.3 }}
-                        />
-                      </div>
-                    </div>
 
                       {/* Carbs */}
                       <div className="space-y-1">
@@ -506,6 +556,188 @@ export default function Home() {
                 </p>
               </TiltCard>
             </RevealItem>
+          </RevealContainer>
+        </div>
+      </section>
+
+      {/* SECTION 3 — AI ENGINE */}
+      <section 
+        aria-label="AI Engine details"
+        className="relative py-24 md:py-32 px-6 bg-[#0A0F1E] z-10 overflow-hidden"
+      >
+        <div className="max-w-[1200px] mx-auto">
+          <RevealContainer className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            
+            {/* Spinning Star Graphic Frame */}
+            <RevealItem className="flex justify-center relative w-full">
+              {/* Decorative glows */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-[#8B5CF6]/10 rounded-full blur-3xl" />
+              
+              <div className="glass-card p-12 flex flex-col items-center justify-center w-full max-w-[400px] aspect-square relative z-10">
+                {/* 10s Linear Rotating pulsing drop-shadow star */}
+                <div className="star-spin-glow text-[48px] text-[#6366F1] leading-none mb-6 select-none font-bold">
+                  ✦
+                </div>
+                <div className="text-center">
+                  <div className="text-xs font-extrabold text-[#06B6D4] tracking-widest uppercase mb-1">
+                    GPT-4O VISION
+                  </div>
+                  <div className="text-[#F8FAFC] font-extrabold text-lg">
+                    Neural Analyzer Active
+                  </div>
+                  <div className="text-xs text-[#94A3B8] mt-1.5 flex items-center justify-center gap-1">
+                    <RefreshCw className="w-3 h-3 animate-spin text-[#6366F1]" /> Processing scan in 2.8s
+                  </div>
+                </div>
+              </div>
+            </RevealItem>
+
+            {/* AI Info Text */}
+            <RevealItem className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-6">
+              <span className="text-xs md:text-sm font-extrabold text-[#8B5CF6] tracking-widest uppercase">
+                POWERED BY
+              </span>
+              <h2 
+                className="text-3xl md:text-4xl font-black text-[#F8FAFC] tracking-tight"
+                style={{ fontSize: "clamp(24px, 6vw, 38px)" }}
+              >
+                GPT-4o Vision Engine
+              </h2>
+              <p className="text-sm md:text-base text-[#94A3B8] leading-relaxed max-w-xl">
+                The same model that powers world-class AI — now reading your plate. Real USDA-verified nutrition. Under 3 seconds.
+              </p>
+
+              {/* Chips Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full max-w-[420px] lg:max-w-none mt-4">
+                {[
+                  "USDA Verified", 
+                  "GPT-4o Vision", 
+                  "91%+ Accuracy", 
+                  "Under 3 sec", 
+                  "Voice Logging", 
+                  "Fridge Raider"
+                ].map((chip, i) => (
+                  <div 
+                    key={i} 
+                    className="px-4 py-2.5 rounded-xl bg-[#141C35]/40 border border-white/5 text-[11px] font-bold text-[#F8FAFC] flex items-center justify-center text-center backdrop-blur-sm select-none"
+                  >
+                    {chip}
+                  </div>
+                ))}
+              </div>
+            </RevealItem>
+
+          </RevealContainer>
+        </div>
+      </section>
+
+      {/* SECTION 4 — SYNC */}
+      <section 
+        aria-label="Data Synchronization"
+        className="relative py-24 md:py-32 px-6 bg-[#0F1629] z-10 border-t border-white/5"
+      >
+        <div className="max-w-[1200px] mx-auto">
+          <RevealContainer className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+            
+            {/* Features Description Left */}
+            <RevealItem className="lg:col-span-5 flex flex-col items-center lg:items-start text-center lg:text-left space-y-6">
+              <h2 
+                className="text-3xl md:text-4xl font-black text-[#F8FAFC] tracking-tight leading-[1.2]"
+                style={{ fontSize: "clamp(24px, 6vw, 38px)" }}
+              >
+                Your data, <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] to-[#06B6D4]">
+                  synced everywhere.
+                </span>
+              </h2>
+              <p className="text-sm md:text-base text-[#94A3B8] leading-relaxed max-w-xl">
+                Log a meal on your phone, see it instantly on your desktop. Our cloud infrastructure ensures you never lose a single gram of protein.
+              </p>
+
+              {/* Locked Features List */}
+              <ul className="space-y-4 w-full max-w-[380px] lg:max-w-none text-left mt-2">
+                <li className="flex items-center gap-3 text-xs md:text-sm font-bold text-[#94A3B8]">
+                  <span className="w-8 h-8 rounded-lg bg-[#6366F1]/10 border border-[#6366F1]/20 flex items-center justify-center text-base flex-shrink-0">
+                    🛡
+                  </span>
+                  Secure NextAuth Authentication
+                </li>
+                <li className="flex items-center gap-3 text-xs md:text-sm font-bold text-[#94A3B8]">
+                  <span className="w-8 h-8 rounded-lg bg-[#06B6D4]/10 border border-[#06B6D4]/20 flex items-center justify-center text-base flex-shrink-0">
+                    ⚡
+                  </span>
+                  Lightning fast Drizzle ORM Database
+                </li>
+                <li className="flex items-center gap-3 text-xs md:text-sm font-bold text-[#94A3B8]">
+                  <span className="w-8 h-8 rounded-lg bg-[#10B981]/10 border border-[#10B981]/20 flex items-center justify-center text-base flex-shrink-0">
+                    📈
+                  </span>
+                  Visual Progress Rings & Streaks
+                </li>
+              </ul>
+            </RevealItem>
+
+            {/* Desktop Dashboard Preview Right */}
+            <RevealItem className="lg:col-span-7 flex justify-center w-full">
+              <div className="glass-card w-full max-w-[500px] border border-white/10 rounded-2xl shadow-2xl relative overflow-hidden bg-slate-950/60 backdrop-blur-lg">
+                
+                {/* Browser Top bar */}
+                <div className="bg-slate-950/90 border-b border-white/5 px-4 py-3 flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
+                  </div>
+                  <div className="mx-auto bg-slate-900 border border-white/5 rounded-md px-4 py-1 text-[10px] text-[#94A3B8] font-bold tracking-tight select-none">
+                    dietbuddy.app/dashboard
+                  </div>
+                  <div className="w-10" />
+                </div>
+
+                {/* Dashboard layout */}
+                <div className="grid grid-cols-12 min-h-[260px] text-left">
+                  {/* Mini Sidebar */}
+                  <div className="col-span-3 border-r border-white/5 p-3 hidden sm:flex flex-col gap-4 bg-slate-950/30">
+                    <span className="text-[10px] font-black text-white">dietBuddy</span>
+                    <div className="flex flex-col gap-2">
+                      <div className="h-2 w-12 bg-[#6366F1]/40 rounded-full" />
+                      <div className="h-2 w-10 bg-white/10 rounded-full" />
+                      <div className="h-2 w-14 bg-white/10 rounded-full" />
+                    </div>
+                  </div>
+
+                  {/* Main Preview Panel */}
+                  <div className="col-span-12 sm:col-span-9 p-5 flex flex-col justify-between">
+                    <div className="flex justify-between items-center mb-4 border-b border-white/5 pb-2">
+                      <span className="text-xs font-extrabold text-[#F8FAFC]">Synced Dashboard</span>
+                      <span className="text-[9px] font-bold text-[#F59E0B] bg-[#F59E0B]/10 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                        🔥 7 days
+                      </span>
+                    </div>
+
+                    {/* Progress Rings Grid */}
+                    <div className="grid grid-cols-3 gap-2 py-2">
+                      <SyncProgressRing targetPercentage={73} color="#10B981" label="Protein" />
+                      <SyncProgressRing targetPercentage={63} color="#6366F1" label="Carbs" />
+                      <SyncProgressRing targetPercentage={69} color="#F59E0B" label="Fats" />
+                    </div>
+
+                    {/* Sync indicator footer */}
+                    <div className="flex items-center justify-between mt-3 text-[9px] text-[#94A3B8] border-t border-white/5 pt-2 font-bold select-none">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
+                        <span>Cloud Database Synced</span>
+                      </div>
+                      <span className="text-[10px] text-[#6366F1] flex items-center gap-0.5">
+                        <Monitor className="w-3 h-3" /> + <Smartphone className="w-3 h-3" /> Live
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </RevealItem>
+
           </RevealContainer>
         </div>
       </section>
