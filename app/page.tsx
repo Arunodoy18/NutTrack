@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, useInView } from "framer-motion";
 import {
   Camera,
   ChevronRight,
-  Flame
+  Flame,
+  Sparkles,
+  Target
 } from "lucide-react";
 
 // Phone mockup sub-components
@@ -52,6 +54,118 @@ function PhoneProgressRing() {
         </span>
       </div>
     </div>
+  );
+}
+
+// 3D Tilt Card Component
+function TiltCard({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [rotate, setRotate] = useState({ x: 0, y: 0 });
+  const [shimmerPos, setShimmerPos] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    const rect = card.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    const rotateY = ((mouseX / width) - 0.5) * 10; // -5 to +5 degrees
+    const rotateX = (0.5 - (mouseY / height)) * 10; // -5 to +5 degrees
+
+    setRotate({ x: rotateX, y: rotateY });
+    setShimmerPos((mouseX / width) * 100);
+  };
+
+  const handleMouseLeave = () => {
+    setRotate({ x: 0, y: 0 });
+    setIsHovered(false);
+  };
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  return (
+    <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={`glass-card relative transition-all duration-300 ${className}`}
+      style={{
+        transform: isHovered 
+          ? `translateY(-4px) rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)` 
+          : `translateY(0px) rotateX(0deg) rotateY(0deg)`,
+        transformStyle: 'preserve-3d',
+        borderColor: isHovered ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.08)',
+      }}
+    >
+      <div 
+        className="absolute top-0 left-0 right-0 h-[1px] pointer-events-none transition-opacity duration-300"
+        style={{
+          background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) ${shimmerPos}%, transparent 100%)`,
+          opacity: isHovered ? 1 : 0,
+        }}
+      />
+      {children}
+    </div>
+  );
+}
+
+// Scroll Reveal Components
+interface RevealProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+function RevealContainer({ children, className = "" }: RevealProps) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, amount: 0.12 });
+
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.1,
+      }
+    }
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      variants={containerVariants}
+      initial="hidden"
+      animate={isInView ? "visible" : "hidden"}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function RevealItem({ children, className = "" }: RevealProps) {
+  const itemVariants = {
+    hidden: { opacity: 0, y: 32 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.65,
+        ease: [0.22, 1, 0.36, 1]
+      }
+    }
+  };
+
+  return (
+    <motion.div variants={itemVariants} className={className}>
+      {children}
+    </motion.div>
   );
 }
 
@@ -251,20 +365,19 @@ export default function Home() {
                     {/* Macro Progress Bars */}
                     <div className="space-y-2.5 z-10">
                       {/* Protein */}
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-[10px]">
-                          <span className="font-bold text-[#94A3B8]">Protein</span>
-                          <span className="font-bold text-[#10B981]">95g / 130g</span>
-                        </div>
-                        <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
-                          <motion.div 
-                            className="h-full bg-[#10B981]" 
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(95/130)*100}%` }}
-                            transition={{ duration: 1.2, delay: 0.3 }}
-                          />
-                        </div>
+                      <div className="flex justify-between text-[10px]">
+                        <span className="font-bold text-[#94A3B8]">Protein</span>
+                        <span className="font-bold text-[#10B981]">95g / 130g</span>
                       </div>
+                      <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
+                        <motion.div 
+                          className="h-full bg-[#10B981]" 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(95/130)*100}%` }}
+                          transition={{ duration: 1.2, delay: 0.3 }}
+                        />
+                      </div>
+                    </div>
 
                       {/* Carbs */}
                       <div className="space-y-1">
@@ -321,6 +434,79 @@ export default function Home() {
             </motion.div>
           </div>
 
+        </div>
+      </section>
+
+      {/* SECTION 2 — HOW IT WORKS */}
+      <section 
+        id="how"
+        aria-label="How it works"
+        className="relative py-24 md:py-32 px-6 bg-[#0F1629] z-10 border-y border-white/5"
+      >
+        <div className="max-w-[1200px] mx-auto">
+          {/* Header */}
+          <RevealContainer className="text-center mb-16 md:mb-20 flex flex-col items-center">
+            <RevealItem>
+              <span className="text-xs md:text-sm font-extrabold text-[#6366F1] tracking-widest uppercase mb-3 block">
+                FRICTIONLESS TRACKING
+              </span>
+            </RevealItem>
+            <RevealItem>
+              <h2 
+                className="text-3xl md:text-4xl font-black text-[#F8FAFC] tracking-tight mb-4"
+                style={{ fontSize: "clamp(24px, 6vw, 38px)" }}
+              >
+                Tracking Made Frictionless
+              </h2>
+            </RevealItem>
+            <RevealItem>
+              <p className="text-sm md:text-base text-[#94A3B8] max-w-xl leading-relaxed">
+                We removed the painful search-and-log process. Now, your camera is your ultimate food diary.
+              </p>
+            </RevealItem>
+          </RevealContainer>
+
+          {/* Cards Grid */}
+          <RevealContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Step 1 */}
+            <RevealItem className="flex justify-center">
+              <TiltCard className="p-8 flex flex-col items-start text-left h-full max-w-[380px] md:max-w-none">
+                <div className="w-12 h-12 rounded-xl bg-[#6366F1]/10 border border-[#6366F1]/20 flex items-center justify-center mb-6">
+                  <Camera className="w-6 h-6 text-[#6366F1]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#F8FAFC] mb-3">1. Snap a Photo</h3>
+                <p className="text-[#94A3B8] text-sm leading-relaxed">
+                  Just point your camera at your meal. No more searching databases for &apos;chicken breast 100g&apos;.
+                </p>
+              </TiltCard>
+            </RevealItem>
+
+            {/* Step 2 */}
+            <RevealItem className="flex justify-center">
+              <TiltCard className="p-8 flex flex-col items-start text-left h-full max-w-[380px] md:max-w-none">
+                <div className="w-12 h-12 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 flex items-center justify-center mb-6">
+                  <Sparkles className="w-6 h-6 text-[#8B5CF6]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#F8FAFC] mb-3">2. AI Analyzes</h3>
+                <p className="text-[#94A3B8] text-sm leading-relaxed">
+                  Our vision model instantly recognises the food items and estimates precise macros.
+                </p>
+              </TiltCard>
+            </RevealItem>
+
+            {/* Step 3 */}
+            <RevealItem className="flex justify-center">
+              <TiltCard className="p-8 flex flex-col items-start text-left h-full max-w-[380px] md:max-w-none">
+                <div className="w-12 h-12 rounded-xl bg-[#06B6D4]/10 border border-[#06B6D4]/20 flex items-center justify-center mb-6">
+                  <Target className="w-6 h-6 text-[#06B6D4]" />
+                </div>
+                <h3 className="text-xl font-bold text-[#F8FAFC] mb-3">3. Hit Your Goals</h3>
+                <p className="text-[#94A3B8] text-sm leading-relaxed">
+                  The calories and protein are automatically added to your daily progress rings.
+                </p>
+              </TiltCard>
+            </RevealItem>
+          </RevealContainer>
         </div>
       </section>
     </div>
