@@ -9,6 +9,12 @@ import { checkScanRateLimit } from "@/lib/rateLimit";
 import { eq } from "drizzle-orm";
 import OpenAI from "openai";
 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || "dummy",
+});
+
+const AI_MODEL = "gpt-4o";
+
 async function checkAiAccess() {
   const session = await getServerSession(authOptions);
   if (!session || !session.user) throw new Error("Unauthorized");

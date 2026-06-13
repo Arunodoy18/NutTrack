@@ -34,7 +34,7 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
-import { saveDailyGoalsAction, saveMealAction, analyzeMealTextAction } from "@/app/actions";
+import { saveDailyGoalsAction, saveMealAction, analyzeMealTextAction, analyzeMealImageAction } from "@/app/actions";
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from "next-auth/react";
 import { useSpeech } from "@/components/useSpeech";
