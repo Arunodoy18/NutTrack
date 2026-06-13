@@ -1,10 +1,23 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users, otpTokens } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { Resend } from "resend";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key");
+
+// Safe initialization of Upstash Redis rate limiter to prevent local dev crashes
+const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+  ? Redis.fromEnv()
+  : null;
+
+const ratelimit = redis ? new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(3, "15 m"), // 3 OTP requests per 15 min per email
+  prefix: "dietbuddy:otp",
+}) : null;
 
 export async function POST(req: Request) {
   try {
@@ -14,14 +27,50 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email and type are required" }, { status: 400 });
     }
 
-    // Check if user is locked out
+    const cleanEmail = email.toLowerCase().trim();
+
+    if (!cleanEmail.includes("@")) {
+      return NextResponse.json(
+        { error: "Please enter a valid email address." },
+        { status: 400 }
+      );
+    }
+
+    // Upstash Rate limiting check
+    if (ratelimit) {
+      const { success } = await ratelimit.limit(cleanEmail);
+      if (!success) {
+        return NextResponse.json(
+          { error: "Too many attempts. Please wait 15 minutes before requesting another OTP." },
+          { status: 429 }
+        );
+      }
+    }
+
+    // Check user exists
     const user = await db.query.users.findFirst({
-      where: eq(users.email, email)
+      where: eq(users.email, cleanEmail)
     });
 
+    // Always return success even if user not found for RESET_PASSWORD (prevent email enumeration)
+    if (type === "RESET_PASSWORD" && !user) {
+      return NextResponse.json({
+        success: true,
+        message: "If that email exists, an OTP has been sent.",
+      });
+    }
+
+    if (type === "VERIFY_ACCOUNT" && !user) {
+      return NextResponse.json({ error: "User not found." }, { status: 400 });
+    }
+
+    // Check if user is locked out
     if (user && user.otpLockedUntil && new Date(user.otpLockedUntil) > new Date()) {
       const remainingMins = Math.ceil((new Date(user.otpLockedUntil).getTime() - Date.now()) / 60000);
-      return NextResponse.json({ error: `Account locked due to too many failed attempts. Try again in ${remainingMins} minutes.` }, { status: 429 });
+      return NextResponse.json(
+        { error: `Account locked due to too many failed attempts. Try again in ${remainingMins} minutes.` },
+        { status: 429 }
+      );
     }
 
     // Generate a 6-digit OTP
@@ -30,9 +79,17 @@ export async function POST(req: Request) {
     // Set expiration to 10 minutes from now
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
+    // Clean up older tokens for this email and type
+    await db.delete(otpTokens).where(
+      and(
+        eq(otpTokens.email, cleanEmail),
+        eq(otpTokens.type, type)
+      )
+    );
+
     // Save OTP to database
     await db.insert(otpTokens).values({
-      email,
+      email: cleanEmail,
       otp,
       expiresAt,
       type,
@@ -40,23 +97,46 @@ export async function POST(req: Request) {
 
     // Send the email via Resend
     if (process.env.RESEND_API_KEY) {
-      await resend.emails.send({
-        from: "Acme <onboarding@resend.dev>", // Replace with verified domain in production
-        to: [email],
-        subject: type === "RESET_PASSWORD" ? "Reset Your Password" : "Verify Your Account",
+      const { error: resendError } = await resend.emails.send({
+        from: "dietBuddy <onboarding@resend.dev>", // Verified sender onboarding on free plans
+        to: [cleanEmail],
+        subject: type === "RESET_PASSWORD" ? "Your dietBuddy Password Reset OTP" : "Verify Your dietBuddy Account",
         html: `
-          <h1>dietBuddy Verification</h1>
-          <p>Your one-time password (OTP) is: <strong>${otp}</strong></p>
-          <p>This code will expire in 10 minutes.</p>
+          <div style="font-family:Inter,sans-serif;max-width:400px;margin:0 auto;padding:32px;">
+            <h2 style="font-size:24px;font-weight:700;margin-bottom:8px;">
+              ${type === "RESET_PASSWORD" ? "Reset your password" : "Verify your account"}
+            </h2>
+            <p style="color:#64748B;margin-bottom:24px;">
+              Use the code below to ${type === "RESET_PASSWORD" ? "reset your dietBuddy password" : "verify your dietBuddy account"}. It expires in 10 minutes.
+            </p>
+            <div style="background:#F1F5F9;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
+              <span style="font-size:36px;font-weight:800;letter-spacing:8px;color:#0A0F1E;">${otp}</span>
+            </div>
+            <p style="font-size:12px;color:#94A3B8;">If you didn't request this, ignore this email. Your credentials will not change.</p>
+          </div>
         `,
       });
+
+      if (resendError) {
+        console.error("[send-otp] Resend error:", resendError);
+        return NextResponse.json(
+          { error: "Failed to send email. Please try again in a moment." },
+          { status: 500 }
+        );
+      }
     } else {
-      console.log(`[DEV MODE] OTP for ${email}: ${otp}`);
+      console.log(`[DEV MODE] OTP for ${cleanEmail}: ${otp}`);
     }
 
-    return NextResponse.json({ success: true, message: "OTP sent successfully" });
+    return NextResponse.json({ 
+      success: true, 
+      message: "If that email exists, an OTP has been sent." 
+    });
   } catch (error: any) {
-    console.error("Send OTP Error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Send OTP Error:", error?.message || error);
+    return NextResponse.json(
+      { error: "Something went wrong. Please try again." },
+      { status: 500 }
+    );
   }
 }
