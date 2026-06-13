@@ -30,12 +30,14 @@ export default function ForgotPasswordPage() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Failed to send OTP");
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong. Please try again.");
+      }
 
-      setMessage("OTP sent to your email!");
+      setMessage(data.message || "OTP sent to your email!");
       setStep(2);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Connection issue. Check your internet and try again.");
     } finally {
       setLoading(false);
     }
@@ -55,12 +57,14 @@ export default function ForgotPasswordPage() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Failed to reset password");
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to reset password. Please try again.");
+      }
 
-      setMessage("Password reset successfully! Redirecting...");
+      setMessage(data.message || "Password reset successfully! Redirecting...");
       setTimeout(() => router.push("/auth/login"), 2000);
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || "Connection issue. Check your internet and try again.");
       setLoading(false);
     }
   };
