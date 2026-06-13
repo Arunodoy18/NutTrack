@@ -14,7 +14,8 @@ import {
   TrendingUp,
   Monitor,
   Smartphone,
-  RefreshCw
+  RefreshCw,
+  Check
 } from "lucide-react";
 
 // Phone mockup progress ring
@@ -738,6 +739,88 @@ export default function Home() {
               </div>
             </RevealItem>
 
+          </RevealContainer>
+        </div>
+      </section>
+
+      {/* SECTION 5 — PRICING */}
+      <section 
+        aria-label="Pricing plans"
+        className="relative py-24 md:py-32 px-6 bg-[#0A0F1E] z-10 border-t border-white/5"
+      >
+        <div className="max-w-[1200px] mx-auto">
+          {/* Header */}
+          <RevealContainer className="text-center mb-16 md:mb-20 flex flex-col items-center">
+            <RevealItem>
+              <span className="text-xs md:text-sm font-extrabold text-[#6366F1] tracking-widest uppercase mb-3 block">
+                SIMPLE PRICING
+              </span>
+            </RevealItem>
+            <RevealItem>
+              <h2 
+                className="text-3xl md:text-4xl font-black text-[#F8FAFC] tracking-tight mb-4"
+                style={{ fontSize: "clamp(24px, 6vw, 38px)" }}
+              >
+                Simple, Honest Pricing.
+              </h2>
+            </RevealItem>
+            <RevealItem>
+              <p className="text-sm md:text-base text-[#94A3B8] max-w-xl leading-relaxed">
+                No confusing subscriptions. No hidden fees. Just one payment for lifetime access to the AI engine.
+              </p>
+            </RevealItem>
+          </RevealContainer>
+
+          {/* Premium Pricing Card */}
+          <RevealContainer className="flex justify-center">
+            <RevealItem className="w-full max-w-[420px]">
+              <div className="premium-pricing-card p-10 md:p-12 flex flex-col items-center relative z-10">
+                {/* Top glow */}
+                <div className="radial-glow" />
+
+                {/* Lifetime premium tag badge */}
+                <span className="relative z-10 px-4 py-1.5 rounded-full bg-[#6366F1]/10 text-[#6366F1] text-xs font-black tracking-widest uppercase mb-8">
+                  LIFETIME PREMIUM
+                </span>
+
+                {/* Price block */}
+                <div className="relative z-10 flex items-baseline gap-2 mb-8 select-none">
+                  <span className="text-5xl md:text-6xl font-black text-[#F8FAFC]">₹199</span>
+                  <span className="text-sm font-bold text-[#64748B]">/ forever</span>
+                </div>
+
+                {/* Locked checklist list */}
+                <ul className="relative z-10 space-y-4 mb-10 text-left w-full max-w-[280px]">
+                  {[
+                    "Unlimited AI Scans",
+                    "Cloud Sync across devices",
+                    "Detailed Macro Breakdowns",
+                    "AI Fridge Raider",
+                    "Priority Support"
+                  ].map((feature, i) => (
+                    <li key={i} className="flex items-center gap-3 text-xs md:text-sm font-bold text-[#94A3B8]">
+                      <Check className="w-4 h-4 text-[#10B981] flex-shrink-0" strokeWidth={3} />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Primary CTA button with custom tap & hover shadow lifters */}
+                <motion.a 
+                  href="/auth/register"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative z-10 w-full text-center font-extrabold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:opacity-95 py-4 px-8 rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.5)] active:shadow-[0_12px_40px_rgba(99,102,241,0.75)] transition-all flex items-center justify-center gap-2 h-12 md:h-14"
+                >
+                  Get Lifetime Access  ›
+                </motion.a>
+
+                {/* Razerpay note */}
+                <span className="relative z-10 text-[10px] md:text-xs text-[#64748B] font-medium mt-6 block select-none">
+                  Secure payment via Razorpay · Instant activation
+                </span>
+              </div>
+            </RevealItem>
           </RevealContainer>
         </div>
       </section>
