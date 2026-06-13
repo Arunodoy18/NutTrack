@@ -24,7 +24,7 @@ function PhoneProgressRing() {
   const targetOffset = circumference * (1 - 0.70);
   return (
     <div className="relative w-32 h-32 flex items-center justify-center">
-      <svg className="w-full h-full transform -rotate-90 absolute">
+      <svg className="w-full h-full transform -rotate-90 absolute" aria-label="Daily progress ring">
         <circle
           cx="64"
           cy="64"
@@ -75,7 +75,7 @@ function SyncProgressRing({ targetPercentage, color, label }: { targetPercentage
   return (
     <div ref={ref} className="flex flex-col items-center gap-2">
       <div className="relative w-20 h-20">
-        <svg className="w-full h-full transform -rotate-90">
+        <svg className="w-full h-full transform -rotate-90" aria-label={`${label} sync progress ring`}>
           <circle
             cx="40"
             cy="40"
@@ -263,6 +263,17 @@ export default function Home() {
 
   return (
     <div className="landing-theme overflow-x-hidden relative min-h-screen">
+      {/* PWA & Open Graph Head Tags */}
+      <head>
+        <meta name="theme-color" content="#080C18" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="dietBuddy" />
+        <meta property="og:title" content="dietBuddy — Snap. Know. Grow." />
+        <meta property="og:description" content="AI-powered nutrition tracking. Snap your food, know your macros instantly." />
+        <meta property="og:image" content="/og-image.png" />
+      </head>
+
       {/* Ambient background orbs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="orb orb-1 top-[-10%] left-[-10%] w-[350px] h-[350px] md:w-[600px] md:h-[600px]" />
@@ -279,16 +290,16 @@ export default function Home() {
         }`}
       >
         <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between">
-          <Link href="/" className="text-xl font-black tracking-tight text-white flex items-center gap-1 select-none">
+          <Link href="/" className="text-xl font-black tracking-tight text-white flex items-center gap-1 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080C18] rounded-lg">
             diet<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#06B6D4]">Buddy</span>
           </Link>
           <div className="flex items-center gap-6">
-            <Link href="/auth/login" className="text-sm font-semibold text-[#94A3B8] hover:text-white transition-colors">
+            <Link href="/auth/login" className="text-sm font-semibold text-[#94A3B8] hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080C18] rounded-md">
               Login
             </Link>
             <Link 
               href="/auth/register" 
-              className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:opacity-90 rounded-xl transition-all shadow-md shadow-indigo-600/20 active:scale-[0.98]"
+              className="px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:opacity-90 rounded-xl transition-all shadow-md shadow-indigo-600/20 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#080C18]"
             >
               Get Started
             </Link>
@@ -352,13 +363,13 @@ export default function Home() {
             >
               <Link 
                 href="/auth/register" 
-                className="w-full sm:w-auto text-center font-extrabold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:opacity-95 py-4 px-8 rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.5)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 max-w-[380px] sm:max-w-none h-12 md:h-14"
+                className="w-full sm:w-auto text-center font-extrabold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:opacity-95 py-4 px-8 rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.5)] active:scale-[0.98] transition-all flex items-center justify-center gap-2 max-w-[380px] sm:max-w-none h-12 md:h-14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0F1E]"
               >
                 📸  Start Scanning Free
               </Link>
               <a 
                 href="#how" 
-                className="w-full sm:w-auto text-center font-bold text-[#F8FAFC] bg-[#141C35]/60 border border-white/10 hover:bg-[#141C35]/90 py-4 px-8 rounded-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 max-w-[380px] sm:max-w-none h-12 md:h-14"
+                className="w-full sm:w-auto text-center font-bold text-[#F8FAFC] bg-[#141C35]/60 border border-white/10 hover:bg-[#141C35]/90 py-4 px-8 rounded-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 max-w-[380px] sm:max-w-none h-12 md:h-14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0F1E]"
               >
                 See How It Works  ›
               </a>
@@ -475,7 +486,8 @@ export default function Home() {
                     {/* Bottom mini scan CTA */}
                     <Link 
                       href="/auth/register" 
-                      className="mt-3 bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white text-[10px] font-black py-2 rounded-xl flex items-center justify-center gap-1 shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all z-10"
+                      className="mt-3 bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] text-white text-[10px] font-black py-2 rounded-xl flex items-center justify-center gap-1 shadow-lg shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1]"
+                      aria-label="Tap to scan your next meal and start scanning"
                     >
                       📸 Tap to scan your next meal
                     </Link>
@@ -523,7 +535,7 @@ export default function Home() {
             <RevealItem className="flex justify-center">
               <TiltCard className="p-8 flex flex-col items-start text-left h-full max-w-[380px] md:max-w-none">
                 <div className="w-12 h-12 rounded-xl bg-[#6366F1]/10 border border-[#6366F1]/20 flex items-center justify-center mb-6">
-                  <Camera className="w-6 h-6 text-[#6366F1]" />
+                  <Camera className="w-6 h-6 text-[#6366F1]" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-[#F8FAFC] mb-3">1. Snap a Photo</h3>
                 <p className="text-[#94A3B8] text-sm leading-relaxed">
@@ -536,7 +548,7 @@ export default function Home() {
             <RevealItem className="flex justify-center">
               <TiltCard className="p-8 flex flex-col items-start text-left h-full max-w-[380px] md:max-w-none">
                 <div className="w-12 h-12 rounded-xl bg-[#8B5CF6]/10 border border-[#8B5CF6]/20 flex items-center justify-center mb-6">
-                  <Sparkles className="w-6 h-6 text-[#8B5CF6]" />
+                  <Sparkles className="w-6 h-6 text-[#8B5CF6]" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-[#F8FAFC] mb-3">2. AI Analyzes</h3>
                 <p className="text-[#94A3B8] text-sm leading-relaxed">
@@ -549,7 +561,7 @@ export default function Home() {
             <RevealItem className="flex justify-center">
               <TiltCard className="p-8 flex flex-col items-start text-left h-full max-w-[380px] md:max-w-none">
                 <div className="w-12 h-12 rounded-xl bg-[#06B6D4]/10 border border-[#06B6D4]/20 flex items-center justify-center mb-6">
-                  <Target className="w-6 h-6 text-[#06B6D4]" />
+                  <Target className="w-6 h-6 text-[#06B6D4]" aria-hidden="true" />
                 </div>
                 <h3 className="text-xl font-bold text-[#F8FAFC] mb-3">3. Hit Your Goals</h3>
                 <p className="text-[#94A3B8] text-sm leading-relaxed">
@@ -658,19 +670,19 @@ export default function Home() {
               {/* Locked Features List */}
               <ul className="space-y-4 w-full max-w-[380px] lg:max-w-none text-left mt-2">
                 <li className="flex items-center gap-3 text-xs md:text-sm font-bold text-[#94A3B8]">
-                  <span className="w-8 h-8 rounded-lg bg-[#6366F1]/10 border border-[#6366F1]/20 flex items-center justify-center text-base flex-shrink-0">
+                  <span className="w-8 h-8 rounded-lg bg-[#6366F1]/10 border border-[#6366F1]/20 flex items-center justify-center text-base flex-shrink-0" aria-hidden="true">
                     🛡
                   </span>
                   Secure NextAuth Authentication
                 </li>
                 <li className="flex items-center gap-3 text-xs md:text-sm font-bold text-[#94A3B8]">
-                  <span className="w-8 h-8 rounded-lg bg-[#06B6D4]/10 border border-[#06B6D4]/20 flex items-center justify-center text-base flex-shrink-0">
+                  <span className="w-8 h-8 rounded-lg bg-[#06B6D4]/10 border border-[#06B6D4]/20 flex items-center justify-center text-base flex-shrink-0" aria-hidden="true">
                     ⚡
                   </span>
                   Lightning fast Drizzle ORM Database
                 </li>
                 <li className="flex items-center gap-3 text-xs md:text-sm font-bold text-[#94A3B8]">
-                  <span className="w-8 h-8 rounded-lg bg-[#10B981]/10 border border-[#10B981]/20 flex items-center justify-center text-base flex-shrink-0">
+                  <span className="w-8 h-8 rounded-lg bg-[#10B981]/10 border border-[#10B981]/20 flex items-center justify-center text-base flex-shrink-0" aria-hidden="true">
                     📈
                   </span>
                   Visual Progress Rings & Streaks
@@ -799,7 +811,7 @@ export default function Home() {
                     "Priority Support"
                   ].map((feature, i) => (
                     <li key={i} className="flex items-center gap-3 text-xs md:text-sm font-bold text-[#94A3B8]">
-                      <Check className="w-4 h-4 text-[#10B981] flex-shrink-0" strokeWidth={3} />
+                      <Check className="w-4 h-4 text-[#10B981] flex-shrink-0" strokeWidth={3} aria-hidden="true" />
                       {feature}
                     </li>
                   ))}
@@ -810,7 +822,7 @@ export default function Home() {
                   href="/auth/register"
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
-                  className="relative z-10 w-full text-center font-extrabold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:opacity-95 py-4 px-8 rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.5)] active:shadow-[0_12px_40px_rgba(99,102,241,0.75)] transition-all flex items-center justify-center gap-2 h-12 md:h-14"
+                  className="relative z-10 w-full text-center font-extrabold text-white bg-gradient-to-r from-[#6366F1] to-[#8B5CF6] hover:opacity-95 py-4 px-8 rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.5)] active:shadow-[0_12px_40px_rgba(99,102,241,0.75)] transition-all flex items-center justify-center gap-2 h-12 md:h-14 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0F1E]"
                 >
                   Get Lifetime Access  ›
                 </motion.a>
@@ -824,6 +836,27 @@ export default function Home() {
           </RevealContainer>
         </div>
       </section>
+
+      {/* FOOTER */}
+      <footer className="border-t border-white/5 py-12 md:py-16 bg-[#080C18] relative z-10">
+        <div className="max-w-[1200px] mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="text-lg font-black tracking-tight text-white select-none">
+            diet<span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#06B6D4]">Buddy</span>
+          </div>
+          
+          {/* Links */}
+          <div className="flex gap-8 text-xs font-bold text-[#94A3B8]">
+            <a href="#how" className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] rounded px-1">How It Works</a>
+            <Link href="/auth/login" className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] rounded px-1">Login</Link>
+            <Link href="/auth/register" className="hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6366F1] rounded px-1">Get Started</Link>
+          </div>
+
+          {/* Copyright */}
+          <div className="text-[11px] font-medium text-[#64748B] text-center md:text-right">
+            © 2026 dietBuddy. Built to grow your health. Instantly.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
