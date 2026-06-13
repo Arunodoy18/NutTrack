@@ -30,3 +30,202 @@ body {
   margin: 0;
   padding: 0;
 }
+
+/* --- LANDING THEME STYLES (Cinematic & Glassmorphic) --- */
+.landing-theme {
+  --night: #080C18;
+  --deep: #0A0F1E;
+  --surface: #0F1629;
+  --card: #141C35;
+
+  --glass-bg: rgba(20, 28, 53, 0.60);
+  --glass-bg2: rgba(15, 22, 41, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bdr-lit: rgba(99, 102, 241, 0.30);
+  --rim: rgba(255, 255, 255, 0.07);
+  --rim-bright: rgba(255, 255, 255, 0.18);
+
+  --indigo: #6366F1;
+  --violet: #8B5CF6;
+  --cyan: #06B6D4;
+  --emerald: #10B981;
+  --amber: #F59E0B;
+  --rose: #F43F5E;
+
+  --grad-hero: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #06B6D4 100%);
+  --grad-cta: linear-gradient(135deg, #6366F1, #8B5CF6);
+  --grad-green: linear-gradient(135deg, #10B981, #06B6D4);
+  --grad-warm: linear-gradient(135deg, #F59E0B, #F43F5E);
+
+  --txt: #F8FAFC;
+  --txt-2: #94A3B8;
+  --txt-3: #64748B;
+
+  background-color: var(--deep);
+  color: var(--txt);
+  min-height: 100vh;
+}
+
+/* Background grid overlay - Hero section only */
+.landing-theme .hero-grid {
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* Ambient Background orbs floating animations */
+@keyframes orb-float-1 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(40px, -60px) scale(1.15); }
+  66% { transform: translate(-30px, 30px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes orb-float-2 {
+  0% { transform: translate(0px, 0px) scale(1.1); }
+  33% { transform: translate(-50px, 50px) scale(0.85); }
+  66% { transform: translate(40px, -40px) scale(1.15); }
+  100% { transform: translate(0px, 0px) scale(1.1); }
+}
+@keyframes orb-float-3 {
+  0% { transform: translate(0px, 0px) scale(0.9); }
+  33% { transform: translate(50px, 40px) scale(1.2); }
+  66% { transform: translate(-40px, -50px) scale(0.85); }
+  100% { transform: translate(0px, 0px) scale(0.9); }
+}
+@keyframes orb-float-4 {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(-40px, -40px) scale(1.15); }
+  66% { transform: translate(50px, 50px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.landing-theme .orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  will-change: transform;
+}
+
+.landing-theme .orb-1 {
+  background: var(--indigo);
+  opacity: 0.16;
+  animation: orb-float-1 14s ease-in-out infinite;
+}
+.landing-theme .orb-2 {
+  background: var(--violet);
+  opacity: 0.16;
+  animation: orb-float-2 16s ease-in-out infinite -4s;
+}
+.landing-theme .orb-3 {
+  background: var(--cyan);
+  opacity: 0.16;
+  animation: orb-float-3 12s ease-in-out infinite -8s;
+}
+.landing-theme .orb-4 {
+  background: var(--emerald);
+  opacity: 0.16;
+  animation: orb-float-4 15s ease-in-out infinite -2s;
+}
+
+/* Glassmorphism rules applied to cards */
+.landing-theme .glass-card {
+  position: relative;
+  overflow: hidden;
+  background: rgba(20, 28, 53, 0.60);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.landing-theme .glass-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* 3D Phone Mockup floating animation */
+@keyframes phone-float {
+  0% { transform: translateY(0px) rotateX(2deg); }
+  50% { transform: translateY(-12px) rotateX(-2deg); }
+  100% { transform: translateY(0px) rotateX(2deg); }
+}
+
+.landing-theme .phone-shell {
+  animation: phone-float 4s ease-in-out infinite;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* Rotating drop shadow glowing star */
+@keyframes star-rotate-glow {
+  0% {
+    transform: rotate(0deg);
+    filter: drop-shadow(0 0 8px var(--indigo));
+  }
+  50% {
+    filter: drop-shadow(0 0 20px var(--violet));
+  }
+  100% {
+    transform: rotate(360deg);
+    filter: drop-shadow(0 0 8px var(--indigo));
+  }
+}
+
+.landing-theme .star-spin-glow {
+  animation: star-rotate-glow 10s linear infinite;
+}
+
+/* Premium pricing card styling */
+.landing-theme .premium-pricing-card {
+  position: relative;
+  overflow: hidden;
+  background: rgba(20, 28, 53, 0.60);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: 32px;
+  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+}
+
+.landing-theme .premium-pricing-card:hover {
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.25), 0 10px 30px -10px rgba(0, 0, 0, 0.8);
+}
+
+.landing-theme .premium-pricing-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, #6366F1 50%, transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Accessibility: prefers-reduced-motion overrides */
+@media (prefers-reduced-motion: reduce) {
+  .landing-theme *,
+  .landing-theme *::before,
+  .landing-theme *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+    transform: none !important;
+  }
+}
