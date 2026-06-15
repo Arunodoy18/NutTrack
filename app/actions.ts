@@ -490,6 +490,84 @@ export async function getGroceryListAction() {
   }
 }
 
+// ==========================================
+// AI ADVISOR ACTIONS
+// ==========================================
+
+export async function updateDietaryPreferencesAction(preferences: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    
+    await db.update(users)
+      .set({ dietaryPreferences: preferences })
+      .where(eq(users.id, session.user.id));
+      
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error updating dietary preferences:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function chatWithAIAdvisorAction(message: string, history: { role: 'user' | 'assistant', content: string }[]) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+
+    const userId = session.user.id;
+    
+    // Fetch user context
+    const userDoc = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      with: { dailyGoals: true }
+    });
+    
+    const preferences = userDoc?.dietaryPreferences || "No specific preferences set.";
+    const goals = userDoc?.dailyGoals?.[0];
+    
+    let goalsContext = "No daily goals set.";
+    if (goals) {
+      goalsContext = `Calories: ${goals.calories}kcal, Protein: ${goals.protein}g, Fat: ${goals.fat}g, Fiber: ${goals.fiber}g.`;
+    }
+
+    const systemPrompt = `You are the NutTrack AI Meal Advisor, a smart, encouraging, and highly knowledgeable personal nutritionist.
+Your job is to provide specific, actionable, and scientifically sound dietary advice to the user.
+
+USER CONTEXT:
+Dietary Preferences: ${preferences}
+Daily Macro Goals: ${goalsContext}
+
+RULES:
+1. ALWAYS respect the user's Dietary Preferences. If they are vegan, NEVER suggest meat. If allergic to nuts, WARN against them.
+2. Provide concise, friendly answers. Avoid massive walls of text. Use bullet points when suggesting meals.
+3. Factor in their Daily Macro Goals when suggesting foods.
+4. If they ask a non-food related question, politely pivot back to nutrition.`;
+
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...history,
+        { role: "user", content: message }
+      ],
+      temperature: 0.7,
+      max_tokens: 500,
+    });
+
+    return { 
+      success: true, 
+      reply: completion.choices[0].message.content,
+      preferences: userDoc?.dietaryPreferences // Send back to update UI if needed
+    };
+  } catch (error: any) {
+    console.error("Error chatting with AI advisor:", error);
+    return { success: false, error: "Failed to connect to AI Advisor." };
+  }
+}
+
 export async function toggleGroceryItemAction(itemId: string, isPurchased: boolean) {
   try {
     const session = await getServerSession(authOptions);

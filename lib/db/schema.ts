@@ -13,6 +13,7 @@ export const users = pgTable("user", {
   premiumSince: timestamp("premium_since", { mode: "date" }),
   image: text("image"),
   otpLockedUntil: timestamp("otp_locked_until", { mode: "date" }),
+  dietaryPreferences: text("dietary_preferences"),
 });
 
 export const accounts = pgTable(

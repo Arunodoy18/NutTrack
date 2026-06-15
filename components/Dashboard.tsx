@@ -22,7 +22,8 @@ import {
   Mic,
   MicOff,
   Utensils,
-  ShoppingCart
+  ShoppingCart,
+  Bot
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -41,6 +42,7 @@ import { signOut } from "next-auth/react";
 import { useSpeech } from "@/components/useSpeech";
 import FridgeRaider from "@/components/FridgeRaider";
 import GroceryListModal from '@/components/GroceryListModal';
+import AIChatModal from '@/components/AIChatModal';
 
 export interface FoodItemData {
   id: string;
@@ -102,6 +104,7 @@ export default function Dashboard({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFridgeRaiderOpen, setIsFridgeRaiderOpen] = useState(false);
   const [isGroceryListOpen, setIsGroceryListOpen] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Fiber'>('Calories');
 
   // AI-generated Nutrition Insight & Toast flags
@@ -547,6 +550,14 @@ export default function Dashboard({
             >
               <ShoppingCart className="w-4 h-4" />
               <span className="hidden sm:inline">Grocery List</span>
+            </button>
+            <button 
+              onClick={() => setIsAIChatOpen(true)}
+              className="flex-1 md:flex-none px-4 py-3 rounded-2xl bg-card border border-purple-500/40 text-purple-400 font-bold hover:bg-col transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-purple-500/10"
+              title="AI Advisor"
+            >
+              <Bot className="w-4 h-4" />
+              <span className="hidden sm:inline">AI Advisor</span>
             </button>
             <button 
               onClick={onAddMealClick || (() => {
@@ -1541,6 +1552,9 @@ export default function Dashboard({
 
       {/* Grocery List Modal */}
       {isGroceryListOpen && <GroceryListModal onClose={() => setIsGroceryListOpen(false)} />}
+
+      {/* AI Advisor Modal */}
+      {isAIChatOpen && <AIChatModal onClose={() => setIsAIChatOpen(false)} />}
     </div>
   );
 }
