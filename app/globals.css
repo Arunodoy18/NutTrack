@@ -31,35 +31,35 @@ body {
   padding: 0;
 }
 
-/* --- LANDING THEME STYLES (Cinematic & Glassmorphic) --- */
+/* --- LANDING THEME STYLES (Light Kanban Match) --- */
 .landing-theme {
-  --night: #080C18;
-  --deep: #0A0F1E;
-  --surface: #0F1629;
-  --card: #141C35;
+  --night: #F7F5F0;
+  --deep: #F7F5F0;
+  --surface: #FFFFFF;
+  --card: #FFFFFF;
 
-  --glass-bg: rgba(20, 28, 53, 0.60);
-  --glass-bg2: rgba(15, 22, 41, 0.85);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-bdr-lit: rgba(99, 102, 241, 0.30);
-  --rim: rgba(255, 255, 255, 0.07);
-  --rim-bright: rgba(255, 255, 255, 0.18);
+  --glass-bg: #FFFFFF;
+  --glass-bg2: #FFFFFF;
+  --glass-border: #EBE8E0;
+  --glass-bdr-lit: #DEDBD2;
+  --rim: transparent;
+  --rim-bright: transparent;
 
-  --indigo: #6366F1;
-  --violet: #8B5CF6;
-  --cyan: #06B6D4;
-  --emerald: #10B981;
-  --amber: #F59E0B;
-  --rose: #F43F5E;
+  --indigo: #635BFF;
+  --violet: #635BFF;
+  --cyan: #5C99D6;
+  --emerald: #83B593;
+  --amber: #E67F63;
+  --rose: #E67F63;
 
-  --grad-hero: linear-gradient(135deg, #6366F1 0%, #8B5CF6 50%, #06B6D4 100%);
-  --grad-cta: linear-gradient(135deg, #6366F1, #8B5CF6);
-  --grad-green: linear-gradient(135deg, #10B981, #06B6D4);
-  --grad-warm: linear-gradient(135deg, #F59E0B, #F43F5E);
+  --grad-hero: linear-gradient(135deg, #635BFF 0%, #635BFF 50%, #5C99D6 100%);
+  --grad-cta: linear-gradient(135deg, #635BFF, #635BFF);
+  --grad-green: linear-gradient(135deg, #83B593, #5C99D6);
+  --grad-warm: linear-gradient(135deg, #E67F63, #E67F63);
 
-  --txt: #F8FAFC;
-  --txt-2: #94A3B8;
-  --txt-3: #64748B;
+  --txt: #3D3B38;
+  --txt-2: #8D8B86;
+  --txt-3: #A3A09A;
 
   background-color: var(--deep);
   color: var(--txt);
