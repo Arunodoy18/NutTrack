@@ -8,10 +8,15 @@ import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit } from "@/lib/rateLimit";
 import { eq } from "drizzle-orm";
 import OpenAI from "openai";
+import { Redis } from "@upstash/redis";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy",
 });
+
+const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+  ? Redis.fromEnv()
+  : null;
 
 const AI_MODEL = "gpt-4o";
 
@@ -125,6 +130,18 @@ export async function generateNutritionInsightAction(
     }
 
     const { calories, protein, fat, fiber } = todayTotals;
+
+    // Redis Caching Logic
+    const dateStr = new Date().toISOString().split('T')[0];
+    const cacheKey = `insight:${userId}:${dateStr}:${calories}:${protein}`;
+    
+    if (redis) {
+      const cachedInsight = await redis.get<string>(cacheKey);
+      if (cachedInsight) {
+        return { success: true, insight: cachedInsight };
+      }
+    }
+
     const gCals = dailyGoals.calories;
     const gProt = dailyGoals.protein;
     const gFat = dailyGoals.fat;
@@ -157,7 +174,12 @@ OUTPUT (plain text, 2-3 sentences):`;
     
     const text = completion.choices[0].message.content;
     if (text) {
-      return { success: true, insight: text.trim() };
+      const insightText = text.trim();
+      if (redis) {
+        // Cache for 3 hours (10800 seconds)
+        await redis.set(cacheKey, insightText, { ex: 10800 });
+      }
+      return { success: true, insight: insightText };
     }
     
     return { success: true, insight: getFallbackInsight(todayTotals, dailyGoals) };

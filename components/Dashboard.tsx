@@ -34,7 +34,7 @@ import {
   ResponsiveContainer,
   ReferenceLine
 } from 'recharts';
-import { saveDailyGoalsAction, saveMealAction, analyzeMealTextAction, analyzeMealImageAction } from "@/app/actions";
+import { saveDailyGoalsAction, saveMealAction, analyzeMealTextAction, analyzeMealImageAction, generateNutritionInsightAction } from "@/app/actions";
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from "next-auth/react";
 import { useSpeech } from "@/components/useSpeech";
@@ -120,12 +120,7 @@ export default function Dashboard({
       }
 
       try {
-        const res = await fetch("/api/insight", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ goals: dailyGoals, today: todayTotals }),
-        });
-        const response = await res.json();
+        const response = await generateNutritionInsightAction(userId, todayTotals, dailyGoals);
         
         if (response.success && response.insight) {
           setAiTip(response.insight);

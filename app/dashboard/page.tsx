@@ -109,11 +109,13 @@ export default async function DashboardPage() {
   }, { calories: 0, protein: 0, fat: 0, fiber: 0 });
 
   // 5. Calculate global user streak based on all historic logged meals
-  const allUserMeals = await db.query.meals.findMany({
+  // Efficient query: Only fetch the timestamp column to avoid loading massive arrays into memory
+  const allUserMealTimestamps = await db.query.meals.findMany({
     where: eq(meals.userId, userId),
+    columns: { timestamp: true },
     orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
   });
-  const activeStreak = calculateActiveStreak(allUserMeals.map(m => m.timestamp));
+  const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp));
 
   // 6. Calculate 7-day weekly data for analytics charts
   const weeklyDataMap = new Map();
@@ -129,8 +131,20 @@ export default async function DashboardPage() {
     weeklyDataMap.set(dateStr, { name: dayName, Calories: 0, Protein: 0, Fats: 0, Fiber: 0 });
   }
 
+  // Fetch only recent meals to build the chart, omitting heavy nested relations
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  const recentMealsForChart = await db.query.meals.findMany({
+    where: and(
+      eq(meals.userId, userId),
+      gte(meals.timestamp, sevenDaysAgo)
+    ),
+    columns: { timestamp: true, totalCalories: true, totalProtein: true, totalFat: true, totalFiber: true }
+  });
+
   // Populate actuals
-  allUserMeals.forEach(meal => {
+  recentMealsForChart.forEach(meal => {
     const mDate = new Date(meal.timestamp);
     mDate.setHours(0, 0, 0, 0);
     const mDateStr = mDate.toDateString();
@@ -159,7 +173,7 @@ export default async function DashboardPage() {
       todayTotals={todayTotals}
       todayMeals={mappedTodayMeals}
       activeStreak={activeStreak}
-      totalMealsCount={allUserMeals.length}
+      totalMealsCount={allUserMealTimestamps.length}
       weeklyData={weeklyData}
     />
   );
