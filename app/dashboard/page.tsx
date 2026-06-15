@@ -115,6 +115,37 @@ export default async function DashboardPage() {
   });
   const activeStreak = calculateActiveStreak(allUserMeals.map(m => m.timestamp));
 
+  // 6. Calculate 7-day weekly data for analytics charts
+  const weeklyDataMap = new Map();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Initialize last 7 days with 0s
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+    const dateStr = d.toDateString();
+    weeklyDataMap.set(dateStr, { name: dayName, Calories: 0, Protein: 0, Fats: 0, Fiber: 0 });
+  }
+
+  // Populate actuals
+  allUserMeals.forEach(meal => {
+    const mDate = new Date(meal.timestamp);
+    mDate.setHours(0, 0, 0, 0);
+    const mDateStr = mDate.toDateString();
+    
+    if (weeklyDataMap.has(mDateStr)) {
+      const dayData = weeklyDataMap.get(mDateStr);
+      dayData.Calories += meal.totalCalories;
+      dayData.Protein += meal.totalProtein;
+      dayData.Fats += meal.totalFat;
+      dayData.Fiber += meal.totalFiber;
+    }
+  });
+
+  const weeklyData = Array.from(weeklyDataMap.values());
+
   return (
     <Dashboard 
       userId={userId}
@@ -129,6 +160,7 @@ export default async function DashboardPage() {
       todayMeals={mappedTodayMeals}
       activeStreak={activeStreak}
       totalMealsCount={allUserMeals.length}
+      weeklyData={weeklyData}
     />
   );
 }

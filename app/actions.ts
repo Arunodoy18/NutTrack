@@ -272,20 +272,15 @@ OUTPUT FORMAT (strict JSON):
       throw new Error("Failed to get response from OpenAI API");
     }
 
-    // Clean JSON string
+    // Clean JSON string using regex to handle conversational filler
     let cleaned = rawText.trim();
-    if (cleaned.startsWith("```json")) {
-      cleaned = cleaned.substring(7);
-      if (cleaned.endsWith("```")) {
-        cleaned = cleaned.substring(0, cleaned.length - 3);
-      }
-    } else if (cleaned.startsWith("```")) {
-      cleaned = cleaned.substring(3);
-      if (cleaned.endsWith("```")) {
-        cleaned = cleaned.substring(0, cleaned.length - 3);
-      }
+    const jsonBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonBlockMatch) {
+      cleaned = jsonBlockMatch[1].trim();
+    } else {
+      const braceMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (braceMatch) cleaned = braceMatch[0];
     }
-    cleaned = cleaned.trim();
 
     const parsed = JSON.parse(cleaned);
     
@@ -371,12 +366,15 @@ OUTPUT FORMAT:
 
     let rawText = completion.choices[0].message.content || "";
     
-    // Clean JSON string
+    // Clean JSON string using regex to handle conversational filler
     let cleaned = rawText.trim();
-    if (cleaned.startsWith("```json")) cleaned = cleaned.substring(7);
-    else if (cleaned.startsWith("```")) cleaned = cleaned.substring(3);
-    if (cleaned.endsWith("```")) cleaned = cleaned.substring(0, cleaned.length - 3);
-    cleaned = cleaned.trim();
+    const jsonBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonBlockMatch) {
+      cleaned = jsonBlockMatch[1].trim();
+    } else {
+      const braceMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (braceMatch) cleaned = braceMatch[0];
+    }
 
     const parsed = JSON.parse(cleaned);
     
@@ -498,11 +496,15 @@ OUTPUT FORMAT:
     
     if (!rawText) throw new Error("Failed to get response from AI");
 
+    // Clean JSON string using regex to handle conversational filler
     let cleaned = rawText.trim();
-    if (cleaned.startsWith("```json")) cleaned = cleaned.substring(7);
-    else if (cleaned.startsWith("```")) cleaned = cleaned.substring(3);
-    if (cleaned.endsWith("```")) cleaned = cleaned.substring(0, cleaned.length - 3);
-    cleaned = cleaned.trim();
+    const jsonBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonBlockMatch) {
+      cleaned = jsonBlockMatch[1].trim();
+    } else {
+      const braceMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (braceMatch) cleaned = braceMatch[0];
+    }
 
     const parsed = JSON.parse(cleaned);
     

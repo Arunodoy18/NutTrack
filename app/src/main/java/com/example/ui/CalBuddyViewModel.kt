@@ -272,13 +272,18 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
     }
 
     private fun cleanJsonString(raw: String): String {
-        var cleaned = raw.trim()
-        if (cleaned.startsWith("```json")) {
-            cleaned = cleaned.substringAfter("```json").substringBeforeLast("```")
-        } else if (cleaned.startsWith("```")) {
-            cleaned = cleaned.substringAfter("```").substringBeforeLast("```")
+        val cleaned = raw.trim()
+        val regex = Regex("```(?:json)?\\s*([\\s\\S]*?)```")
+        val matchResult = regex.find(cleaned)
+        if (matchResult != null) {
+            return matchResult.groupValues[1].trim()
         }
-        return cleaned.trim()
+        val braceRegex = Regex("\\{[\\s\\S]*\\}")
+        val braceMatch = braceRegex.find(cleaned)
+        if (braceMatch != null) {
+            return braceMatch.value.trim()
+        }
+        return cleaned
     }
 
     fun startManualMeal() {
