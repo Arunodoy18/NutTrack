@@ -49,8 +49,12 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
     private val _nutrientTargets = MutableStateFlow(repository.getNutrientTargets())
     val nutrientTargets: StateFlow<NutrientTargets> = _nutrientTargets.asStateFlow()
 
-    private val _savedMeals = MutableStateFlow(repository.getSavedMeals())
-    val savedMeals: StateFlow<List<SavedMeal>> = _savedMeals.asStateFlow()
+    val savedMeals: StateFlow<List<SavedMeal>> = repository.getSavedMealsFlow()
+        .stateIn(
+            scope = viewModelScope,
+            started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     private val _selectedImageBitmap = MutableStateFlow<Bitmap?>(null)
     val selectedImageBitmap: StateFlow<Bitmap?> = _selectedImageBitmap.asStateFlow()
@@ -440,8 +444,9 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
             timestamp = System.currentTimeMillis(),
             analysis = analysis
         )
-        repository.saveMeal(meal)
-        _savedMeals.value = repository.getSavedMeals()
+        viewModelScope.launch {
+            repository.saveMeal(meal)
+        }
 
         _selectedImageBitmap.value = null
         _activeEditingMeal.value = null
@@ -454,13 +459,15 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun deleteSavedMeal(mealId: String) {
-        repository.deleteMeal(mealId)
-        _savedMeals.value = repository.getSavedMeals()
+        viewModelScope.launch {
+            repository.deleteMeal(mealId)
+        }
     }
 
     fun clearHistory() {
-        repository.clearSavedMeals()
-        _savedMeals.value = repository.getSavedMeals()
+        viewModelScope.launch {
+            repository.clearSavedMeals()
+        }
     }
 
     fun updateNutrientTargets(targets: NutrientTargets) {
@@ -507,7 +514,7 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
                 }
 
                 // 2. Sync Meals
-                val localMeals = repository.getSavedMeals()
+                val localMeals = savedMeals.value
                 val mealsResponse = com.example.api.SyncRetrofitClient.service.syncMeals(
                     com.example.api.SyncMealsRequest(
                         userId = userId,
@@ -516,7 +523,6 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
                 )
                 if (mealsResponse.success && mealsResponse.meals != null) {
                     repository.saveMealsList(mealsResponse.meals)
-                    _savedMeals.value = repository.getSavedMeals()
                     _syncSuccess.value = true
                 } else if (mealsResponse.error != null) {
                     throw Exception(mealsResponse.error)

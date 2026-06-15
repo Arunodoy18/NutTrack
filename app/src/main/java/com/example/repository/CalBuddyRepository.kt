@@ -7,14 +7,14 @@ import com.example.model.DailyTotals
 import com.example.model.MealAnalysis
 import com.example.model.SavedMeal
 import com.example.model.NutrientTargets
-import com.squareup.moshi.Types
+import com.example.db.AppDatabase
+import com.example.db.LocalMeal
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class CalBuddyRepository(context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("calbuddy_prefs", Context.MODE_PRIVATE)
-    private val moshi = OpenRouterRetrofitClient.moshiInstance
-    private val mealListAdapter = moshi.adapter<List<SavedMeal>>(
-        Types.newParameterizedType(List::class.java, SavedMeal::class.java)
-    )
+    private val dao = AppDatabase.getDatabase(context).calBuddyDao()
 
     companion object {
         private const val KEY_CALORIES = "total_calories"
@@ -78,35 +78,28 @@ class CalBuddyRepository(context: Context) {
         saveDailyTotals(DailyTotals(0, 0, 0, 0))
     }
 
-    fun getSavedMeals(): List<SavedMeal> {
-        val json = prefs.getString(KEY_SAVED_MEALS, null) ?: return emptyList()
-        return try {
-            mealListAdapter.fromJson(json) ?: emptyList()
-        } catch (e: Exception) {
-            emptyList()
+    // --- Room Database Methods ---
+
+    fun getSavedMealsFlow(): Flow<List<SavedMeal>> {
+        return dao.getAllMeals().map { localMeals ->
+            localMeals.map { it.toSavedMeal() }
         }
     }
 
-    fun saveMeal(meal: SavedMeal) {
-        val currentMeals = getSavedMeals().toMutableList()
-        currentMeals.add(0, meal) // Add to the top of the history list
-        saveMealsList(currentMeals)
+    suspend fun saveMeal(meal: SavedMeal) {
+        dao.insertMeal(LocalMeal.fromSavedMeal(meal))
     }
 
-    fun saveMealsList(meals: List<SavedMeal>) {
-        val json = mealListAdapter.toJson(meals)
-        prefs.edit().putString(KEY_SAVED_MEALS, json).apply()
+    suspend fun saveMealsList(meals: List<SavedMeal>) {
+        meals.forEach { saveMeal(it) }
     }
 
-    fun deleteMeal(mealId: String) {
-        val currentMeals = getSavedMeals().toMutableList()
-        currentMeals.removeAll { it.id == mealId }
-        val json = mealListAdapter.toJson(currentMeals)
-        prefs.edit().putString(KEY_SAVED_MEALS, json).apply()
+    suspend fun deleteMeal(mealId: String) {
+        dao.deleteMeal(mealId)
     }
 
-    fun clearSavedMeals() {
-        prefs.edit().remove(KEY_SAVED_MEALS).apply()
+    suspend fun clearSavedMeals() {
+        dao.clearMeals()
     }
 
     fun isPremium(): Boolean {
