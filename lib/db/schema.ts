@@ -124,11 +124,22 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const groceryList = pgTable("grocery_list", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  ingredientName: text("ingredient_name").notNull(),
+  isPurchased: boolean("is_purchased").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
   meals: many(meals),
   dailyGoals: many(dailyGoals),
+  groceryList: many(groceryList),
 }));
 
 export const mealsRelations = relations(meals, ({ one, many }) => ({
@@ -156,6 +167,13 @@ export const dailyGoalsRelations = relations(dailyGoals, ({ one }) => ({
 export const paymentsRelations = relations(payments, ({ one }) => ({
   user: one(users, {
     fields: [payments.userId],
+    references: [users.id],
+  }),
+}));
+
+export const groceryListRelations = relations(groceryList, ({ one }) => ({
+  user: one(users, {
+    fields: [groceryList.userId],
     references: [users.id],
   }),
 }));

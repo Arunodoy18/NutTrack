@@ -21,7 +21,8 @@ import {
   Zap,
   Mic,
   MicOff,
-  Utensils
+  Utensils,
+  ShoppingCart
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -39,6 +40,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from "next-auth/react";
 import { useSpeech } from "@/components/useSpeech";
 import FridgeRaider from "@/components/FridgeRaider";
+import GroceryListModal from '@/components/GroceryListModal';
 
 export interface FoodItemData {
   id: string;
@@ -99,6 +101,7 @@ export default function Dashboard({
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFridgeRaiderOpen, setIsFridgeRaiderOpen] = useState(false);
+  const [isGroceryListOpen, setIsGroceryListOpen] = useState(false);
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Fiber'>('Calories');
 
   // AI-generated Nutrition Insight & Toast flags
@@ -536,6 +539,14 @@ export default function Dashboard({
             >
               <Utensils className="w-4 h-4" />
               <span className="hidden sm:inline">Fridge Raider</span>
+            </button>
+            <button 
+              onClick={() => setIsGroceryListOpen(true)}
+              className="flex-1 md:flex-none px-4 py-3 rounded-2xl bg-card border border-green/40 text-green font-bold hover:bg-col transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-green/10"
+              title="Grocery List"
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span className="hidden sm:inline">Grocery List</span>
             </button>
             <button 
               onClick={onAddMealClick || (() => {
@@ -1527,6 +1538,9 @@ export default function Dashboard({
 
       {/* Fridge Raider Modal */}
       {isFridgeRaiderOpen && <FridgeRaider onClose={() => setIsFridgeRaiderOpen(false)} />}
+
+      {/* Grocery List Modal */}
+      {isGroceryListOpen && <GroceryListModal onClose={() => setIsGroceryListOpen(false)} />}
     </div>
   );
 }

@@ -1,12 +1,12 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { dailyGoals, meals, mealItems, users } from "@/lib/db/schema";
+import { dailyGoals, meals, mealItems, users, groceryList } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit } from "@/lib/rateLimit";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import OpenAI from "openai";
 import { Redis } from "@upstash/redis";
 
@@ -434,6 +434,92 @@ OUTPUT FORMAT:
   } catch (err) {
     console.error("AI text scan error:", err);
     return { success: false, error: String(err) };
+  }
+}
+
+// ==========================================
+// GROCERY LIST ACTIONS
+// ==========================================
+
+export async function addIngredientsToGroceryListAction(ingredients: string[]) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    
+    const userId = session.user.id;
+    
+    // Check which ones already exist for this user to avoid duplicates
+    const existing = await db.query.groceryList.findMany({
+      where: eq(groceryList.userId, userId)
+    });
+    const existingNames = existing.map(e => e.ingredientName.toLowerCase());
+    
+    const newIngredients = ingredients.filter(ing => !existingNames.includes(ing.toLowerCase()));
+    
+    if (newIngredients.length > 0) {
+      const inserts = newIngredients.map(ing => ({
+        userId,
+        ingredientName: ing,
+        isPurchased: false
+      }));
+      await db.insert(groceryList).values(inserts);
+      revalidatePath("/dashboard");
+    }
+    
+    return { success: true, added: newIngredients.length };
+  } catch (error: any) {
+    console.error("Error adding to grocery list:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function getGroceryListAction() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    
+    const list = await db.query.groceryList.findMany({
+      where: eq(groceryList.userId, session.user.id),
+      orderBy: (items, { desc }) => [desc(items.createdAt)]
+    });
+    
+    return { success: true, list };
+  } catch (error: any) {
+    console.error("Error fetching grocery list:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function toggleGroceryItemAction(itemId: string, isPurchased: boolean) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    
+    await db.update(groceryList)
+      .set({ isPurchased })
+      .where(and(eq(groceryList.id, itemId), eq(groceryList.userId, session.user.id)));
+      
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error toggling grocery item:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteGroceryItemAction(itemId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) return { success: false, error: "Unauthorized" };
+    
+    await db.delete(groceryList)
+      .where(and(eq(groceryList.id, itemId), eq(groceryList.userId, session.user.id)));
+      
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting grocery item:", error);
+    return { success: false, error: error.message };
   }
 }
 

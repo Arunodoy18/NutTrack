@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Camera, Upload, X, ChevronRight, RefreshCw, AlertTriangle, ChevronDown, ChevronUp, Check, Sparkles, Utensils } from 'lucide-react';
-import { analyzeFridgeImageAction } from "@/app/actions";
+import { analyzeFridgeImageAction, addIngredientsToGroceryListAction } from "@/app/actions";
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Recipe {
@@ -33,6 +33,18 @@ export default function FridgeRaider({ onClose }: FridgeRaiderProps) {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ ingredients_found: string[], recipes: Recipe[] } | null>(null);
   const [expandedRecipeIdx, setExpandedRecipeIdx] = useState<number | null>(null);
+  const [addingGrocery, setAddingGrocery] = useState<number | null>(null);
+
+  const handleAddGrocery = async (idx: number, ingredients: string[]) => {
+    setAddingGrocery(idx);
+    const res = await addIngredientsToGroceryListAction(ingredients);
+    setAddingGrocery(null);
+    if (res.success) {
+      alert((res.added ?? 0) > 0 ? `Added ${res.added} new items to Grocery List!` : "All items already in your list!");
+    } else {
+      alert("Failed to add items: " + res.error);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -284,6 +296,18 @@ export default function FridgeRaider({ onClose }: FridgeRaiderProps) {
                                           <li key={i} className="text-xs text-txt-2">{item}</li>
                                         ))}
                                       </ul>
+                                      <button 
+                                        onClick={() => handleAddGrocery(idx, recipe.ingredients_used)}
+                                        disabled={addingGrocery === idx}
+                                        className="mt-3 px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-lg text-[10px] font-bold uppercase tracking-wide flex items-center gap-1.5 transition-all"
+                                      >
+                                        {addingGrocery === idx ? (
+                                          <RefreshCw className="w-3 h-3 animate-spin" />
+                                        ) : (
+                                          <Sparkles className="w-3 h-3" />
+                                        )}
+                                        Add Missing to Grocery List
+                                      </button>
                                     </div>
                                     <div>
                                       <h5 className="text-[10px] font-black text-green uppercase tracking-widest mb-2 mt-4">Steps</h5>
