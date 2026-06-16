@@ -21,3 +21,6 @@ debug.keystore
 node_modules/
 .next/
 .build-outputs/
+gradle-8.5/
+gradle.zip
+.gradle/

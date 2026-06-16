@@ -135,7 +135,7 @@ class CalBuddyViewModel(application: Application) : AndroidViewModel(application
                 val base64Image = withContext<String>(Dispatchers.IO) { toBase64(bitmap) }
                 val openRouterKey = BuildConfig.OPENROUTER_API_KEY
                 val usdaKey = BuildConfig.USDA_API_KEY
-                val modelName = if (BuildConfig.OPENROUTER_MODEL.isNotEmpty()) BuildConfig.OPENROUTER_MODEL else "google/gemini-2.5-flash"
+                val modelName = if (BuildConfig.OPENROUTER_MODEL.isNotEmpty()) BuildConfig.OPENROUTER_MODEL else "google/gemini-1.5-flash"
 
                 if (openRouterKey.isEmpty() || openRouterKey == "YOUR_OPENROUTER_API_KEY" || openRouterKey == "MY_GEMINI_API_KEY") {
                     throw IllegalStateException("OpenRouter API key is not configured. Please use the Secrets panel in AI Studio.")
