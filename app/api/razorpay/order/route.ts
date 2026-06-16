@@ -15,8 +15,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Amount in paise (₹199 * 100 = 19900)
-    const amount = 19900;
+    // Amount in paise (₹299 * 100 = 29900)
+    const amount = 29900;
     
     const options = {
       amount,

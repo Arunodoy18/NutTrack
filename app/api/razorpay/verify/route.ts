@@ -37,13 +37,13 @@ export async function POST(req: Request) {
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
         razorpaySignature: razorpay_signature,
-        amount: 19900,
+        amount: 29900,
         status: "paid",
       });
 
-      // 2. Upgrade the user to Premium
+      // 2. Upgrade the user to Premium and set the start date
       await db.update(users)
-        .set({ isPremium: true })
+        .set({ isPremium: true, premiumSince: new Date() })
         .where(eq(users.id, userId));
 
       return NextResponse.json({

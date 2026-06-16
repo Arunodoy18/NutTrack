@@ -21,6 +21,7 @@ export const viewport = {
 };
 
 import { PwaRegistry } from "@/components/PwaRegistry";
+import InstallPrompt from "@/components/InstallPrompt";
 
 export default function RootLayout({
   children,
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
         <PwaRegistry />
+        <InstallPrompt />
         {children}
         <Script id="register-sw" strategy="afterInteractive">
           {`

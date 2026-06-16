@@ -261,10 +261,10 @@ export default function Home() {
           {/* Pricing Card */}
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="w-full mx-auto max-w-[400px]">
             <div className="bg-[#FFFFFF] border border-[#EBE8E0] shadow-lg rounded-3xl p-8 flex flex-col items-center relative text-center">
-              <span className="px-3 py-1 rounded-full bg-[#635BFF]/10 text-[#635BFF] text-[10px] font-black tracking-widest uppercase mb-6">LIFETIME PREMIUM</span>
+              <span className="px-3 py-1 rounded-full bg-[#635BFF]/10 text-[#635BFF] text-[10px] font-black tracking-widest uppercase mb-6">PREMIUM ACCESS</span>
               <div className="flex items-baseline gap-1 mb-6">
-                <span className="text-5xl font-black text-[#3D3B38]">$0</span>
-                <span className="text-xs font-bold text-[#8D8B86]">/ forever</span>
+                <span className="text-5xl font-black text-[#3D3B38]">₹299</span>
+                <span className="text-xs font-bold text-[#8D8B86]">/ 3 months</span>
               </div>
               <ul className="space-y-3 mb-8 text-left w-full px-4">
                 {["Unlimited AI Scans", "Cloud Sync across devices", "Detailed Macro Breakdowns", "AI Fridge Raider"].map((feature, i) => (
@@ -272,7 +272,7 @@ export default function Home() {
                 ))}
               </ul>
               <Link href="/auth/register" className="w-full text-center font-bold text-[#FFFFFF] bg-[#3D3B38] hover:bg-[#2A2927] py-4 rounded-xl active:scale-95 transition-all shadow-md">
-                Get Lifetime Access ›
+                Get Premium Access ›
               </Link>
             </div>
           </motion.div>

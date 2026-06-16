@@ -23,7 +23,17 @@ export default async function DashboardPage() {
   const currentUser = await db.query.users.findFirst({
     where: eq(users.id, userId)
   });
-  const isPremium = currentUser?.isPremium || false;
+  let isPremium = currentUser?.isPremium || false;
+
+  if (isPremium && currentUser?.premiumSince) {
+    const premiumDate = new Date(currentUser.premiumSince);
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    
+    if (premiumDate < ninetyDaysAgo) {
+      isPremium = false;
+    }
+  }
 
   // 1. Fetch user's Daily Nutrition Goals
   let currentGoals = await db.query.dailyGoals.findFirst({

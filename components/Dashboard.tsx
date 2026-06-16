@@ -16,6 +16,7 @@ import { useSpeech } from "@/components/useSpeech";
 import FridgeRaider from "@/components/FridgeRaider";
 import GroceryListModal from '@/components/GroceryListModal';
 import AIChatModal from '@/components/AIChatModal';
+import Paywall from '@/components/Paywall';
 
 // Interfaces
 export interface FoodItemData { id: string; name: string; calories: number; protein: number; fat: number; fiber: number; estimatedQuantity: string; }
@@ -466,6 +467,7 @@ export default function Dashboard({
       {isFridgeRaiderOpen && <FridgeRaider onClose={() => setIsFridgeRaiderOpen(false)} />}
       {isGroceryListOpen && <GroceryListModal onClose={() => setIsGroceryListOpen(false)} />}
       {isAIChatOpen && <AIChatModal onClose={() => setIsAIChatOpen(false)} />}
+      {isPaywallOpen && <Paywall onClose={() => setIsPaywallOpen(false)} onSuccess={() => { setIsPaywallOpen(false); setIsPremium(true); window.location.reload(); }} />}
       
     </div>
   );
