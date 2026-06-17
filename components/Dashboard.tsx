@@ -82,7 +82,7 @@ export default function Dashboard({
     let interval: NodeJS.Timeout;
     if (uploadStep === 1) {
       interval = setInterval(() => {
-        setScanningMsgIdx(p => p < 2 ? p + 1 : (isAnalyzing ? p : (setUploadStep(2), p)));
+        setScanningMsgIdx(p => p < 2 ? p + 1 : p);
       }, 950);
     }
     return () => clearInterval(interval);
@@ -420,6 +420,12 @@ export default function Dashboard({
                       <h4 className="text-sm font-black text-[#3D3B38]">GPT-4o Vision Active</h4>
                       <p className="text-xs font-bold text-[#635BFF] mt-1">{SCAN_MESSAGES[scanningMsgIdx]}</p>
                     </div>
+                    {analysisError && (
+                      <div className="mt-4 mx-4 p-3 bg-red-50 text-red-500 rounded-xl border border-red-100 text-xs font-bold">
+                        Error: {analysisError}
+                        <button onClick={() => { setUploadStep(0); setAnalysisError(null); }} className="block w-full py-2 bg-red-500 text-white rounded-lg mt-3 uppercase tracking-widest text-[10px]">Try Again</button>
+                      </div>
+                    )}
                   </div>
                 )}
 
