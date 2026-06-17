@@ -117,7 +117,7 @@ export default function Home() {
         </h1>
         <div className="flex items-center gap-4">
           <Link href="/auth/login" className="text-[13px] font-medium text-[#8D8B86] hover:text-[#3D3B38] transition-colors">Login</Link>
-          <Link href="/auth/register" className="bg-[#FFFFFF] border border-[#EBE8E0] shadow-sm hover:bg-[#F0ECE1] text-[#3D3B38] px-4 py-2 rounded-lg text-[13px] font-bold transition-all active:scale-95">
+          <Link href="/auth/signup" className="bg-[#FFFFFF] border border-[#EBE8E0] shadow-sm hover:bg-[#F0ECE1] text-[#3D3B38] px-4 py-2 rounded-lg text-[13px] font-bold transition-all active:scale-95">
             Get Started
           </Link>
         </div>
@@ -138,7 +138,7 @@ export default function Home() {
               Stop guessing calories. Just take a picture of your plate, and our AI instantly breaks down the protein, carbs, and fats.
             </p>
             <div className="flex gap-4 w-full sm:w-auto">
-              <Link href="/auth/register" className="w-full sm:w-auto text-center font-bold text-[#FFFFFF] bg-[#3D3B38] hover:bg-[#2A2927] py-4 px-8 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-2">
+              <Link href="/auth/signup" className="w-full sm:w-auto text-center font-bold text-[#FFFFFF] bg-[#3D3B38] hover:bg-[#2A2927] py-4 px-8 rounded-xl active:scale-95 transition-all shadow-md flex items-center justify-center gap-2">
                 <Camera size={18} /> Start Scanning Free
               </Link>
             </div>
@@ -271,7 +271,7 @@ export default function Home() {
                   <li key={i} className="flex items-center gap-3 text-xs font-bold text-[#8D8B86]"><Check className="w-4 h-4 text-[#83B593]" strokeWidth={3} />{feature}</li>
                 ))}
               </ul>
-              <Link href="/auth/register" className="w-full text-center font-bold text-[#FFFFFF] bg-[#3D3B38] hover:bg-[#2A2927] py-4 rounded-xl active:scale-95 transition-all shadow-md">
+              <Link href="/auth/signup" className="w-full text-center font-bold text-[#FFFFFF] bg-[#3D3B38] hover:bg-[#2A2927] py-4 rounded-xl active:scale-95 transition-all shadow-md">
                 Get Premium Access ›
               </Link>
             </div>
