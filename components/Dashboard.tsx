@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Flame, Activity, Plus, RefreshCw, Calendar, Settings, Check, 
   AlertTriangle, Sparkles, X, Camera, Upload, Zap, Mic, MicOff, 
-  Utensils, ShoppingCart, Bot, LogOut, Trash2, Calculator
+  Utensils, ShoppingCart, Bot, LogOut, Trash2, Calculator, TrendingDown, TrendingUp, ArrowRight
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
@@ -538,32 +538,146 @@ export default function Dashboard({
       {/* Goals Setting Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#3D3B38]/60 backdrop-blur-sm">
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="w-full max-w-sm bg-[#FFFFFF] rounded-3xl shadow-2xl overflow-hidden">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[#3D3B38]/60 backdrop-blur-sm">
+            <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 300 }} className="w-full max-w-lg bg-[#FFFFFF] rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden max-h-[90dvh] flex flex-col">
               <div className="p-5 border-b border-[#EBE8E0] flex justify-between items-center">
-                <h3 className="text-sm font-black text-[#3D3B38]">Daily Targets</h3>
+                <h3 className="text-sm font-black text-[#3D3B38]">Daily Targets & Macro Split</h3>
                 <button onClick={() => setIsModalOpen(false)} className="text-[#8D8B86]"><X size={18}/></button>
               </div>
-              <form onSubmit={handleSaveGoals} className="p-6 space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-black text-[#8D8B86] uppercase block mb-1">Calories</label>
-                    <input type="number" value={targetCals} onChange={(e)=>setTargetCals(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-2 rounded-xl text-sm font-bold text-[#3D3B38]" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#8D8B86] uppercase block mb-1">Protein (g)</label>
-                    <input type="number" value={targetProtein} onChange={(e)=>setTargetProtein(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-2 rounded-xl text-sm font-bold text-[#3D3B38]" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#8D8B86] uppercase block mb-1">Fats (g)</label>
-                    <input type="number" value={targetFat} onChange={(e)=>setTargetFat(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-2 rounded-xl text-sm font-bold text-[#3D3B38]" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black text-[#8D8B86] uppercase block mb-1">Fiber (g)</label>
-                    <input type="number" value={targetFiber} onChange={(e)=>setTargetFiber(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-2 rounded-xl text-sm font-bold text-[#3D3B38]" />
+              <form onSubmit={handleSaveGoals} className="p-6 space-y-5 overflow-y-auto">
+                {/* Calorie Target */}
+                <div>
+                  <label className="text-[10px] font-black text-[#8D8B86] uppercase block mb-1">Daily Calorie Target</label>
+                  <input type="number" value={targetCals} onChange={(e) => {
+                    setTargetCals(e.target.value);
+                    const cals = parseInt(e.target.value) || 0;
+                    const saved = localStorage.getItem('dietbuddy_macro_split');
+                    if (saved) {
+                      try {
+                        const split = JSON.parse(saved);
+                        setTargetProtein(Math.round((cals * (split.protein / 100)) / 4).toString());
+                        setTargetFat(Math.round((cals * (split.fat / 100)) / 9).toString());
+                      } catch {}
+                    }
+                  }} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-4 py-3 rounded-xl text-lg font-black text-[#3D3B38] text-center focus:outline-none focus:border-[#635BFF]" />
+                </div>
+
+                {/* Macro Split Presets */}
+                <div>
+                  <label className="text-[10px] font-black text-[#8D8B86] uppercase tracking-widest block mb-2">Quick Macro Splits</label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { label: '💪 Muscle', p: 40, f: 25, c: 35 },
+                      { label: '⚖️ Balanced', p: 30, f: 30, c: 40 },
+                      { label: '🥑 Keto', p: 25, f: 65, c: 10 },
+                      { label: '🏃 Endurance', p: 20, f: 25, c: 55 },
+                    ].map((preset) => (
+                      <button key={preset.label} type="button" onClick={() => {
+                        const cals = parseInt(targetCals) || 2000;
+                        const proteinG = Math.round((cals * (preset.p / 100)) / 4);
+                        const fatG = Math.round((cals * (preset.f / 100)) / 9);
+                        setTargetProtein(proteinG.toString());
+                        setTargetFat(fatG.toString());
+                        localStorage.setItem('dietbuddy_macro_split', JSON.stringify({ protein: preset.p, fat: preset.f, carbs: preset.c }));
+                      }} className="bg-[#F7F5F0] border border-[#EBE8E0] rounded-xl p-2 text-center hover:border-[#635BFF] transition-all active:scale-95">
+                        <span className="text-xs font-bold text-[#3D3B38] block">{preset.label}</span>
+                        <span className="text-[8px] font-bold text-[#8D8B86] block mt-0.5">P{preset.p} F{preset.f} C{preset.c}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
-                <button type="submit" disabled={isSaving} className="w-full mt-4 py-3 bg-[#3D3B38] text-white rounded-xl font-bold text-xs">Save Goals</button>
+
+                {/* Editable Macro Inputs */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-[10px] font-black text-[#83B593] uppercase block mb-1">Protein (g)</label>
+                    <input type="number" value={targetProtein} onChange={(e)=>setTargetProtein(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-2.5 rounded-xl text-sm font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#83B593]" />
+                    <span className="text-[8px] font-bold text-[#8D8B86] block text-center mt-1">{parseInt(targetCals) > 0 ? Math.round((parseInt(targetProtein) * 4 / parseInt(targetCals)) * 100) : 0}% of cals</span>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-[#E67F63] uppercase block mb-1">Fats (g)</label>
+                    <input type="number" value={targetFat} onChange={(e)=>setTargetFat(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-2.5 rounded-xl text-sm font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#E67F63]" />
+                    <span className="text-[8px] font-bold text-[#8D8B86] block text-center mt-1">{parseInt(targetCals) > 0 ? Math.round((parseInt(targetFat) * 9 / parseInt(targetCals)) * 100) : 0}% of cals</span>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-[#5C99D6] uppercase block mb-1">Fiber (g)</label>
+                    <input type="number" value={targetFiber} onChange={(e)=>setTargetFiber(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-2.5 rounded-xl text-sm font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#5C99D6]" />
+                    <span className="text-[8px] font-bold text-[#8D8B86] block text-center mt-1">gut health</span>
+                  </div>
+                </div>
+
+                {/* Dynamic Adjustment Suggestion */}
+                {(() => {
+                  const avgCals = weeklyData.length > 0 ? Math.round(weeklyData.reduce((sum: number, d: any) => sum + (d.Calories || 0), 0) / weeklyData.length) : 0;
+                  const avgProt = weeklyData.length > 0 ? Math.round(weeklyData.reduce((sum: number, d: any) => sum + (d.Protein || 0), 0) / weeklyData.length) : 0;
+                  const goalCals = parseInt(targetCals) || 2000;
+                  const goalProt = parseInt(targetProtein) || 80;
+                  const calDiff = avgCals - goalCals;
+                  const protDiff = avgProt - goalProt;
+
+                  if (avgCals === 0) return null;
+
+                  return (
+                    <div className="bg-[#F7F5F0] rounded-2xl p-4 border border-[#EBE8E0] space-y-3">
+                      <span className="text-[9px] font-black text-[#8D8B86] uppercase tracking-widest">📊 Weekly Analysis</span>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-[#FFFFFF] rounded-xl p-3 border border-[#EBE8E0] text-center">
+                          <span className="text-[8px] font-black text-[#8D8B86] uppercase block">Avg Calories</span>
+                          <span className="text-lg font-black text-[#3D3B38]">{avgCals}</span>
+                          <span className={`text-[9px] font-bold flex items-center justify-center gap-0.5 mt-1 ${calDiff > 0 ? 'text-[#E67F63]' : 'text-[#83B593]'}`}>
+                            {calDiff > 0 ? <TrendingUp size={10}/> : <TrendingDown size={10}/>} {Math.abs(calDiff)} {calDiff > 0 ? 'over' : 'under'}
+                          </span>
+                        </div>
+                        <div className="bg-[#FFFFFF] rounded-xl p-3 border border-[#EBE8E0] text-center">
+                          <span className="text-[8px] font-black text-[#8D8B86] uppercase block">Avg Protein</span>
+                          <span className="text-lg font-black text-[#3D3B38]">{avgProt}g</span>
+                          <span className={`text-[9px] font-bold flex items-center justify-center gap-0.5 mt-1 ${protDiff >= 0 ? 'text-[#83B593]' : 'text-[#E67F63]'}`}>
+                            {protDiff >= 0 ? <TrendingUp size={10}/> : <TrendingDown size={10}/>} {Math.abs(protDiff)}g {protDiff >= 0 ? 'above' : 'below'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Smart Suggestions */}
+                      {calDiff < -300 && (
+                        <button type="button" onClick={() => {
+                          const suggested = goalCals - 200;
+                          setTargetCals(suggested.toString());
+                        }} className="w-full text-left p-3 bg-[#635BFF]/5 rounded-xl border border-[#635BFF]/20 flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] font-black text-[#635BFF] block">🎯 Suggested Adjustment</span>
+                            <span className="text-[9px] font-bold text-[#8D8B86]">You're consistently {Math.abs(calDiff)} cals under. Lower target to {goalCals - 200} for a realistic plan.</span>
+                          </div>
+                          <ArrowRight size={14} className="text-[#635BFF] shrink-0" />
+                        </button>
+                      )}
+                      {calDiff > 200 && (
+                        <button type="button" onClick={() => {
+                          const suggested = goalCals + 150;
+                          setTargetCals(suggested.toString());
+                        }} className="w-full text-left p-3 bg-[#E67F63]/5 rounded-xl border border-[#E67F63]/20 flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] font-black text-[#E67F63] block">⚠️ Over-eating Pattern</span>
+                            <span className="text-[9px] font-bold text-[#8D8B86]">You're consistently {calDiff} cals over. Raise target to {goalCals + 150} or tighten portions.</span>
+                          </div>
+                          <ArrowRight size={14} className="text-[#E67F63] shrink-0" />
+                        </button>
+                      )}
+                      {protDiff < -15 && (
+                        <button type="button" onClick={() => {
+                          setTargetProtein(Math.max(avgProt + 10, goalProt).toString());
+                        }} className="w-full text-left p-3 bg-[#83B593]/5 rounded-xl border border-[#83B593]/20 flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] font-black text-[#83B593] block">💪 Protein Gap Detected</span>
+                            <span className="text-[9px] font-bold text-[#8D8B86]">You're averaging {Math.abs(protDiff)}g below your protein target. Add a scoop of whey or extra chicken.</span>
+                          </div>
+                          <ArrowRight size={14} className="text-[#83B593] shrink-0" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                <button type="submit" disabled={isSaving} className="w-full py-3.5 bg-[#3D3B38] text-white rounded-xl font-bold text-xs active:scale-95 transition-all">Save Goals</button>
               </form>
             </motion.div>
           </div>
