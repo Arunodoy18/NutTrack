@@ -244,8 +244,9 @@ The user has uploaded a photo of their meal. Your job is to identify every disti
 RULES:
 - Only identify food items you can see with reasonable confidence. Do not guess invisible items.
 - If the image is not a food photo (blurry, non-food subject, error), return { "error": "not_food", "message": "No meal detected in this image." }
-- Never hallucinate nutrition values. Use your trained knowledge of USDA nutritional data.
+- ALWAYS cross-reference your nutrition estimates against USDA FoodData Central values. Use scientifically verified macros per 100g, not rough guesses.
 - Weights are estimates — be conservative, not generous. A "medium chicken breast" is 150g, not 250g.
+- REFERENCE OBJECTS: If you detect a fork, spoon, knife, coin, or hand in the image, use it as a size reference to more accurately estimate the dimensions and weight of the food portions. A standard dinner fork is ~19cm long. A standard teaspoon is ~13cm.
 - Always return valid JSON only. No markdown, no explanation, no preamble.
 
 OUTPUT FORMAT (strict JSON):

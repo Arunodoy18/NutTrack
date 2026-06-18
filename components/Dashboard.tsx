@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Flame, Activity, Plus, RefreshCw, Calendar, Settings, Check, 
   AlertTriangle, Sparkles, X, Camera, Upload, Zap, Mic, MicOff, 
-  Utensils, ShoppingCart, Bot, LogOut, Trash2, Calculator, TrendingDown, TrendingUp, ArrowRight
+  Utensils, ShoppingCart, Bot, LogOut, Trash2, Calculator, TrendingDown, TrendingUp, ArrowRight, ScanBarcode, Info
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
@@ -18,6 +18,7 @@ import GroceryListModal from '@/components/GroceryListModal';
 import AIChatModal from '@/components/AIChatModal';
 import Paywall from '@/components/Paywall';
 import BodyProfileModal from '@/components/BodyProfileModal';
+import BarcodeScanner from '@/components/BarcodeScanner';
 
 // Interfaces
 export interface FoodItemData { id: string; name: string; calories: number; protein: number; fat: number; fiber: number; estimatedQuantity: string; }
@@ -36,6 +37,7 @@ export default function Dashboard({
   const [isGroceryListOpen, setIsGroceryListOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [isBodyProfileOpen, setIsBodyProfileOpen] = useState(false);
+  const [isBarcodeOpen, setIsBarcodeOpen] = useState(false);
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Fiber'>('Calories');
 
   const [targetCals, setTargetCals] = useState(dailyGoals.calories.toString());
@@ -413,8 +415,7 @@ export default function Dashboard({
               <div className="p-6 overflow-y-auto">
                 {uploadStep === 0 && (
                   <div className="space-y-6">
-                    {/* Camera / Voice / Gallery actions */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-4 gap-3">
                       <div className="relative bg-[#F7F5F0] border border-[#EBE8E0] rounded-2xl p-4 flex flex-col items-center justify-center gap-2">
                         <input type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
                         <div className="w-10 h-10 rounded-full bg-[#FFFFFF] shadow-sm flex items-center justify-center text-[#635BFF]"><Upload size={18} /></div>
@@ -429,8 +430,20 @@ export default function Dashboard({
                         <button onPointerDown={startListening} onPointerUp={stopListening} onPointerLeave={stopListening} className={`w-10 h-10 rounded-full shadow-sm flex items-center justify-center z-10 relative ${isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-[#FFFFFF] text-[#E67F63]'}`}>
                           {isListening ? <Mic size={18} /> : <MicOff size={18} />}
                         </button>
-                        <span className="text-[10px] font-bold text-[#3D3B38]">{isListening ? "Listening" : "Hold to Talk"}</span>
+                        <span className="text-[10px] font-bold text-[#3D3B38]">{isListening ? "Listening" : "Voice"}</span>
                       </div>
+                      <div className="bg-[#F7F5F0] border border-[#EBE8E0] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 cursor-pointer active:scale-95 transition-transform" onClick={() => { setIsUploadModalOpen(false); setIsBarcodeOpen(true); }}>
+                        <div className="w-10 h-10 rounded-full bg-[#FFFFFF] shadow-sm flex items-center justify-center text-[#635BFF]"><ScanBarcode size={18} /></div>
+                        <span className="text-[10px] font-bold text-[#3D3B38]">Barcode</span>
+                      </div>
+                    </div>
+
+                    {/* Photo Reference Tip */}
+                    <div className="flex items-start gap-2 p-3 bg-[#635BFF]/5 rounded-xl border border-[#635BFF]/10">
+                      <Info size={14} className="text-[#635BFF] shrink-0 mt-0.5" />
+                      <p className="text-[10px] font-bold text-[#8D8B86] leading-relaxed">
+                        <span className="text-[#3D3B38]">Pro Tip:</span> Place a fork or coin next to your plate before snapping. The AI uses reference objects to estimate portion sizes more accurately.
+                      </p>
                     </div>
 
                     {transcript && <div className="p-3 bg-red-50 rounded-xl border border-red-100 text-xs font-semibold text-red-500 italic">"{transcript}"</div>}
@@ -690,6 +703,18 @@ export default function Dashboard({
       {isAIChatOpen && <AIChatModal onClose={() => setIsAIChatOpen(false)} />}
       {isPaywallOpen && <Paywall onClose={() => setIsPaywallOpen(false)} onSuccess={() => { setIsPaywallOpen(false); setIsPremium(true); window.location.reload(); }} />}
       {isBodyProfileOpen && <BodyProfileModal onClose={() => setIsBodyProfileOpen(false)} onGoalsCalculated={handleGoalsFromProfile} />}
+      {isBarcodeOpen && <BarcodeScanner onClose={() => setIsBarcodeOpen(false)} onFoodFound={(food) => {
+        const newItems = [...(activeAnalysis?.items || []), food];
+        const totalCalories = newItems.reduce((s: number, i: any) => s + (i.calories || 0), 0);
+        const totalProtein = newItems.reduce((s: number, i: any) => s + (i.protein || 0), 0);
+        const totalFat = newItems.reduce((s: number, i: any) => s + (i.fat || 0), 0);
+        const totalFiber = newItems.reduce((s: number, i: any) => s + (i.fiber || 0), 0);
+        setActiveAnalysis({ name: "Scanned Meal", totalCalories, totalProtein, totalFat, totalFiber, items: newItems });
+        setCustomMealName(food.name);
+        setUploadStep(2);
+        setIsUploadModalOpen(true);
+        setIsBarcodeOpen(false);
+      }} />}
       
     </div>
   );
