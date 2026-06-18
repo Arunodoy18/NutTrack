@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Flame, Activity, Plus, RefreshCw, Calendar, Settings, Check, 
   AlertTriangle, Sparkles, X, Camera, Upload, Zap, Mic, MicOff, 
-  Utensils, ShoppingCart, Bot, LogOut, Trash2
+  Utensils, ShoppingCart, Bot, LogOut, Trash2, Calculator
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
@@ -17,6 +17,7 @@ import FridgeRaider from "@/components/FridgeRaider";
 import GroceryListModal from '@/components/GroceryListModal';
 import AIChatModal from '@/components/AIChatModal';
 import Paywall from '@/components/Paywall';
+import BodyProfileModal from '@/components/BodyProfileModal';
 
 // Interfaces
 export interface FoodItemData { id: string; name: string; calories: number; protein: number; fat: number; fiber: number; estimatedQuantity: string; }
@@ -34,6 +35,7 @@ export default function Dashboard({
   const [isFridgeRaiderOpen, setIsFridgeRaiderOpen] = useState(false);
   const [isGroceryListOpen, setIsGroceryListOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [isBodyProfileOpen, setIsBodyProfileOpen] = useState(false);
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Fiber'>('Calories');
 
   const [targetCals, setTargetCals] = useState(dailyGoals.calories.toString());
@@ -216,6 +218,14 @@ export default function Dashboard({
     setIsSaving(false); setIsModalOpen(false);
   };
 
+  const handleGoalsFromProfile = async (goals: { calories: number; protein: number; fat: number; fiber: number }) => {
+    setTargetCals(goals.calories.toString());
+    setTargetProtein(goals.protein.toString());
+    setTargetFat(goals.fat.toString());
+    setTargetFiber(goals.fiber.toString());
+    await saveDailyGoalsAction(userId, goals);
+  };
+
   return (
     <div className="min-h-[100dvh] bg-[#F7F5F0] text-[#3D3B38] font-sans pb-32">
       {/* FLOATING ACTION BAR */}
@@ -258,6 +268,9 @@ export default function Dashboard({
           </button>
           <button onClick={() => setIsGroceryListOpen(true)} className="shrink-0 px-4 py-2 bg-[#FFFFFF] border border-[#EBE8E0] rounded-xl text-xs font-bold text-[#3D3B38] shadow-sm flex items-center gap-2 active:scale-95">
             <ShoppingCart size={14} className="text-[#83B593]"/> Grocery List
+          </button>
+          <button onClick={() => setIsBodyProfileOpen(true)} className="shrink-0 px-4 py-2 bg-[#FFFFFF] border border-[#EBE8E0] rounded-xl text-xs font-bold text-[#3D3B38] shadow-sm flex items-center gap-2 active:scale-95">
+            <Calculator size={14} className="text-[#E67F63]"/> BMR Calculator
           </button>
         </div>
 
@@ -562,6 +575,7 @@ export default function Dashboard({
       {isGroceryListOpen && <GroceryListModal onClose={() => setIsGroceryListOpen(false)} />}
       {isAIChatOpen && <AIChatModal onClose={() => setIsAIChatOpen(false)} />}
       {isPaywallOpen && <Paywall onClose={() => setIsPaywallOpen(false)} onSuccess={() => { setIsPaywallOpen(false); setIsPremium(true); window.location.reload(); }} />}
+      {isBodyProfileOpen && <BodyProfileModal onClose={() => setIsBodyProfileOpen(false)} onGoalsCalculated={handleGoalsFromProfile} />}
       
     </div>
   );
