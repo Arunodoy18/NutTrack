@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Flame, Activity, Plus, RefreshCw, Calendar, Settings, Check, 
   AlertTriangle, Sparkles, X, Camera, Upload, Zap, Mic, MicOff, 
-  Utensils, ShoppingCart, Bot, LogOut
+  Utensils, ShoppingCart, Bot, LogOut, Trash2
 } from 'lucide-react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine
@@ -114,6 +114,45 @@ export default function Dashboard({
       else setAnalysisError(res.error || "Failed");
     } catch { setAnalysisError("Error"); } finally { setIsAnalyzing(false); }
   };
+
+  // --- Edit & Confirm Logic ---
+  const handleItemChange = (index: number, field: string, value: string | number) => {
+    if (!activeAnalysis || !activeAnalysis.items) return;
+    const newItems = [...activeAnalysis.items];
+    newItems[index] = { ...newItems[index], [field]: value };
+    setActiveAnalysis({ ...activeAnalysis, items: newItems });
+  };
+
+  const handleItemDelete = (index: number) => {
+    if (!activeAnalysis || !activeAnalysis.items) return;
+    const newItems = activeAnalysis.items.filter((_: any, i: number) => i !== index);
+    setActiveAnalysis({ ...activeAnalysis, items: newItems });
+  };
+
+  const handleAddItem = () => {
+    if (!activeAnalysis) return;
+    const newItems = [...(activeAnalysis.items || []), { name: "", calories: 0, protein: 0, fat: 0, fiber: 0, estimatedQuantity: "100g" }];
+    setActiveAnalysis({ ...activeAnalysis, items: newItems });
+  };
+
+  useEffect(() => {
+    if (activeAnalysis && activeAnalysis.items) {
+      const items = activeAnalysis.items;
+      const totalCalories = items.reduce((sum: number, item: any) => sum + (item.calories || 0), 0);
+      const totalProtein = items.reduce((sum: number, item: any) => sum + (item.protein || 0), 0);
+      const totalFat = items.reduce((sum: number, item: any) => sum + (item.fat || 0), 0);
+      const totalFiber = items.reduce((sum: number, item: any) => sum + (item.fiber || 0), 0);
+      
+      if (
+        totalCalories !== activeAnalysis.totalCalories ||
+        totalProtein !== activeAnalysis.totalProtein ||
+        totalFat !== activeAnalysis.totalFat ||
+        totalFiber !== activeAnalysis.totalFiber
+      ) {
+        setActiveAnalysis({ ...activeAnalysis, totalCalories, totalProtein, totalFat, totalFiber });
+      }
+    }
+  }, [activeAnalysis?.items]);
 
   const handleStartAnalysis = () => {
     if (checkScanLimit()) return setIsPaywallOpen(true);
@@ -449,7 +488,30 @@ export default function Dashboard({
                       <input type="text" value={customMealName} onChange={(e)=>setCustomMealName(e.target.value)} className="w-full px-4 py-3 bg-[#FFFFFF] border border-[#EBE8E0] rounded-xl text-sm font-bold text-[#3D3B38] focus:outline-none focus:border-[#635BFF]" />
                     </div>
 
-                    <button disabled={isSavingMeal} onClick={handleSaveMeal} className="w-full py-4 bg-[#635BFF] text-white rounded-xl font-bold text-sm shadow-[0_4px_14px_rgba(99,102,241,0.4)] disabled:opacity-50 flex justify-center items-center gap-2">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <label className="text-[10px] font-black text-[#8D8B86] uppercase tracking-widest">Identified Items</label>
+                        <button onClick={handleAddItem} className="text-[#635BFF] flex items-center gap-1 text-[10px] font-bold"><Plus size={12}/> Add Missing</button>
+                      </div>
+                      <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                        {activeAnalysis.items?.map((item: any, index: number) => (
+                          <div key={index} className="bg-[#FFFFFF] border border-[#EBE8E0] rounded-xl p-3 shadow-sm">
+                            <div className="flex justify-between items-center mb-2">
+                              <input type="text" value={item.name} onChange={(e) => handleItemChange(index, 'name', e.target.value)} className="text-sm font-bold text-[#3D3B38] focus:outline-none bg-transparent w-full" placeholder="Food name"/>
+                              <button onClick={() => handleItemDelete(index)} className="text-red-400 hover:bg-red-50 rounded-md p-1 transition-colors"><Trash2 size={14}/></button>
+                            </div>
+                            <div className="grid grid-cols-4 gap-2 text-[10px] font-bold text-[#3D3B38]">
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-1">Cals</span><input type="number" value={item.calories} onChange={(e) => handleItemChange(index, 'calories', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-2 py-1.5 focus:outline-none border border-transparent focus:border-[#635BFF]/30"/></div>
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-1">Pro (g)</span><input type="number" value={item.protein} onChange={(e) => handleItemChange(index, 'protein', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-2 py-1.5 focus:outline-none border border-transparent focus:border-[#83B593]/30"/></div>
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-1">Fat (g)</span><input type="number" value={item.fat} onChange={(e) => handleItemChange(index, 'fat', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-2 py-1.5 focus:outline-none border border-transparent focus:border-[#E67F63]/30"/></div>
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-1">Fib (g)</span><input type="number" value={item.fiber} onChange={(e) => handleItemChange(index, 'fiber', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-2 py-1.5 focus:outline-none border border-transparent focus:border-[#5C99D6]/30"/></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button disabled={isSavingMeal} onClick={handleSaveMeal} className="w-full py-4 bg-[#635BFF] text-white rounded-xl font-bold text-sm shadow-[0_4px_14px_rgba(99,102,241,0.4)] disabled:opacity-50 flex justify-center items-center gap-2 active:scale-95 transition-all mt-4">
                       {isSavingMeal ? <RefreshCw className="animate-spin" size={16}/> : <Check size={16}/>} Save to Log
                     </button>
                   </div>
