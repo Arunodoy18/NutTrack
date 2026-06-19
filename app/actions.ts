@@ -53,12 +53,23 @@ export async function saveDailyGoalsAction(
   }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || session.user.id !== userId) {
+      throw new Error("Unauthorized: Invalid session or user ID mismatch");
+    }
+
+    // Sanitize and bound inputs
+    const safeCals = Math.min(Math.max(0, targetValues.calories || 0), 20000);
+    const safeProtein = Math.min(Math.max(0, targetValues.protein || 0), 1000);
+    const safeFat = Math.min(Math.max(0, targetValues.fat || 0), 1000);
+    const safeFiber = Math.min(Math.max(0, targetValues.fiber || 0), 200);
+
     await db.insert(dailyGoals).values({
       userId: userId,
-      calories: targetValues.calories,
-      protein: targetValues.protein,
-      fat: targetValues.fat,
-      fiber: targetValues.fiber,
+      calories: safeCals,
+      protein: safeProtein,
+      fat: safeFat,
+      fiber: safeFiber,
     });
     revalidatePath("/dashboard");
     return { success: true };
@@ -87,25 +98,43 @@ export async function saveMealAction(
   }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || session.user.id !== userId) {
+      throw new Error("Unauthorized: Invalid session or user ID mismatch");
+    }
+
+    // Sanitize and bound totals
+    const safeTotalCals = Math.min(Math.max(0, mealData.totalCalories || 0), 20000);
+    const safeTotalProt = Math.min(Math.max(0, mealData.totalProtein || 0), 1000);
+    const safeTotalFat = Math.min(Math.max(0, mealData.totalFat || 0), 1000);
+    const safeTotalFib = Math.min(Math.max(0, mealData.totalFiber || 0), 200);
+
     const [insertedMeal] = await db.insert(meals).values({
       userId: userId,
-      summary: mealData.summary,
-      totalCalories: mealData.totalCalories,
-      totalProtein: mealData.totalProtein,
-      totalFat: mealData.totalFat,
-      totalFiber: mealData.totalFiber,
+      summary: mealData.summary || "Meal",
+      totalCalories: safeTotalCals,
+      totalProtein: safeTotalProt,
+      totalFat: safeTotalFat,
+      totalFiber: safeTotalFib,
       timestamp: new Date(),
     }).returning();
 
     for (const item of mealData.items) {
+      if (!item.name || item.name.trim() === "") continue;
+      
+      const safeItemCals = Math.min(Math.max(0, item.calories || 0), 5000);
+      const safeItemProt = Math.min(Math.max(0, item.protein || 0), 500);
+      const safeItemFat = Math.min(Math.max(0, item.fat || 0), 500);
+      const safeItemFib = Math.min(Math.max(0, item.fiber || 0), 100);
+
       await db.insert(mealItems).values({
         mealId: insertedMeal.id,
-        name: item.name,
-        calories: item.calories,
-        protein: item.protein,
-        fat: item.fat,
-        fiber: item.fiber,
-        estimatedQuantity: item.estimatedQuantity,
+        name: item.name.trim().substring(0, 100),
+        calories: safeItemCals,
+        protein: safeItemProt,
+        fat: safeItemFat,
+        fiber: safeItemFib,
+        estimatedQuantity: (item.estimatedQuantity || "1 serving").substring(0, 50),
       });
     }
 
@@ -305,7 +334,13 @@ OUTPUT FORMAT (strict JSON):
       if (braceMatch) cleaned = braceMatch[0];
     }
 
-    const parsed = JSON.parse(cleaned);
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (e) {
+      console.error("Failed to parse AI response:", cleaned);
+      throw new Error("Failed to analyze meal. The AI returned an invalid format. Please try again.");
+    }
     
     if (parsed.error) {
       throw new Error(parsed.message || "Invalid meal image.");
@@ -399,7 +434,13 @@ OUTPUT FORMAT:
       if (braceMatch) cleaned = braceMatch[0];
     }
 
-    const parsed = JSON.parse(cleaned);
+    let parsed;
+    try {
+      parsed = JSON.parse(cleaned);
+    } catch (e) {
+      console.error("Failed to parse AI response (text):", cleaned);
+      throw new Error("Failed to analyze meal text. The AI returned an invalid format.");
+    }
     
     if (parsed.error === "no_food_detected" || parsed.error) {
       throw new Error(parsed.message || "No recognizable food items found in the text.");

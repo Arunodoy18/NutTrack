@@ -70,6 +70,19 @@ export default function BarcodeScanner({ onClose, onFoodFound }: BarcodeScannerP
     };
   }, []);
 
+  const fetchWithTimeout = async (url: string, ms = 8000) => {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), ms);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(id);
+      return response;
+    } catch (err) {
+      clearTimeout(id);
+      throw err;
+    }
+  };
+
   const lookupBarcode = async (barcode: string) => {
     setIsSearching(true);
     setError(null);
@@ -77,7 +90,7 @@ export default function BarcodeScanner({ onClose, onFoodFound }: BarcodeScannerP
 
     try {
       // Step 1: Try Open Food Facts (free, no API key)
-      const offRes = await fetch(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`);
+      const offRes = await fetchWithTimeout(`https://world.openfoodfacts.org/api/v2/product/${barcode}.json`, 5000);
       const offData = await offRes.json();
 
       if (offData.status === 1 && offData.product) {
@@ -104,7 +117,7 @@ export default function BarcodeScanner({ onClose, onFoodFound }: BarcodeScannerP
 
       // Step 2: Fallback - Try USDA FoodData Central
       const usdaKey = "DEMO_KEY"; // Free tier allows 30 requests/hour
-      const usdaRes = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usdaKey}&query=${barcode}&pageSize=1`);
+      const usdaRes = await fetchWithTimeout(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${usdaKey}&query=${barcode}&pageSize=1`, 5000);
       const usdaData = await usdaRes.json();
 
       if (usdaData.foods && usdaData.foods.length > 0) {

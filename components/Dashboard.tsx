@@ -61,17 +61,23 @@ export default function Dashboard({
 
   const { isListening, transcript, startListening, stopListening, error: speechError } = useSpeech();
 
-  useEffect(() => { setIsPremium(isPremiumUser || localStorage.getItem("dietbuddy_premium") === "true"); }, [isPremiumUser]);
+  // Safe local storage helper
+  const safeStorage = {
+    get: (key: string) => { try { return localStorage.getItem(key); } catch { return null; } },
+    set: (key: string, value: string) => { try { localStorage.setItem(key, value); } catch {} }
+  };
+
+  useEffect(() => { setIsPremium(isPremiumUser || safeStorage.get("dietbuddy_premium") === "true"); }, [isPremiumUser]);
 
   const checkScanLimit = () => {
     if (typeof window === "undefined" || isPremium) return false;
-    const count = parseInt(localStorage.getItem("dietbuddy_scan_count") || "0");
+    const count = parseInt(safeStorage.get("dietbuddy_scan_count") || "0");
     return count >= 3;
   };
 
   const incrementScanCount = () => {
-    const count = parseInt(localStorage.getItem("dietbuddy_scan_count") || "0");
-    localStorage.setItem("dietbuddy_scan_count", (count + 1).toString());
+    const count = parseInt(safeStorage.get("dietbuddy_scan_count") || "0");
+    safeStorage.set("dietbuddy_scan_count", (count + 1).toString());
   };
 
   const SCAN_MESSAGES = ["Detecting ingredients...", "Estimating portions...", "Calculating macros..."];
@@ -215,8 +221,19 @@ export default function Dashboard({
   const isOverCal = todayTotals.calories > dailyGoals.calories;
 
   const handleSaveGoals = async (e: React.FormEvent) => {
-    e.preventDefault(); setIsSaving(true);
-    await saveDailyGoalsAction(userId, { calories: parseInt(targetCals), protein: parseInt(targetProtein), fat: parseInt(targetFat), fiber: parseInt(targetFiber) });
+    e.preventDefault();
+    const cals = parseInt(targetCals);
+    const prot = parseInt(targetProtein);
+    const fat = parseInt(targetFat);
+    const fib = parseInt(targetFiber);
+
+    if (isNaN(cals) || isNaN(prot) || isNaN(fat) || isNaN(fib) || cals < 0 || prot < 0 || fat < 0 || fib < 0) {
+      alert("Please enter valid positive numbers for goals.");
+      return;
+    }
+
+    setIsSaving(true);
+    await saveDailyGoalsAction(userId, { calories: cals, protein: prot, fat: fat, fiber: fib });
     setIsSaving(false); setIsModalOpen(false);
   };
 
@@ -561,10 +578,10 @@ export default function Dashboard({
                 {/* Calorie Target */}
                 <div>
                   <label className="text-[10px] font-black text-[#8D8B86] uppercase block mb-1">Daily Calorie Target</label>
-                  <input type="number" value={targetCals} onChange={(e) => {
+                  <input type="number" min="0" max="20000" value={targetCals} onChange={(e) => {
                     setTargetCals(e.target.value);
                     const cals = parseInt(e.target.value) || 0;
-                    const saved = localStorage.getItem('dietbuddy_macro_split');
+                    const saved = safeStorage.get('dietbuddy_macro_split');
                     if (saved) {
                       try {
                         const split = JSON.parse(saved);
@@ -591,7 +608,7 @@ export default function Dashboard({
                         const fatG = Math.round((cals * (preset.f / 100)) / 9);
                         setTargetProtein(proteinG.toString());
                         setTargetFat(fatG.toString());
-                        localStorage.setItem('dietbuddy_macro_split', JSON.stringify({ protein: preset.p, fat: preset.f, carbs: preset.c }));
+                        safeStorage.set('dietbuddy_macro_split', JSON.stringify({ protein: preset.p, fat: preset.f, carbs: preset.c }));
                       }} className="bg-[#F7F5F0] border border-[#EBE8E0] rounded-xl p-2 text-center hover:border-[#635BFF] transition-all active:scale-95">
                         <span className="text-xs font-bold text-[#3D3B38] block">{preset.label}</span>
                         <span className="text-[8px] font-bold text-[#8D8B86] block mt-0.5">P{preset.p} F{preset.f} C{preset.c}</span>

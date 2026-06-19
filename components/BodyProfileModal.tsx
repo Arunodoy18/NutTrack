@@ -52,9 +52,15 @@ export default function BodyProfileModal({ onClose, onGoalsCalculated }: BodyPro
   const [targetFat, setTargetFat] = useState(0);
   const [targetFiber, setTargetFiber] = useState(0);
 
+  // Safe local storage helper
+  const safeStorage = {
+    get: (key: string) => { try { return localStorage.getItem(key); } catch { return null; } },
+    set: (key: string, value: string) => { try { localStorage.setItem(key, value); } catch {} }
+  };
+
   // Load saved profile
   useEffect(() => {
-    const saved = localStorage.getItem('dietbuddy_body_profile');
+    const saved = safeStorage.get('dietbuddy_body_profile');
     if (saved) {
       try {
         const profile = JSON.parse(saved);
@@ -120,8 +126,8 @@ export default function BodyProfileModal({ onClose, onGoalsCalculated }: BodyPro
     setTargetFat(fat);
     setTargetFiber(fiber);
 
-    // Save profile to localStorage
-    localStorage.setItem('dietbuddy_body_profile', JSON.stringify({
+    // Save profile to localStorage safely
+    safeStorage.set('dietbuddy_body_profile', JSON.stringify({
       gender, age, weight, height, activityLevel, fitnessGoal
     }));
 
