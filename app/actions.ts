@@ -225,7 +225,7 @@ export async function analyzeMealImageAction(base64Image: string) {
       const sizeInMB = (base64Image.length * 3) / 4 / 1024 / 1024;
       if (sizeInMB > 10) throw new Error("Image exceeds 10MB limit");
       
-      if (!base64Image.startsWith("data:image/")) {
+      if (base64Image.startsWith("data:") && !base64Image.startsWith("data:image/")) {
         throw new Error("Invalid file type. Only images are allowed.");
       }
     }
