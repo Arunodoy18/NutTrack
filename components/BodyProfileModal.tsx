@@ -6,7 +6,7 @@ import { X, Calculator, Activity, Target, ChevronRight, Flame, Dumbbell } from '
 
 interface BodyProfileModalProps {
   onClose: () => void;
-  onGoalsCalculated: (goals: { calories: number; protein: number; fat: number; fiber: number }) => void;
+  onGoalsCalculated: (goals: { calories: number; protein: number; fat: number; fiber: number; sodium?: number; iron?: number; calcium?: number; vitaminC?: number; }) => void;
 }
 
 type Gender = 'male' | 'female';
@@ -140,6 +140,10 @@ export default function BodyProfileModal({ onClose, onGoalsCalculated }: BodyPro
       protein: targetProtein,
       fat: targetFat,
       fiber: targetFiber,
+      sodium: 2300,
+      iron: gender === 'female' ? 18 : 8,
+      calcium: 1000,
+      vitaminC: 90
     });
     onClose();
   };

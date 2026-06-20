@@ -50,6 +50,10 @@ export default async function DashboardPage() {
         protein: 80,
         fat: 65,
         fiber: 30,
+        sodium: 2300,
+        iron: 18,
+        calcium: 1000,
+        vitaminC: 90
       }).returning();
       currentGoals = newGoal;
     } catch (err) {
@@ -60,6 +64,10 @@ export default async function DashboardPage() {
         protein: 80,
         fat: 65,
         fiber: 30,
+        sodium: 2300,
+        iron: 18,
+        calcium: 1000,
+        vitaminC: 90,
         createdAt: new Date()
       };
     }
@@ -93,6 +101,10 @@ export default async function DashboardPage() {
       protein: item.protein,
       fat: item.fat,
       fiber: item.fiber,
+      sodium: item.sodium || 0,
+      iron: item.iron || 0,
+      calcium: item.calcium || 0,
+      vitaminC: item.vitaminC || 0,
       estimatedQuantity: item.estimatedQuantity || "100g"
     }));
 
@@ -104,19 +116,27 @@ export default async function DashboardPage() {
       totalProtein: meal.totalProtein,
       totalFat: meal.totalFat,
       totalFiber: meal.totalFiber,
+      totalSodium: meal.totalSodium || 0,
+      totalIron: meal.totalIron || 0,
+      totalCalcium: meal.totalCalcium || 0,
+      totalVitaminC: meal.totalVitaminC || 0,
       items: mealItemsList
-    };
+    } as any;
   });
 
   // 4. Calculate aggregated daily running totals
-  const todayTotals = mappedTodayMeals.reduce((acc, meal) => {
+  const todayTotals = mappedTodayMeals.reduce((acc, meal: any) => {
     return {
       calories: acc.calories + meal.totalCalories,
       protein: acc.protein + meal.totalProtein,
       fat: acc.fat + meal.totalFat,
-      fiber: acc.fiber + meal.totalFiber
+      fiber: acc.fiber + meal.totalFiber,
+      sodium: acc.sodium + (meal.totalSodium || 0),
+      iron: acc.iron + (meal.totalIron || 0),
+      calcium: acc.calcium + (meal.totalCalcium || 0),
+      vitaminC: acc.vitaminC + (meal.totalVitaminC || 0),
     };
-  }, { calories: 0, protein: 0, fat: 0, fiber: 0 });
+  }, { calories: 0, protein: 0, fat: 0, fiber: 0, sodium: 0, iron: 0, calcium: 0, vitaminC: 0 });
 
   // 5. Calculate global user streak based on all historic logged meals
   // Efficient query: Only fetch the timestamp column to avoid loading massive arrays into memory
@@ -179,6 +199,10 @@ export default async function DashboardPage() {
         protein: currentGoals.protein,
         fat: currentGoals.fat,
         fiber: currentGoals.fiber,
+        sodium: (currentGoals as any).sodium || 2300,
+        iron: (currentGoals as any).iron || 18,
+        calcium: (currentGoals as any).calcium || 1000,
+        vitaminC: (currentGoals as any).vitaminC || 90,
       }}
       todayTotals={todayTotals}
       todayMeals={mappedTodayMeals}

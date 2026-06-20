@@ -82,6 +82,10 @@ export const meals = pgTable("meals", {
   totalProtein: integer("total_protein").notNull().default(0),
   totalFat: integer("total_fat").notNull().default(0),
   totalFiber: integer("total_fiber").notNull().default(0),
+  totalSodium: integer("total_sodium").notNull().default(0),
+  totalIron: integer("total_iron").notNull().default(0),
+  totalCalcium: integer("total_calcium").notNull().default(0),
+  totalVitaminC: integer("total_vitamin_c").notNull().default(0),
   summary: text("summary"),
   imagePath: text("image_path"),
 });
@@ -96,6 +100,10 @@ export const mealItems = pgTable("meal_items", {
   protein: integer("protein").notNull().default(0),
   fat: integer("fat").notNull().default(0),
   fiber: integer("fiber").notNull().default(0),
+  sodium: integer("sodium").notNull().default(0),
+  iron: integer("iron").notNull().default(0),
+  calcium: integer("calcium").notNull().default(0),
+  vitaminC: integer("vitamin_c").notNull().default(0),
   isManual: boolean("is_manual").notNull().default(false),
   estimatedQuantity: text("estimated_quantity").default("100g"),
 });
@@ -109,6 +117,10 @@ export const dailyGoals = pgTable("daily_goals", {
   protein: integer("protein").notNull().default(80),
   fat: integer("fat").notNull().default(65),
   fiber: integer("fiber").notNull().default(30),
+  sodium: integer("sodium").notNull().default(2300),
+  iron: integer("iron").notNull().default(18),
+  calcium: integer("calcium").notNull().default(1000),
+  vitaminC: integer("vitamin_c").notNull().default(90),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -44,6 +44,10 @@ export default function Dashboard({
   const [targetProtein, setTargetProtein] = useState(dailyGoals.protein.toString());
   const [targetFat, setTargetFat] = useState(dailyGoals.fat.toString());
   const [targetFiber, setTargetFiber] = useState(dailyGoals.fiber.toString());
+  const [targetSodium, setTargetSodium] = useState((dailyGoals.sodium || 2300).toString());
+  const [targetIron, setTargetIron] = useState((dailyGoals.iron || 18).toString());
+  const [targetCalcium, setTargetCalcium] = useState((dailyGoals.calcium || 1000).toString());
+  const [targetVitC, setTargetVitC] = useState((dailyGoals.vitaminC || 90).toString());
   const [isSaving, setIsSaving] = useState(false);
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -141,7 +145,7 @@ export default function Dashboard({
 
   const handleAddItem = () => {
     if (!activeAnalysis) return;
-    const newItems = [...(activeAnalysis.items || []), { name: "", calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, estimatedQuantity: "100g" }];
+    const newItems = [...(activeAnalysis.items || []), { name: "", calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0, iron: 0, calcium: 0, vitaminC: 0, estimatedQuantity: "100g" }];
     setActiveAnalysis({ ...activeAnalysis, items: newItems });
   };
 
@@ -153,15 +157,23 @@ export default function Dashboard({
       const totalFat = items.reduce((sum: number, item: any) => sum + (item.fat || 0), 0);
       const totalCarbs = items.reduce((sum: number, item: any) => sum + (item.carbs || 0), 0);
       const totalFiber = items.reduce((sum: number, item: any) => sum + (item.fiber || 0), 0);
+      const totalSodium = items.reduce((sum: number, item: any) => sum + (item.sodium || 0), 0);
+      const totalIron = items.reduce((sum: number, item: any) => sum + (item.iron || 0), 0);
+      const totalCalcium = items.reduce((sum: number, item: any) => sum + (item.calcium || 0), 0);
+      const totalVitaminC = items.reduce((sum: number, item: any) => sum + (item.vitaminC || 0), 0);
       
       if (
         totalCalories !== activeAnalysis.totalCalories ||
         totalProtein !== activeAnalysis.totalProtein ||
         totalFat !== activeAnalysis.totalFat ||
         totalCarbs !== activeAnalysis.totalCarbs ||
-        totalFiber !== activeAnalysis.totalFiber
+        totalFiber !== activeAnalysis.totalFiber ||
+        totalSodium !== activeAnalysis.totalSodium ||
+        totalIron !== activeAnalysis.totalIron ||
+        totalCalcium !== activeAnalysis.totalCalcium ||
+        totalVitaminC !== activeAnalysis.totalVitaminC
       ) {
-        setActiveAnalysis({ ...activeAnalysis, totalCalories, totalProtein, totalFat, totalCarbs, totalFiber });
+        setActiveAnalysis({ ...activeAnalysis, totalCalories, totalProtein, totalFat, totalCarbs, totalFiber, totalSodium, totalIron, totalCalcium, totalVitaminC });
       }
     }
   }, [activeAnalysis?.items]);
@@ -210,7 +222,18 @@ export default function Dashboard({
   const handleSaveMeal = async () => {
     if (!activeAnalysis) return;
     setIsSavingMeal(true);
-    const res = await saveMealAction(userId, { summary: customMealName, totalCalories: activeAnalysis.totalCalories, totalProtein: activeAnalysis.totalProtein, totalFat: activeAnalysis.totalFat, totalFiber: activeAnalysis.totalFiber, items: activeAnalysis.items || [] });
+    const res = await saveMealAction(userId, { 
+      summary: customMealName, 
+      totalCalories: activeAnalysis.totalCalories, 
+      totalProtein: activeAnalysis.totalProtein, 
+      totalFat: activeAnalysis.totalFat, 
+      totalFiber: activeAnalysis.totalFiber,
+      totalSodium: activeAnalysis.totalSodium,
+      totalIron: activeAnalysis.totalIron,
+      totalCalcium: activeAnalysis.totalCalcium,
+      totalVitaminC: activeAnalysis.totalVitaminC,
+      items: activeAnalysis.items || [] 
+    });
     setIsSavingMeal(false);
     if (res.success) { setIsUploadModalOpen(false); setSelectedImage(null); setActiveAnalysis(null); }
   };
@@ -228,23 +251,31 @@ export default function Dashboard({
     const prot = parseInt(targetProtein);
     const fat = parseInt(targetFat);
     const fib = parseInt(targetFiber);
+    const sod = parseInt(targetSodium);
+    const irn = parseInt(targetIron);
+    const calc = parseInt(targetCalcium);
+    const vitc = parseInt(targetVitC);
 
-    if (isNaN(cals) || isNaN(prot) || isNaN(fat) || isNaN(fib) || cals < 0 || prot < 0 || fat < 0 || fib < 0) {
-      alert("Please enter valid positive numbers for goals.");
+    if (isNaN(cals) || isNaN(prot) || isNaN(fat) || isNaN(fib) || cals < 0 || prot < 0 || fat < 0 || fib < 0 || isNaN(sod) || isNaN(irn) || isNaN(calc) || isNaN(vitc)) {
+      alert("Please enter valid numbers for goals.");
       return;
     }
 
     setIsSaving(true);
-    await saveDailyGoalsAction(userId, { calories: cals, protein: prot, fat: fat, fiber: fib });
+    await saveDailyGoalsAction(userId, { calories: cals, protein: prot, fat: fat, fiber: fib, sodium: sod, iron: irn, calcium: calc, vitaminC: vitc });
     setIsSaving(false); setIsModalOpen(false);
   };
 
-  const handleGoalsFromProfile = async (goals: { calories: number; protein: number; fat: number; fiber: number }) => {
+  const handleGoalsFromProfile = async (goals: { calories: number; protein: number; fat: number; fiber: number; sodium?: number; iron?: number; calcium?: number; vitaminC?: number; }) => {
     setTargetCals(goals.calories.toString());
     setTargetProtein(goals.protein.toString());
     setTargetFat(goals.fat.toString());
     setTargetFiber(goals.fiber.toString());
-    await saveDailyGoalsAction(userId, goals);
+    if (goals.sodium !== undefined) setTargetSodium(goals.sodium.toString());
+    if (goals.iron !== undefined) setTargetIron(goals.iron.toString());
+    if (goals.calcium !== undefined) setTargetCalcium(goals.calcium.toString());
+    if (goals.vitaminC !== undefined) setTargetVitC(goals.vitaminC.toString());
+    await saveDailyGoalsAction(userId, goals as any);
   };
 
   return (
@@ -343,6 +374,29 @@ export default function Dashboard({
                     </div>
                   </div>
                </div>
+            </div>
+
+            {/* Micronutrients Grid */}
+            <div className="mt-8 border-t border-[#EBE8E0] pt-6">
+              <span className="text-[10px] font-black text-[#8D8B86] tracking-widest uppercase block mb-4">Micronutrients</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                {[
+                  { name: 'Sodium', total: todayTotals.sodium || 0, target: dailyGoals.sodium || 2300, unit: 'mg', color: '#635BFF' },
+                  { name: 'Iron', total: todayTotals.iron || 0, target: dailyGoals.iron || 18, unit: 'mg', color: '#E67F63' },
+                  { name: 'Calcium', total: todayTotals.calcium || 0, target: dailyGoals.calcium || 1000, unit: 'mg', color: '#83B593' },
+                  { name: 'Vit C', total: todayTotals.vitaminC || 0, target: dailyGoals.vitaminC || 90, unit: 'mg', color: '#E2B93B' },
+                ].map(micro => {
+                  const pct = micro.target > 0 ? Math.min(100, Math.round((micro.total / micro.target) * 100)) : 0;
+                  return (
+                    <div key={micro.name}>
+                      <div className="flex justify-between text-[10px] mb-1 font-bold"><span className="text-[#8D8B86]">{micro.name}</span><span style={{color: micro.color}}>{micro.total}{micro.unit} / {micro.target}{micro.unit}</span></div>
+                      <div className="h-1.5 w-full bg-[#F7F5F0] rounded-full overflow-hidden">
+                        <motion.div initial={{width:0}} animate={{width: `${pct}%`}} transition={{duration:1, delay:0.3}} className="h-full rounded-full" style={{backgroundColor: micro.color}}/>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </motion.div>
@@ -549,12 +603,18 @@ export default function Dashboard({
                                 <button onClick={() => handleItemDelete(index)} className="text-red-400 hover:bg-red-50 rounded-md p-1.5 transition-colors active:scale-95"><Trash2 size={14}/></button>
                               </div>
                             </div>
-                            <div className="grid grid-cols-5 gap-1 sm:gap-2 text-[10px] font-bold text-[#3D3B38]">
+                            <div className="grid grid-cols-5 gap-1 sm:gap-2 text-[10px] font-bold text-[#3D3B38] mb-2">
                               <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5 text-center">Cals</span><input type="number" value={item.calories} onChange={(e) => handleItemChange(index, 'calories', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-0 sm:px-1 py-1.5 text-center focus:outline-none border border-transparent focus:border-[#635BFF]/30 w-full"/></div>
                               <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5 text-center">Pro</span><input type="number" value={item.protein} onChange={(e) => handleItemChange(index, 'protein', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-0 sm:px-1 py-1.5 text-center focus:outline-none border border-transparent focus:border-[#83B593]/30 w-full"/></div>
                               <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5 text-center">Fat</span><input type="number" value={item.fat} onChange={(e) => handleItemChange(index, 'fat', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-0 sm:px-1 py-1.5 text-center focus:outline-none border border-transparent focus:border-[#E67F63]/30 w-full"/></div>
                               <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5 text-center">Carbs</span><input type="number" value={item.carbs || 0} onChange={(e) => handleItemChange(index, 'carbs', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-0 sm:px-1 py-1.5 text-center focus:outline-none border border-transparent focus:border-[#E2B93B]/30 w-full"/></div>
                               <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5 text-center">Fib</span><input type="number" value={item.fiber} onChange={(e) => handleItemChange(index, 'fiber', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-0 sm:px-1 py-1.5 text-center focus:outline-none border border-transparent focus:border-[#5C99D6]/30 w-full"/></div>
+                            </div>
+                            <div className="grid grid-cols-4 gap-1 sm:gap-2 text-[10px] font-bold text-[#3D3B38] border-t border-[#EBE8E0] pt-2">
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5 text-center">Sodium</span><input type="number" value={item.sodium || 0} onChange={(e) => handleItemChange(index, 'sodium', parseInt(e.target.value)||0)} className="bg-transparent rounded px-0 sm:px-1 py-1 text-center focus:outline-none w-full text-[#8D8B86]"/></div>
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5 text-center">Iron</span><input type="number" value={item.iron || 0} onChange={(e) => handleItemChange(index, 'iron', parseInt(e.target.value)||0)} className="bg-transparent rounded px-0 sm:px-1 py-1 text-center focus:outline-none w-full text-[#8D8B86]"/></div>
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5 text-center">Calcium</span><input type="number" value={item.calcium || 0} onChange={(e) => handleItemChange(index, 'calcium', parseInt(e.target.value)||0)} className="bg-transparent rounded px-0 sm:px-1 py-1 text-center focus:outline-none w-full text-[#8D8B86]"/></div>
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5 text-center">Vit C</span><input type="number" value={item.vitaminC || 0} onChange={(e) => handleItemChange(index, 'vitaminC', parseInt(e.target.value)||0)} className="bg-transparent rounded px-0 sm:px-1 py-1 text-center focus:outline-none w-full text-[#8D8B86]"/></div>
                             </div>
                           </div>
                         ))}
@@ -640,6 +700,30 @@ export default function Dashboard({
                     <label className="text-[10px] font-black text-[#5C99D6] uppercase block mb-1">Fiber (g)</label>
                     <input type="number" value={targetFiber} onChange={(e)=>setTargetFiber(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-2.5 rounded-xl text-sm font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#5C99D6]" />
                     <span className="text-[8px] font-bold text-[#8D8B86] block text-center mt-1">gut health</span>
+                  </div>
+                </div>
+
+                {/* Editable Micro Inputs */}
+                <div className="grid grid-cols-4 gap-2">
+                  <div>
+                    <label className="text-[10px] font-black text-[#8D8B86] uppercase block mb-1 text-center">Sodium</label>
+                    <input type="number" value={targetSodium} onChange={(e)=>setTargetSodium(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-2 py-2 rounded-xl text-xs font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#635BFF]" />
+                    <span className="text-[8px] font-bold text-[#8D8B86] block text-center mt-1">mg</span>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-[#8D8B86] uppercase block mb-1 text-center">Iron</label>
+                    <input type="number" value={targetIron} onChange={(e)=>setTargetIron(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-2 py-2 rounded-xl text-xs font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#635BFF]" />
+                    <span className="text-[8px] font-bold text-[#8D8B86] block text-center mt-1">mg</span>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-[#8D8B86] uppercase block mb-1 text-center">Calcium</label>
+                    <input type="number" value={targetCalcium} onChange={(e)=>setTargetCalcium(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-2 py-2 rounded-xl text-xs font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#635BFF]" />
+                    <span className="text-[8px] font-bold text-[#8D8B86] block text-center mt-1">mg</span>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-[#8D8B86] uppercase block mb-1 text-center">Vit C</label>
+                    <input type="number" value={targetVitC} onChange={(e)=>setTargetVitC(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-2 py-2 rounded-xl text-xs font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#635BFF]" />
+                    <span className="text-[8px] font-bold text-[#8D8B86] block text-center mt-1">mg</span>
                   </div>
                 </div>
 
