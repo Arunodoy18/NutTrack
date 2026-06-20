@@ -141,7 +141,7 @@ export default function Dashboard({
 
   const handleAddItem = () => {
     if (!activeAnalysis) return;
-    const newItems = [...(activeAnalysis.items || []), { name: "", calories: 0, protein: 0, fat: 0, fiber: 0, estimatedQuantity: "100g" }];
+    const newItems = [...(activeAnalysis.items || []), { name: "", calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, estimatedQuantity: "100g" }];
     setActiveAnalysis({ ...activeAnalysis, items: newItems });
   };
 
@@ -151,15 +151,17 @@ export default function Dashboard({
       const totalCalories = items.reduce((sum: number, item: any) => sum + (item.calories || 0), 0);
       const totalProtein = items.reduce((sum: number, item: any) => sum + (item.protein || 0), 0);
       const totalFat = items.reduce((sum: number, item: any) => sum + (item.fat || 0), 0);
+      const totalCarbs = items.reduce((sum: number, item: any) => sum + (item.carbs || 0), 0);
       const totalFiber = items.reduce((sum: number, item: any) => sum + (item.fiber || 0), 0);
       
       if (
         totalCalories !== activeAnalysis.totalCalories ||
         totalProtein !== activeAnalysis.totalProtein ||
         totalFat !== activeAnalysis.totalFat ||
+        totalCarbs !== activeAnalysis.totalCarbs ||
         totalFiber !== activeAnalysis.totalFiber
       ) {
-        setActiveAnalysis({ ...activeAnalysis, totalCalories, totalProtein, totalFat, totalFiber });
+        setActiveAnalysis({ ...activeAnalysis, totalCalories, totalProtein, totalFat, totalCarbs, totalFiber });
       }
     }
   }, [activeAnalysis?.items]);
@@ -519,10 +521,11 @@ export default function Dashboard({
                         <span className="text-[11px] font-black text-[#8D8B86] uppercase tracking-widest">Total Macros</span>
                         <span className="text-2xl font-black text-[#3D3B38]">{activeAnalysis.totalCalories} <span className="text-sm">kcal</span></span>
                       </div>
-                      <div className="flex justify-between text-xs font-bold">
-                        <span className="text-[#83B593]">{activeAnalysis.totalProtein}g Protein</span>
-                        <span className="text-[#E67F63]">{activeAnalysis.totalFat}g Fat</span>
-                        <span className="text-[#5C99D6]">{activeAnalysis.totalFiber}g Fiber</span>
+                      <div className="grid grid-cols-4 gap-2 text-center text-[10px] font-bold">
+                        <div className="bg-[#FFFFFF] rounded-lg p-2 border border-[#EBE8E0]"><span className="block text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5">Protein</span><span className="text-[#83B593]">{activeAnalysis.totalProtein}g</span></div>
+                        <div className="bg-[#FFFFFF] rounded-lg p-2 border border-[#EBE8E0]"><span className="block text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5">Fat</span><span className="text-[#E67F63]">{activeAnalysis.totalFat}g</span></div>
+                        <div className="bg-[#FFFFFF] rounded-lg p-2 border border-[#EBE8E0]"><span className="block text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5">Carbs</span><span className="text-[#E2B93B]">{activeAnalysis.totalCarbs || 0}g</span></div>
+                        <div className="bg-[#FFFFFF] rounded-lg p-2 border border-[#EBE8E0]"><span className="block text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5">Fiber</span><span className="text-[#5C99D6]">{activeAnalysis.totalFiber}g</span></div>
                       </div>
                     </div>
                     
@@ -540,14 +543,18 @@ export default function Dashboard({
                         {activeAnalysis.items?.map((item: any, index: number) => (
                           <div key={index} className="bg-[#FFFFFF] border border-[#EBE8E0] rounded-xl p-3 shadow-sm">
                             <div className="flex justify-between items-center mb-2">
-                              <input type="text" value={item.name} onChange={(e) => handleItemChange(index, 'name', e.target.value)} className="text-sm font-bold text-[#3D3B38] focus:outline-none bg-transparent w-full" placeholder="Food name"/>
-                              <button onClick={() => handleItemDelete(index)} className="text-red-400 hover:bg-red-50 rounded-md p-1 transition-colors"><Trash2 size={14}/></button>
+                              <input type="text" value={item.name} onChange={(e) => handleItemChange(index, 'name', e.target.value)} className="text-sm font-bold text-[#3D3B38] focus:outline-none bg-transparent w-[60%]" placeholder="Food name"/>
+                              <div className="flex items-center gap-2">
+                                <input type="text" value={item.estimatedQuantity || ""} onChange={(e) => handleItemChange(index, 'estimatedQuantity', e.target.value)} className="text-[10px] font-bold text-[#8D8B86] bg-[#F7F5F0] rounded px-2 py-1 focus:outline-none w-16 text-right" placeholder="Weight"/>
+                                <button onClick={() => handleItemDelete(index)} className="text-red-400 hover:bg-red-50 rounded-md p-1 transition-colors"><Trash2 size={14}/></button>
+                              </div>
                             </div>
-                            <div className="grid grid-cols-4 gap-2 text-[10px] font-bold text-[#3D3B38]">
-                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-1">Cals</span><input type="number" value={item.calories} onChange={(e) => handleItemChange(index, 'calories', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-2 py-1.5 focus:outline-none border border-transparent focus:border-[#635BFF]/30"/></div>
-                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-1">Pro (g)</span><input type="number" value={item.protein} onChange={(e) => handleItemChange(index, 'protein', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-2 py-1.5 focus:outline-none border border-transparent focus:border-[#83B593]/30"/></div>
-                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-1">Fat (g)</span><input type="number" value={item.fat} onChange={(e) => handleItemChange(index, 'fat', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-2 py-1.5 focus:outline-none border border-transparent focus:border-[#E67F63]/30"/></div>
-                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-1">Fib (g)</span><input type="number" value={item.fiber} onChange={(e) => handleItemChange(index, 'fiber', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-2 py-1.5 focus:outline-none border border-transparent focus:border-[#5C99D6]/30"/></div>
+                            <div className="grid grid-cols-5 gap-1.5 text-[10px] font-bold text-[#3D3B38]">
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5">Cals</span><input type="number" value={item.calories} onChange={(e) => handleItemChange(index, 'calories', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-1 py-1.5 text-center focus:outline-none border border-transparent focus:border-[#635BFF]/30 w-full"/></div>
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5">Pro</span><input type="number" value={item.protein} onChange={(e) => handleItemChange(index, 'protein', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-1 py-1.5 text-center focus:outline-none border border-transparent focus:border-[#83B593]/30 w-full"/></div>
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5">Fat</span><input type="number" value={item.fat} onChange={(e) => handleItemChange(index, 'fat', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-1 py-1.5 text-center focus:outline-none border border-transparent focus:border-[#E67F63]/30 w-full"/></div>
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5">Carbs</span><input type="number" value={item.carbs || 0} onChange={(e) => handleItemChange(index, 'carbs', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-1 py-1.5 text-center focus:outline-none border border-transparent focus:border-[#E2B93B]/30 w-full"/></div>
+                              <div className="flex flex-col"><span className="text-[#8D8B86] uppercase tracking-wider text-[8px] mb-0.5">Fib</span><input type="number" value={item.fiber} onChange={(e) => handleItemChange(index, 'fiber', parseInt(e.target.value)||0)} className="bg-[#F7F5F0] rounded px-1 py-1.5 text-center focus:outline-none border border-transparent focus:border-[#5C99D6]/30 w-full"/></div>
                             </div>
                           </div>
                         ))}

@@ -271,12 +271,11 @@ export async function analyzeMealImageAction(base64Image: string) {
 The user has uploaded a photo of their meal. Your job is to identify every distinct food item visible on the plate, estimate its portion weight in grams, and return structured nutritional data.
 
 RULES:
-- Only identify food items you can see with reasonable confidence. Do not guess invisible items.
-- If the image is not a food photo (blurry, non-food subject, error), return { "error": "not_food", "message": "No meal detected in this image." }
-- ALWAYS cross-reference your nutrition estimates against USDA FoodData Central values. Use scientifically verified macros per 100g, not rough guesses.
-- Weights are estimates — be conservative, not generous. A "medium chicken breast" is 150g, not 250g.
-- REFERENCE OBJECTS: If you detect a fork, spoon, knife, coin, or hand in the image, use it as a size reference to more accurately estimate the dimensions and weight of the food portions. A standard dinner fork is ~19cm long. A standard teaspoon is ~13cm.
-- Always return valid JSON only. No markdown, no explanation, no preamble.
+- Be highly robust. Even if the image is slightly blurry or poorly lit, try your absolute best to identify the food. Only return an error if it is completely pitch black or obviously not food.
+- Identify every distinct food item visible on the plate.
+- ALWAYS cross-reference your nutrition estimates against USDA FoodData Central values. Use scientifically verified macros per 100g.
+- Weights are critical. Estimate the weight in grams. If you detect a fork, spoon, knife, coin, or hand, use it as a size reference (a standard dinner fork is ~19cm long).
+- Always return valid JSON only. No markdown, no explanation.
 
 OUTPUT FORMAT (strict JSON):
 {
@@ -356,12 +355,13 @@ OUTPUT FORMAT (strict JSON):
       calories: Math.round(food.calories || 0),
       protein: Math.round(food.protein_g || 0),
       fat: Math.round(food.fat_g || 0),
+      carbs: Math.round(food.carbs_g || 0),
       fiber: Math.round(food.fiber_g || 0),
       estimatedQuantity: `${food.weight_g || 100}g`,
       isManual: false
     }));
 
-    const totals = parsed.totals || { calories: 0, protein_g: 0, fat_g: 0, fiber_g: 0 };
+    const totals = parsed.totals || { calories: 0, protein_g: 0, fat_g: 0, carbs_g: 0, fiber_g: 0 };
 
     return {
       success: true,
@@ -370,6 +370,7 @@ OUTPUT FORMAT (strict JSON):
         totalCalories: Math.round(totals.calories || items.reduce((acc: number, i: any) => acc + i.calories, 0)),
         totalProtein: Math.round(totals.protein_g || items.reduce((acc: number, i: any) => acc + i.protein, 0)),
         totalFat: Math.round(totals.fat_g || items.reduce((acc: number, i: any) => acc + i.fat, 0)),
+        totalCarbs: Math.round(totals.carbs_g || items.reduce((acc: number, i: any) => acc + i.carbs, 0)),
         totalFiber: Math.round(totals.fiber_g || items.reduce((acc: number, i: any) => acc + i.fiber, 0)),
         summary: parsed.notes || `AI Scanner identified ${items.length} food items.`,
         items
@@ -454,12 +455,13 @@ OUTPUT FORMAT:
       calories: Math.round(food.calories || 0),
       protein: Math.round(food.protein_g || 0),
       fat: Math.round(food.fat_g || 0),
+      carbs: Math.round(food.carbs_g || 0),
       fiber: Math.round(food.fiber_g || 0),
       estimatedQuantity: food.quantity ? `${food.quantity} (${food.weight_g || 100}g)` : `${food.weight_g || 100}g`,
       isManual: false
     }));
 
-    const totals = parsed.totals || { calories: 0, protein_g: 0, fat_g: 0, fiber_g: 0 };
+    const totals = parsed.totals || { calories: 0, protein_g: 0, fat_g: 0, carbs_g: 0, fiber_g: 0 };
 
     return {
       success: true,
@@ -468,6 +470,7 @@ OUTPUT FORMAT:
         totalCalories: Math.round(totals.calories || items.reduce((acc: number, i: any) => acc + i.calories, 0)),
         totalProtein: Math.round(totals.protein_g || items.reduce((acc: number, i: any) => acc + i.protein, 0)),
         totalFat: Math.round(totals.fat_g || items.reduce((acc: number, i: any) => acc + i.fat, 0)),
+        totalCarbs: Math.round(totals.carbs_g || items.reduce((acc: number, i: any) => acc + i.carbs, 0)),
         totalFiber: Math.round(totals.fiber_g || items.reduce((acc: number, i: any) => acc + i.fiber, 0)),
         summary: parsed.assumptions?.length ? parsed.assumptions.join(" ") : `AI parsed voice input and identified ${items.length} food items.`,
         items
