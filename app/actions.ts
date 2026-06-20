@@ -271,8 +271,9 @@ export async function analyzeMealImageAction(base64Image: string) {
 The user has uploaded a photo of their meal. Your job is to identify every distinct food item visible on the plate, estimate its portion weight in grams, and return structured nutritional data.
 
 RULES:
-- Be highly robust. Even if the image is slightly blurry or poorly lit, try your absolute best to identify the food. Only return an error if it is completely pitch black or obviously not food.
-- Identify every distinct food item visible on the plate.
+- Be highly robust. Even if the image is slightly blurry or poorly lit, try your absolute best to identify the food.
+- NON-FOOD IMAGES: If the image is completely pitch black or obviously NOT food (e.g., a picture of a car or a wall), you MUST return an error in this exact JSON format: { "error": "not_food", "message": "good try buddy , try better" }. Do not use any other message for non-food.
+- ANY MEAL TYPE: Whether it is a post-workout shake, a bowl of cereal, a pre-workout snack, or a full dinner, you must identify everything crystal clear.
 - EXACT MACROS: You must be mathematically perfect. ALWAYS cross-reference your nutrition estimates against USDA FoodData Central values. Use scientifically verified macros per 100g.
 - WEIGHT ESTIMATION: Your weight estimates must be extremely precise. Estimate the weight in grams. If you detect a fork, spoon, knife, coin, or hand, use it as a size reference (a standard dinner fork is ~19cm long) to perfectly calculate volume and weight.
 - Always return valid JSON only. No markdown, no explanation.
