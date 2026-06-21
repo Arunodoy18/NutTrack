@@ -1,10 +1,13 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import BottomNav from '@/components/BottomNav';
 import { Camera, Refrigerator } from 'lucide-react';
+import FridgeRaider from '@/components/FridgeRaider';
 
 export default function FridgePage() {
+  const [isRaiderOpen, setIsRaiderOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-surface text-ink font-sans pb-28">
       <div className="pt-16 px-6 max-w-lg mx-auto">
@@ -31,7 +34,10 @@ export default function FridgePage() {
             Snap a photo and Buddy invents macro-friendly recipes from what it sees.
           </p>
           
-          <button className="w-full bg-brand hover:bg-[#e63e00] text-white py-4 rounded-[20px] font-bold shadow-lg shadow-brand/30 flex items-center justify-center gap-2 transition-transform active:scale-[0.98] relative z-10">
+          <button 
+            onClick={() => setIsRaiderOpen(true)}
+            className="w-full bg-brand hover:bg-[#e63e00] text-white py-4 rounded-[20px] font-bold shadow-lg shadow-brand/30 flex items-center justify-center gap-2 transition-transform active:scale-[0.98] relative z-10"
+          >
             <Camera className="w-5 h-5" />
             Scan my fridge
           </button>
@@ -58,6 +64,8 @@ export default function FridgePage() {
       </div>
 
       <BottomNav />
+      
+      {isRaiderOpen && <FridgeRaider onClose={() => setIsRaiderOpen(false)} />}
     </div>
   );
 }

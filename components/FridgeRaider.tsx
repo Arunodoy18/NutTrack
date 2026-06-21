@@ -182,7 +182,7 @@ export default function FridgeRaider({ onClose }: FridgeRaiderProps) {
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {error ? (
                 <div className="p-8 bg-white rounded-3xl border border-red-500/20 text-center space-y-5 max-w-lg mx-auto">
-                  <div className="w-16 h-16 rounded-full bg-red-500-500/10 text-red-500-600 flex items-center justify-center mx-auto border border-red-500/20">
+                  <div className="w-16 h-16 rounded-full bg-red-500/10 text-red-600 flex items-center justify-center mx-auto border border-red-500/20">
                     <AlertTriangle className="w-8 h-8" />
                   </div>
                   <div>
