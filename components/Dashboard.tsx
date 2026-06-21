@@ -69,11 +69,8 @@ export interface DashboardProps {
     protein: number;
     fat: number;
     fiber: number;
-    sodium?: number;
-    iron?: number;
-    calcium?: number;
-    vitaminC?: number;
   };
+  weeklyData?: any[];
   todayTotals: {
     calories: number;
     protein: number;
@@ -85,7 +82,6 @@ export interface DashboardProps {
   onRefreshClick?: () => void;
   activeStreak?: number;
   totalMealsCount?: number;
-  weeklyData?: any[];
 }
 
 export default function Dashboard({
@@ -486,19 +482,19 @@ export default function Dashboard({
                 </span>
                 <h1 className="font-display text-2xl md:text-3xl font-extrabold text-ink tracking-tight">dietBuddy Dashboard</h1>
               </div>
-              <div className="inline-flex items-center gap-1.5 self-start sm:self-auto px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-extrabold text-xs shadow-md shadow-orange-500/5">
+              <div className="inline-flex items-center gap-1.5 self-start sm:self-auto px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 font-extrabold text-sm shadow-md shadow-orange-500/5">
                 <Flame className="w-3.5 h-3.5 text-orange-500 fill-orange-500" />
                 <span>{activeStreak} DAY STREAK</span>
               </div>
             </div>
-            <p className="text-ink-soft text-sm mt-1">
+            <p className="text-ink-soft text-base mt-1">
               Your real-time nutritional tracking, USDA verified guidelines and AI meal recognition.
             </p>
           </div>
           <div className="flex items-center gap-3 w-full md:w-auto">
             <button 
               onClick={onRefreshClick}
-              className="flex-1 md:flex-none p-3 rounded-2xl bg-surface-muted hover:bg-surface-line border border-surface-line text-ink-soft transition-all flex items-center justify-center gap-2 text-sm"
+              className="flex-1 md:flex-none p-3 rounded-2xl bg-surface-muted hover:bg-surface-line border border-surface-line text-ink-soft transition-all flex items-center justify-center gap-2 text-base"
               title="Refresh Stats"
             >
               <RefreshCw className="w-4 h-4" />
@@ -512,14 +508,14 @@ export default function Dashboard({
                 setTargetFiber(dailyGoals.fiber.toString());
                 setIsModalOpen(true);
               }}
-              className="flex-1 md:flex-none p-3 rounded-2xl bg-surface-muted hover:bg-surface-line border border-surface-line text-ink-soft transition-all flex items-center justify-center gap-2 text-sm"
+              className="flex-1 md:flex-none p-3 rounded-2xl bg-surface-muted hover:bg-surface-line border border-surface-line text-ink-soft transition-all flex items-center justify-center gap-2 text-base"
             >
               <Settings className="w-4 h-4" />
               <span>Goals</span>
             </button>
             <button 
               onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}
-              className="flex-1 md:flex-none p-3 rounded-2xl bg-surface-muted hover:bg-surface-line border border-surface-line text-ink-soft transition-all flex items-center justify-center gap-2 text-sm text-rose-500 hover:text-rose-500"
+              className="flex-1 md:flex-none p-3 rounded-2xl bg-surface-muted hover:bg-surface-line border border-surface-line text-ink-soft transition-all flex items-center justify-center gap-2 text-base text-rose-500 hover:text-rose-500"
               title="Sign Out"
             >
               <X className="w-4 h-4" />
@@ -527,7 +523,7 @@ export default function Dashboard({
             </button>
             <button 
               onClick={() => setIsFridgeRaiderOpen(true)}
-              className="flex-1 md:flex-none px-4 py-3 rounded-2xl bg-white border border-brand-500/40 text-brand font-bold hover:bg-surface-muted transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-brand-500/10"
+              className="flex-1 md:flex-none px-4 py-3 rounded-2xl bg-white border border-brand-500/40 text-brand font-bold hover:bg-surface-muted transition-all flex items-center justify-center gap-2 text-base shadow-md shadow-brand-500/10"
               title="AI Fridge Raider"
             >
               <Utensils className="w-4 h-4" />
@@ -540,7 +536,7 @@ export default function Dashboard({
                 setUploadStep(0);
                 setIsUploadModalOpen(true);
               })}
-              className="flex-2 md:flex-none px-5 py-3 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-brand-600/30"
+              className="flex-2 md:flex-none px-5 py-3 rounded-2xl bg-brand-600 hover:bg-brand-500 text-white font-semibold transition-all flex items-center justify-center gap-2 text-base shadow-lg shadow-brand-600/30"
             >
               <Plus className="w-4 h-4" />
               <span>Log Meal</span>
@@ -577,7 +573,7 @@ export default function Dashboard({
                   {/* Inside Center Display */}
                   <div className="absolute text-center">
                     <span className="font-display text-5xl font-black block text-ink leading-none">{calPercent}%</span>
-                    <span className="text-[10px] uppercase font-bold text-ink-soft tracking-wider">Cals Met</span>
+                    <span className="text-xs uppercase font-bold text-ink-soft tracking-wider">Cals Met</span>
                   </div>
                 </div>
 
@@ -585,10 +581,10 @@ export default function Dashboard({
                 <div className="flex-1 w-full space-y-6">
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs uppercase font-bold text-brand tracking-wider flex items-center gap-1.5">
+                      <span className="text-sm uppercase font-bold text-brand tracking-wider flex items-center gap-1.5">
                         <Flame className="w-3.5 h-3.5" /> Today's Calories
                       </span>
-                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
+                      <span className={`text-sm font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
                         isOverCal 
                         ? 'bg-rose-500/20 text-rose-500 border border-rose-500/30' 
                         : 'bg-emerald-500/20 text-emerald-600 border border-emerald-500/20'
@@ -607,7 +603,7 @@ export default function Dashboard({
 
                     <div className="flex items-baseline gap-1.5">
                       <span className="font-display text-4xl font-extrabold text-ink tracking-tight">{todayTotals.calories}</span>
-                      <span className="text-ink-soft text-sm font-medium">/ {dailyGoals.calories} kcal Goal</span>
+                      <span className="text-ink-soft text-base font-medium">/ {dailyGoals.calories} kcal Goal</span>
                     </div>
 
                     {/* Styled Track Bar */}
@@ -627,13 +623,13 @@ export default function Dashboard({
                           <Sparkles className="w-5 h-5 text-brand" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-ink">Ready to start tracking?</p>
-                          <p className="text-xs text-ink-soft mt-0.5">Log your first meal using the AI scanner or voice.</p>
+                          <p className="text-base font-bold text-ink">Ready to start tracking?</p>
+                          <p className="text-sm text-ink-soft mt-0.5">Log your first meal using the AI scanner or voice.</p>
                         </div>
                       </div>
                       <button 
                         onClick={onAddMealClick || (() => setIsUploadModalOpen(true))}
-                        className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center gap-2 whitespace-nowrap animate-pulse"
+                        className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center gap-2 whitespace-nowrap animate-pulse"
                       >
                         <Plus className="w-3.5 h-3.5" /> Log Meal
                       </button>
@@ -641,7 +637,7 @@ export default function Dashboard({
                   ) : (
                     <div className="p-4 rounded-2xl bg-brand-50 border border-brand-500/20 flex gap-3 items-center">
                       <Sparkles className="w-5 h-5 text-brand shrink-0" />
-                      <p className="text-xs text-ink-soft leading-normal">
+                      <p className="text-sm text-ink-soft leading-normal">
                         {isOverCal 
                           ? "You have surpassed your daily target calories of energy intake."
                           : `Great job! You have reached ${calPercent}% of your active calorie tracking goal.`}
@@ -657,12 +653,12 @@ export default function Dashboard({
                 {/* Protein progress card */}
                 <div className="bg-surface-muted border border-surface-line rounded-2xl p-4 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-bold text-ink-soft">Protein</span>
-                    <span className="text-xs font-bold text-emerald-600">{protPercent}%</span>
+                    <span className="text-base font-bold text-ink-soft">Protein</span>
+                    <span className="text-sm font-bold text-emerald-600">{protPercent}%</span>
                   </div>
                   <div className="flex items-baseline gap-1 mb-3">
                     <span className="text-xl font-bold text-ink">{todayTotals.protein}g</span>
-                    <span className="text-ink-soft text-xs">/ {dailyGoals.protein}g</span>
+                    <span className="text-ink-soft text-sm">/ {dailyGoals.protein}g</span>
                   </div>
                   <div className="w-full h-1.5 bg-surface-muted rounded-full overflow-hidden">
                     <div 
@@ -675,12 +671,12 @@ export default function Dashboard({
                 {/* Fat progress card */}
                 <div className="bg-surface-muted border border-surface-line rounded-2xl p-4 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-bold text-ink-soft">Fats</span>
-                    <span className="text-xs font-bold text-amber-600">{fatPercent}%</span>
+                    <span className="text-base font-bold text-ink-soft">Fats</span>
+                    <span className="text-sm font-bold text-amber-600">{fatPercent}%</span>
                   </div>
                   <div className="flex items-baseline gap-1 mb-3">
                     <span className="text-xl font-bold text-ink">{todayTotals.fat}g</span>
-                    <span className="text-ink-soft text-xs">/ {dailyGoals.fat}g</span>
+                    <span className="text-ink-soft text-sm">/ {dailyGoals.fat}g</span>
                   </div>
                   <div className="w-full h-1.5 bg-surface-muted rounded-full overflow-hidden">
                     <div 
@@ -693,12 +689,12 @@ export default function Dashboard({
                 {/* Fiber progress card */}
                 <div className="bg-surface-muted border border-surface-line rounded-2xl p-4 flex flex-col justify-between">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-bold text-ink-soft">Dietary Fiber</span>
-                    <span className="text-xs font-bold text-blue-600">{fibPercent}%</span>
+                    <span className="text-base font-bold text-ink-soft">Dietary Fiber</span>
+                    <span className="text-sm font-bold text-blue-600">{fibPercent}%</span>
                   </div>
                   <div className="flex items-baseline gap-1 mb-3">
                     <span className="text-xl font-bold text-ink">{todayTotals.fiber}g</span>
-                    <span className="text-ink-soft text-xs">/ {dailyGoals.fiber}g</span>
+                    <span className="text-ink-soft text-sm">/ {dailyGoals.fiber}g</span>
                   </div>
                   <div className="w-full h-1.5 bg-surface-muted rounded-full overflow-hidden">
                     <div 
@@ -716,14 +712,14 @@ export default function Dashboard({
               <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h3 className="font-display text-lg font-bold text-ink">Weekly Performance Report</h3>
-                  <p className="text-xs text-ink-soft mt-0.5">Visualize your daily macro levels relative to target benchmarks.</p>
+                  <p className="text-sm text-ink-soft mt-0.5">Visualize your daily macro levels relative to target benchmarks.</p>
                 </div>
                 <div className="flex rounded-xl bg-surface-muted p-1 border border-surface-line">
                   {(['Calories', 'Protein', 'Fats', 'Fiber'] as const).map((m) => (
                     <button
                       key={m}
                       onClick={() => setActiveMetric(m)}
-                      className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                      className={`px-3 py-1.5 text-sm font-bold rounded-lg transition-all ${
                         activeMetric === m
                           ? 'bg-white text-ink shadow-sm'
                           : 'text-ink-soft hover:text-ink-soft'
@@ -774,7 +770,7 @@ export default function Dashboard({
                   <h3 className="font-display text-lg font-bold text-ink flex items-center gap-2">
                     <Calendar className="w-4 h-4 text-brand" /> Today's Meals
                   </h3>
-                  <span className="text-xs font-semibold px-2 py-1 bg-surface-line rounded-lg text-ink-soft">
+                  <span className="text-sm font-semibold px-2 py-1 bg-surface-line rounded-lg text-ink-soft">
                     {todayMeals.length} logged
                   </span>
                 </div>
@@ -784,8 +780,8 @@ export default function Dashboard({
                     <div className="w-12 h-12 rounded-full bg-surface-muted flex items-center justify-center border border-surface-line text-ink-faint">
                       <Activity className="w-6 h-6" />
                     </div>
-                    <p className="text-sm font-semibold text-ink-soft">No meals logged today</p>
-                    <p className="text-xs text-ink-faint max-w-[200px] leading-relaxed mx-auto">
+                    <p className="text-base font-semibold text-ink-soft">No meals logged today</p>
+                    <p className="text-sm text-ink-faint max-w-[200px] leading-relaxed mx-auto">
                       All meals captured via AI scanner or logged manually will be stored here.
                     </p>
                   </div>
@@ -801,30 +797,30 @@ export default function Dashboard({
                         >
                           <div className="p-4 flex justify-between items-start">
                             <div>
-                              <p className="text-sm font-bold text-ink line-clamp-1">{meal.summary}</p>
-                              <p className="text-xs text-ink-faint mt-0.5">
+                              <p className="text-base font-bold text-ink line-clamp-1">{meal.summary}</p>
+                              <p className="text-sm text-ink-faint mt-0.5">
                                 {new Date(meal.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             </div>
                             <div className="text-right">
-                              <span className="text-sm font-extrabold text-ink">{meal.totalCalories} kcal</span>
-                              <p className="text-[10px] text-emerald-600 font-bold">{meal.totalProtein}g protein</p>
+                              <span className="text-base font-extrabold text-ink">{meal.totalCalories} kcal</span>
+                              <p className="text-xs text-emerald-600 font-bold">{meal.totalProtein}g protein</p>
                             </div>
                           </div>
 
                           {isExpanded && (
                             <div className="border-t border-surface-line bg-surface-muted p-4 space-y-3">
-                              <p className="text-xs font-bold uppercase tracking-wider text-brand">Items Breakdown</p>
+                              <p className="text-sm font-bold uppercase tracking-wider text-brand">Items Breakdown</p>
                               <div className="space-y-2">
                                 {meal.items.map((item) => (
-                                  <div key={item.id} className="flex justify-between items-center text-xs">
+                                  <div key={item.id} className="flex justify-between items-center text-sm">
                                     <div className="space-y-0.5">
                                       <p className="font-semibold text-ink">{item.name}</p>
-                                      <p className="text-[10px] text-ink-faint">{item.estimatedQuantity}</p>
+                                      <p className="text-xs text-ink-faint">{item.estimatedQuantity}</p>
                                     </div>
                                     <div className="text-right text-ink-soft">
                                       <span className="font-semibold text-ink-soft">{item.calories} kcal</span>
-                                      <p className="text-[9px] text-ink-faint">
+                                      <p className="text-xs text-ink-faint">
                                         P: {item.protein}g | F: {item.fat}g | Fib: {item.fiber}g
                                       </p>
                                     </div>
@@ -841,7 +837,7 @@ export default function Dashboard({
               </div>
 
               {todayMeals.length > 0 && (
-                <div className="pt-4 mt-4 border-t border-surface-line flex justify-between text-xs text-ink-soft">
+                <div className="pt-4 mt-4 border-t border-surface-line flex justify-between text-sm text-ink-soft">
                   <span>Cumulative metrics:</span>
                   <span className="font-bold text-brand">{todayTotals.calories} kcal total</span>
                 </div>
@@ -862,7 +858,7 @@ export default function Dashboard({
             className="flex flex-col items-center gap-1 text-ink-soft w-16"
           >
             <Utensils className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Fridge</span>
+            <span className="text-xs font-bold">Fridge</span>
           </button>
           <button
             onClick={onAddMealClick || (() => {
@@ -887,7 +883,7 @@ export default function Dashboard({
             className="flex flex-col items-center gap-1 text-ink-soft w-16"
           >
             <Settings className="w-5 h-5" />
-            <span className="text-[10px] font-bold">Goals</span>
+            <span className="text-xs font-bold">Goals</span>
           </button>
         </div>
       </div>
@@ -912,12 +908,12 @@ export default function Dashboard({
 
             {/* Modal Content */}
             <form onSubmit={handleSaveGoals} className="p-6 space-y-4">
-              <p className="text-xs text-ink-soft leading-normal">
+              <p className="text-sm text-ink-soft leading-normal">
                 Personalize your daily targets. The charts and indicators will adapt to your choices immediately.
               </p>
 
               {saveError && (
-                <div className="p-3 bg-red-900/30 border border-red-500/20 rounded-xl text-xs text-red-600 flex items-center gap-2">
+                <div className="p-3 bg-red-900/30 border border-red-500/20 rounded-xl text-sm text-red-600 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
                   <span>{saveError}</span>
                 </div>
@@ -925,52 +921,52 @@ export default function Dashboard({
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-bold text-ink-soft block mb-1">Calories Target (kcal)</label>
+                  <label className="text-sm font-bold text-ink-soft block mb-1">Calories Target (kcal)</label>
                   <input
                     type="number"
                     value={targetCals}
                     onChange={(e) => setTargetCals(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 bg-white border border-surface-line rounded-xl text-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-white border border-surface-line rounded-xl text-ink text-base focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="2000"
                     min="1"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-ink-soft block mb-1">Protein Target (g)</label>
+                  <label className="text-sm font-bold text-ink-soft block mb-1">Protein Target (g)</label>
                   <input
                     type="number"
                     value={targetProtein}
                     onChange={(e) => setTargetProtein(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 bg-white border border-surface-line rounded-xl text-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-white border border-surface-line rounded-xl text-ink text-base focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="80"
                     min="1"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-ink-soft block mb-1">Fat Target (g)</label>
+                  <label className="text-sm font-bold text-ink-soft block mb-1">Fat Target (g)</label>
                   <input
                     type="number"
                     value={targetFat}
                     onChange={(e) => setTargetFat(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 bg-white border border-surface-line rounded-xl text-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-white border border-surface-line rounded-xl text-ink text-base focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="65"
                     min="1"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-ink-soft block mb-1">Fiber Target (g)</label>
+                  <label className="text-sm font-bold text-ink-soft block mb-1">Fiber Target (g)</label>
                   <input
                     type="number"
                     value={targetFiber}
                     onChange={(e) => setTargetFiber(e.target.value)}
                     required
-                    className="w-full px-4 py-2.5 bg-white border border-surface-line rounded-xl text-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    className="w-full px-4 py-2.5 bg-white border border-surface-line rounded-xl text-ink text-base focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="30"
                     min="1"
                   />
@@ -983,14 +979,14 @@ export default function Dashboard({
                   type="button"
                   onClick={() => setIsModalOpen(false)}
                   disabled={isSaving}
-                  className="px-4 py-2.5 bg-surface-muted hover:bg-surface-muted border border-surface-line rounded-xl text-ink-soft hover:text-ink font-semibold text-sm transition-all"
+                  className="px-4 py-2.5 bg-surface-muted hover:bg-surface-muted border border-surface-line rounded-xl text-ink-soft hover:text-ink font-semibold text-base transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-lg shadow-brand-600/30 transition-all flex items-center gap-2"
+                  className="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold text-base rounded-xl shadow-lg shadow-brand-600/30 transition-all flex items-center gap-2"
                 >
                   {isSaving ? "Saving..." : "Save Goals"}
                 </button>
@@ -1018,7 +1014,7 @@ export default function Dashboard({
                 </div>
                 <div>
                   <h3 className="font-display text-lg font-bold text-ink">AI Vision Meal Scanner</h3>
-                  <p className="text-xs text-ink-soft">Upload or select a nutritional plate snapshot to auto-extract macros.</p>
+                  <p className="text-sm text-ink-soft">Upload or select a nutritional plate snapshot to auto-extract macros.</p>
                 </div>
               </div>
               <button 
@@ -1047,7 +1043,7 @@ export default function Dashboard({
                       <div className="w-12 h-12 rounded-2xl bg-surface-muted flex items-center justify-center border border-surface-line text-ink-soft group-hover:bg-brand-50 group-hover:text-brand transition-all shadow-md">
                         <Upload className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-bold text-ink group-hover:text-ink transition-all">Upload</p>
+                      <p className="text-base font-bold text-ink group-hover:text-ink transition-all">Upload</p>
                     </div>
 
                     {/* Take Photo with Camera */}
@@ -1062,7 +1058,7 @@ export default function Dashboard({
                       <div className="w-12 h-12 rounded-2xl bg-surface-muted flex items-center justify-center border border-surface-line text-ink-soft group-hover:bg-emerald-600/10 group-hover:text-emerald-600 transition-all shadow-md">
                         <Camera className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-bold text-ink group-hover:text-ink transition-all">Photo</p>
+                      <p className="text-base font-bold text-ink group-hover:text-ink transition-all">Photo</p>
                     </div>
 
                     {/* Voice Logging */}
@@ -1075,7 +1071,7 @@ export default function Dashboard({
                       >
                         {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
                       </button>
-                      <p className="text-sm font-bold text-ink group-hover:text-ink transition-all leading-tight">
+                      <p className="text-base font-bold text-ink group-hover:text-ink transition-all leading-tight">
                         {isListening ? "Listening..." : "Hold to Speak"}
                       </p>
                     </div>
@@ -1083,17 +1079,17 @@ export default function Dashboard({
                   
                   {transcript && isListening && (
                     <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                       <p className="text-xs text-red-600 italic">"{transcript}"</p>
+                       <p className="text-sm text-red-600 italic">"{transcript}"</p>
                     </div>
                   )}
                   {speechError && (
-                    <div className="mt-2 p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-xs text-red-600">
+                    <div className="mt-2 p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-sm text-red-600">
                        Speech Error: {speechError}. (Ensure microphone permissions are granted).
                     </div>
                   )}
 
                   {selectedImage && (
-                    <div className="mt-4 px-4 py-2 rounded-2xl bg-brand-50 border border-brand-500/20 text-brand-600 text-xs font-semibold flex items-center gap-1.5 animate-bounce">
+                    <div className="mt-4 px-4 py-2 rounded-2xl bg-brand-50 border border-brand-500/20 text-brand-600 text-sm font-semibold flex items-center gap-1.5 animate-bounce">
                       <Check className="w-3.5 h-3.5 text-brand" /> Custom file loaded! Click "Analyze" below
                     </div>
                   )}
@@ -1101,7 +1097,7 @@ export default function Dashboard({
                   {/* Healthy Gourmet Presets Title */}
                   <div className="text-center pt-2">
                     <div className="h-[1px] w-full bg-surface-line flex items-center justify-center">
-                      <span className="px-4 bg-surface-muted text-[10px] font-black uppercase text-brand tracking-widest">
+                      <span className="px-4 bg-surface-muted text-xs font-black uppercase text-brand tracking-widest">
                         Or select a visual preset
                       </span>
                     </div>
@@ -1121,16 +1117,16 @@ export default function Dashboard({
                             alt={preset.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" 
                           />
-                          <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/50 rounded-lg text-[9px] font-bold text-brand-600 backdrop-blur-sm border border-brand-500/20">
+                          <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/50 rounded-lg text-xs font-bold text-brand-600 backdrop-blur-sm border border-brand-500/20">
                             {preset.totalCalories} kcal
                           </div>
                         </div>
                         <div className="p-3.5 space-y-2 flex-grow flex flex-col justify-between">
                           <div>
-                            <h4 className="text-xs font-black text-ink line-clamp-1 group-hover:text-ink">{preset.name}</h4>
-                            <p className="text-[10px] text-ink-faint line-clamp-2 mt-0.5 leading-relaxed">{preset.summary}</p>
+                            <h4 className="text-sm font-black text-ink line-clamp-1 group-hover:text-ink">{preset.name}</h4>
+                            <p className="text-xs text-ink-faint line-clamp-2 mt-0.5 leading-relaxed">{preset.summary}</p>
                           </div>
-                          <div className="flex justify-between items-center text-[9px] font-bold text-ink-soft border-t border-surface-line pt-2 mt-1">
+                          <div className="flex justify-between items-center text-xs font-bold text-ink-soft border-t border-surface-line pt-2 mt-1">
                             <span className="text-emerald-600">P: {preset.totalProtein}g</span>
                             <span className="text-amber-600">F: {preset.totalFat}g</span>
                             <span className="text-blue-600">Fib: {preset.totalFiber}g</span>
@@ -1146,7 +1142,7 @@ export default function Dashboard({
                       <button
                         type="button"
                         onClick={handleStartAnalysis}
-                        className="px-6 py-3 bg-brand-600 hover:bg-brand-500 font-bold text-white text-sm rounded-xl transition-all shadow-lg shadow-brand-600/30 flex items-center gap-2"
+                        className="px-6 py-3 bg-brand-600 hover:bg-brand-500 font-bold text-white text-base rounded-xl transition-all shadow-lg shadow-brand-600/30 flex items-center gap-2"
                       >
                         <Sparkles className="w-4 h-4" />
                         <span>Run AI Analyzer</span>
@@ -1170,7 +1166,7 @@ export default function Dashboard({
                     ) : (
                       <div className="p-6 text-center z-20">
                          <Mic className="w-12 h-12 text-brand mx-auto mb-4 animate-pulse" />
-                         <p className="text-xs font-semibold text-ink-soft italic">"{transcript}"</p>
+                         <p className="text-sm font-semibold text-ink-soft italic">"{transcript}"</p>
                       </div>
                     )}
 
@@ -1198,7 +1194,7 @@ export default function Dashboard({
                   <div className="text-center space-y-2">
                     <div className="flex items-center justify-center gap-2">
                       <RefreshCw className="w-4 h-4 text-brand animate-spin" />
-                      <span className="text-sm font-black text-ink tracking-wide uppercase">
+                      <span className="text-base font-black text-ink tracking-wide uppercase">
                         AI Dissection Live
                       </span>
                     </div>
@@ -1206,11 +1202,11 @@ export default function Dashboard({
                       key={scanningMsgIdx}
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-brand font-extrabold text-sm min-h-[20px]"
+                      className="text-brand font-extrabold text-base min-h-[20px]"
                     >
                       {SCAN_MESSAGES[scanningMsgIdx]}
                     </motion.p>
-                    <p className="text-xs text-ink-faint">Wait a few seconds for computer-vision calorie estimation...</p>
+                    <p className="text-sm text-ink-faint">Wait a few seconds for computer-vision calorie estimation...</p>
                   </div>
 
                   {/* Pulsing Loading line */}
@@ -1234,8 +1230,8 @@ export default function Dashboard({
                         <AlertTriangle className="w-6 h-6" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-ink">AI Dissection Failed</h4>
-                        <p className="text-xs text-ink-soft mt-1 leading-relaxed max-w-sm mx-auto">
+                        <h4 className="text-base font-bold text-ink">AI Dissection Failed</h4>
+                        <p className="text-sm text-ink-soft mt-1 leading-relaxed max-w-sm mx-auto">
                           {analysisError}
                         </p>
                       </div>
@@ -1247,7 +1243,7 @@ export default function Dashboard({
                           setActiveAnalysis(null);
                           setAnalysisError(null);
                         }}
-                        className="px-4 py-2 bg-surface-muted hover:bg-surface-line text-xs font-semibold rounded-xl text-ink-soft transition-all"
+                        className="px-4 py-2 bg-surface-muted hover:bg-surface-line text-sm font-semibold rounded-xl text-ink-soft transition-all"
                       >
                         Try Another Image
                       </button>
@@ -1255,7 +1251,7 @@ export default function Dashboard({
                   ) : activeAnalysis ? (
                     <>
                       {mealSaveError && (
-                        <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-xs text-red-600 flex items-center gap-2">
+                        <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-sm text-red-600 flex items-center gap-2">
                           <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
                           <span>{mealSaveError}</span>
                         </div>
@@ -1270,7 +1266,7 @@ export default function Dashboard({
                               alt="Analyzed food" 
                               className="w-full h-full object-cover"
                             />
-                            <div className="absolute top-3 left-3 px-2 py-0.5 bg-emerald-500/20 text-emerald-600 text-[10px] font-black tracking-widest rounded-lg border border-emerald-500/20 backdrop-blur-sm shadow-sm uppercase">
+                            <div className="absolute top-3 left-3 px-2 py-0.5 bg-emerald-500/20 text-emerald-600 text-xs font-black tracking-widest rounded-lg border border-emerald-500/20 backdrop-blur-sm shadow-sm uppercase">
                               USDA Matched
                             </div>
                           </div>
@@ -1278,22 +1274,22 @@ export default function Dashboard({
                           {/* Calorie and Nutrient Highlights */}
                           <div className="p-4 bg-surface-muted rounded-2xl border border-surface-line space-y-3">
                             <div className="flex justify-between items-baseline">
-                              <span className="text-[10px] font-extrabold text-ink-soft uppercase tracking-widest">Total Energy</span>
+                              <span className="text-xs font-extrabold text-ink-soft uppercase tracking-widest">Total Energy</span>
                               <span className="font-display text-xl font-black text-ink">{activeAnalysis.totalCalories} kcal</span>
                             </div>
                             <hr className="border-surface-line" />
-                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div className="grid grid-cols-3 gap-2 text-center text-sm">
                               <div className="bg-emerald-500/5 p-2 rounded-xl border border-emerald-500/10">
-                                <p className="text-[10px] font-bold text-ink-faint uppercase">Protein</p>
-                                <p className="text-sm font-extrabold text-emerald-600 mt-0.5">{activeAnalysis.totalProtein}g</p>
+                                <p className="text-xs font-bold text-ink-faint uppercase">Protein</p>
+                                <p className="text-base font-extrabold text-emerald-600 mt-0.5">{activeAnalysis.totalProtein}g</p>
                               </div>
                               <div className="bg-amber-500/5 p-2 rounded-xl border border-amber-500/10">
-                                <p className="text-[10px] font-bold text-ink-faint uppercase">Fat</p>
-                                <p className="text-sm font-extrabold text-amber-600 mt-0.5">{activeAnalysis.totalFat}g</p>
+                                <p className="text-xs font-bold text-ink-faint uppercase">Fat</p>
+                                <p className="text-base font-extrabold text-amber-600 mt-0.5">{activeAnalysis.totalFat}g</p>
                               </div>
                               <div className="bg-blue-500/5 p-2 rounded-xl border border-blue-500/10">
-                                <p className="text-[10px] font-bold text-ink-faint uppercase">Fiber</p>
-                                <p className="text-sm font-extrabold text-blue-600 mt-0.5">{activeAnalysis.totalFiber}g</p>
+                                <p className="text-xs font-bold text-ink-faint uppercase">Fiber</p>
+                                <p className="text-base font-extrabold text-blue-600 mt-0.5">{activeAnalysis.totalFiber}g</p>
                               </div>
                             </div>
                           </div>
@@ -1303,29 +1299,29 @@ export default function Dashboard({
                         <div className="md:col-span-7 space-y-4">
                           {/* Name input */}
                           <div>
-                            <label className="text-[10px] font-black text-ink-soft uppercase tracking-widest block mb-1">Meal Title</label>
+                            <label className="text-xs font-black text-ink-soft uppercase tracking-widest block mb-1">Meal Title</label>
                             <input 
                               type="text" 
                               value={customMealName}
                               onChange={(e) => setCustomMealName(e.target.value)}
                               placeholder="My Gourmet Feast Bowl"
-                              className="w-full px-4 py-2.5 bg-white border border-surface-line rounded-xl text-ink text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                              className="w-full px-4 py-2.5 bg-white border border-surface-line rounded-xl text-ink text-base focus:outline-none focus:ring-2 focus:ring-brand-500"
                             />
                           </div>
 
                           {/* Items breakdown */}
                           <div className="space-y-2">
-                            <label className="text-[10px] font-black text-ink-soft uppercase tracking-widest block mb-1">Estimated Plate Breakdown</label>
+                            <label className="text-xs font-black text-ink-soft uppercase tracking-widest block mb-1">Estimated Plate Breakdown</label>
                             <div className="space-y-2.5 max-h-36 overflow-y-auto pr-1">
                               {activeAnalysis.items.map((item: any, idx: number) => (
-                                <div key={idx} className="flex justify-between items-center p-2.5 bg-surface-muted border border-surface-line rounded-xl text-xs">
+                                <div key={idx} className="flex justify-between items-center p-2.5 bg-surface-muted border border-surface-line rounded-xl text-sm">
                                   <div className="space-y-0.5">
                                     <p className="font-bold text-ink">{item.name}</p>
-                                    <p className="text-[10px] text-ink-faint">Portion: {item.estimatedQuantity || "100g"}</p>
+                                    <p className="text-xs text-ink-faint">Portion: {item.estimatedQuantity || "100g"}</p>
                                   </div>
                                   <div className="text-right">
                                     <p className="font-extrabold text-ink-soft">{item.calories} kcal</p>
-                                    <p className="text-[9px] text-ink-faint">P:{item.protein}g | F:{item.fat}g | Fib:{item.fiber}g</p>
+                                    <p className="text-xs text-ink-faint">P:{item.protein}g | F:{item.fat}g | Fib:{item.fiber}g</p>
                                   </div>
                                 </div>
                               ))}
@@ -1339,7 +1335,7 @@ export default function Dashboard({
                         <button
                           type="button"
                           onClick={() => setUploadStep(0)}
-                          className="px-5 py-2.5 bg-surface-muted hover:bg-surface-muted border border-surface-line rounded-xl text-ink-soft font-semibold text-sm transition-all"
+                          className="px-5 py-2.5 bg-surface-muted hover:bg-surface-muted border border-surface-line rounded-xl text-ink-soft font-semibold text-base transition-all"
                         >
                           Back
                         </button>
@@ -1347,7 +1343,7 @@ export default function Dashboard({
                           type="button"
                           disabled={isSavingMeal}
                           onClick={handleSaveMeal}
-                          className="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold text-sm rounded-xl shadow-lg shadow-brand-600/30 transition-all flex items-center gap-2"
+                          className="px-6 py-2.5 bg-brand-600 hover:bg-brand-500 disabled:opacity-50 text-white font-semibold text-base rounded-xl shadow-lg shadow-brand-600/30 transition-all flex items-center gap-2"
                         >
                           {isSavingMeal ? (
                             <>
@@ -1397,7 +1393,7 @@ export default function Dashboard({
             {/* Title & Subtitle */}
             <div className="text-center space-y-2 mb-6">
               <h3 className="font-display text-2xl font-black text-ink tracking-tight">Upgrade to dietBuddy Premium</h3>
-              <p className="text-xs text-ink-soft leading-relaxed">
+              <p className="text-sm text-ink-soft leading-relaxed">
                 You've reached your free daily scan limit. Unlock the full power of dietBuddy to crush your fitness goals.
               </p>
             </div>
@@ -1409,8 +1405,8 @@ export default function Dashboard({
                   <Check className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-ink">Unlimited AI Plate Scans</h4>
-                  <p className="text-[10px] text-ink-faint mt-0.5">Scan breakfast, lunch, dinner, and snacks with no limits.</p>
+                  <h4 className="text-sm font-bold text-ink">Unlimited AI Plate Scans</h4>
+                  <p className="text-xs text-ink-faint mt-0.5">Scan breakfast, lunch, dinner, and snacks with no limits.</p>
                 </div>
               </div>
 
@@ -1419,8 +1415,8 @@ export default function Dashboard({
                   <Check className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-ink">Automated Cloud Sync</h4>
-                  <p className="text-[10px] text-ink-faint mt-0.5">Seamless two-way synchronization between your Android app and Web portal.</p>
+                  <h4 className="text-sm font-bold text-ink">Automated Cloud Sync</h4>
+                  <p className="text-xs text-ink-faint mt-0.5">Seamless two-way synchronization between your Android app and Web portal.</p>
                 </div>
               </div>
 
@@ -1429,20 +1425,20 @@ export default function Dashboard({
                   <Check className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-ink">Premium Macros Insights</h4>
-                  <p className="text-[10px] text-ink-faint mt-0.5">Get in-depth AI coaching and nutrition trends updated dynamically.</p>
+                  <h4 className="text-sm font-bold text-ink">Premium Macros Insights</h4>
+                  <p className="text-xs text-ink-faint mt-0.5">Get in-depth AI coaching and nutrition trends updated dynamically.</p>
                 </div>
               </div>
             </div>
 
             {/* Pricing Section */}
             <div className="bg-surface-muted border border-surface-line rounded-3xl p-5 text-center mb-6">
-              <span className="text-[10px] font-black tracking-widest text-brand uppercase">Premium Plan</span>
+              <span className="text-xs font-black tracking-widest text-brand uppercase">Premium Plan</span>
               <div className="flex items-baseline justify-center gap-1.5 mt-1">
                 <span className="font-display text-3xl font-black text-ink">₹199</span>
-                <span className="text-ink-faint text-xs font-bold">/ month</span>
+                <span className="text-ink-faint text-sm font-bold">/ month</span>
               </div>
-              <p className="text-[10px] text-ink-faint mt-2">Cancel anytime. Risk-free subscription.</p>
+              <p className="text-xs text-ink-faint mt-2">Cancel anytime. Risk-free subscription.</p>
             </div>
 
             {/* Checkout Action Button */}
@@ -1520,7 +1516,7 @@ export default function Dashboard({
                   alert("Something went wrong during checkout.");
                 }
               }}
-              className="w-full py-4 bg-brand-600 hover:bg-brand-500 font-bold text-white text-sm rounded-2xl transition-all shadow-lg shadow-brand-600/30 text-center flex items-center justify-center gap-2 group"
+              className="w-full py-4 bg-brand-600 hover:bg-brand-500 font-bold text-white text-base rounded-2xl transition-all shadow-lg shadow-brand-600/30 text-center flex items-center justify-center gap-2 group"
             >
               <span>Subscribe Now</span>
               <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />

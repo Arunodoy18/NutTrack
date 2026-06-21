@@ -199,10 +199,6 @@ export default async function DashboardPage() {
         protein: currentGoals.protein,
         fat: currentGoals.fat,
         fiber: currentGoals.fiber,
-        sodium: (currentGoals as any).sodium || 2300,
-        iron: (currentGoals as any).iron || 18,
-        calcium: (currentGoals as any).calcium || 1000,
-        vitaminC: (currentGoals as any).vitaminC || 90,
       }}
       todayTotals={todayTotals}
       todayMeals={mappedTodayMeals}
