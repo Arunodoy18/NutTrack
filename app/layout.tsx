@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "dietBuddy - Calorie & Nutrition Estimator",
@@ -12,16 +9,15 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "dietBuddy",
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
   },
 };
 
 export const viewport = {
-  themeColor: "#E07A3A",
+  themeColor: "#FFFFFF",
 };
 
 import { PwaRegistry } from "@/components/PwaRegistry";
-import InstallPrompt from "@/components/InstallPrompt";
 
 export default function RootLayout({
   children,
@@ -30,9 +26,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} antialiased`}>
+      <body className="bg-surface-muted text-ink antialiased">
         <PwaRegistry />
-        <InstallPrompt />
         {children}
         <Script id="register-sw" strategy="afterInteractive">
           {`

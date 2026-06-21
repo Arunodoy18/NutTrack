@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { dailyGoals, meals, mealItems, users, groceryList } from "@/lib/db/schema";
+import { dailyGoals, meals, mealItems, users, groceryList, payments } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";

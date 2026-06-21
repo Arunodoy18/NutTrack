@@ -1,231 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg:          #F5F0E8;   
-  --bg-card:     #EDE8DF;   
-  --bg-col:      #E8E3D9;   
-  --bg-input:    #EAE5DC;   
-  --border:      #D4CFC5;   
-  --border-s:    #BDB8AE;   
-  --txt:         #2C2A25;   
-  --txt-2:       #7A7468;   
-  --txt-h:       #A9A39A;   
-  --green:       #4CAF82;   
-  --green-l:     #D6F0E3;   
-  --orange:      #E07A3A;   
-  --orange-l:    #FAE8D8;   
-  --red:         #D64E4E;   
-  --red-l:       #FAE0E0;   
-  --blue:        #4A7FA5;   
-  --blue-l:      #DCE9F3;   
-  --white:       #FDFAF5;   
+  --background: #F4F4F6;
+  --foreground: #242428;
+  --brand: #FC4C02;
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--txt);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   margin: 0;
   padding: 0;
 }
 
-/* --- LANDING THEME STYLES (Light Kanban Match) --- */
-.landing-theme {
-  --night: #F7F5F0;
-  --deep: #F7F5F0;
-  --surface: #FFFFFF;
-  --card: #FFFFFF;
-
-  --glass-bg: #FFFFFF;
-  --glass-bg2: #FFFFFF;
-  --glass-border: #EBE8E0;
-  --glass-bdr-lit: #DEDBD2;
-  --rim: transparent;
-  --rim-bright: transparent;
-
-  --indigo: #635BFF;
-  --violet: #635BFF;
-  --cyan: #5C99D6;
-  --emerald: #83B593;
-  --amber: #E67F63;
-  --rose: #E67F63;
-
-  --grad-hero: linear-gradient(135deg, #635BFF 0%, #635BFF 50%, #5C99D6 100%);
-  --grad-cta: linear-gradient(135deg, #635BFF, #635BFF);
-  --grad-green: linear-gradient(135deg, #83B593, #5C99D6);
-  --grad-warm: linear-gradient(135deg, #E67F63, #E67F63);
-
-  --txt: #3D3B38;
-  --txt-2: #8D8B86;
-  --txt-3: #A3A09A;
-
-  background-color: var(--deep);
-  color: var(--txt);
-  min-height: 100vh;
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Background grid overlay - Hero section only */
-.landing-theme .hero-grid {
-  background-image:
-    linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-}
-
-/* Ambient Background orbs floating animations */
-@keyframes orb-float-1 {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(40px, -60px) scale(1.15); }
-  66% { transform: translate(-30px, 30px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-@keyframes orb-float-2 {
-  0% { transform: translate(0px, 0px) scale(1.1); }
-  33% { transform: translate(-50px, 50px) scale(0.85); }
-  66% { transform: translate(40px, -40px) scale(1.15); }
-  100% { transform: translate(0px, 0px) scale(1.1); }
-}
-@keyframes orb-float-3 {
-  0% { transform: translate(0px, 0px) scale(0.9); }
-  33% { transform: translate(50px, 40px) scale(1.2); }
-  66% { transform: translate(-40px, -50px) scale(0.85); }
-  100% { transform: translate(0px, 0px) scale(0.9); }
-}
-@keyframes orb-float-4 {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(-40px, -40px) scale(1.15); }
-  66% { transform: translate(50px, 50px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-
-.landing-theme .orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  will-change: transform;
-}
-
-.landing-theme .orb-1 {
-  background: var(--indigo);
-  opacity: 0.16;
-  animation: orb-float-1 14s ease-in-out infinite;
-}
-.landing-theme .orb-2 {
-  background: var(--violet);
-  opacity: 0.16;
-  animation: orb-float-2 16s ease-in-out infinite -4s;
-}
-.landing-theme .orb-3 {
-  background: var(--cyan);
-  opacity: 0.16;
-  animation: orb-float-3 12s ease-in-out infinite -8s;
-}
-.landing-theme .orb-4 {
-  background: var(--emerald);
-  opacity: 0.16;
-  animation: orb-float-4 15s ease-in-out infinite -2s;
-}
-
-/* Glassmorphism rules applied to cards */
-.landing-theme .glass-card {
-  position: relative;
-  overflow: hidden;
-  background: rgba(20, 28, 53, 0.60);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-.landing-theme .glass-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.15) 50%,
-    transparent 100%
-  );
-  pointer-events: none;
-  z-index: 10;
-}
-
-/* 3D Phone Mockup floating animation */
-@keyframes phone-float {
-  0% { transform: translateY(0px) rotateX(2deg); }
-  50% { transform: translateY(-12px) rotateX(-2deg); }
-  100% { transform: translateY(0px) rotateX(2deg); }
-}
-
-.landing-theme .phone-shell {
-  animation: phone-float 4s ease-in-out infinite;
-  perspective: 1000px;
-  transform-style: preserve-3d;
-}
-
-/* Rotating drop shadow glowing star */
-@keyframes star-rotate-glow {
-  0% {
-    transform: rotate(0deg);
-    filter: drop-shadow(0 0 8px var(--indigo));
-  }
-  50% {
-    filter: drop-shadow(0 0 20px var(--violet));
-  }
-  100% {
-    transform: rotate(360deg);
-    filter: drop-shadow(0 0 8px var(--indigo));
-  }
-}
-
-.landing-theme .star-spin-glow {
-  animation: star-rotate-glow 10s linear infinite;
-}
-
-/* Premium pricing card styling */
-.landing-theme .premium-pricing-card {
-  position: relative;
-  overflow: hidden;
-  background: rgba(20, 28, 53, 0.60);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  border-radius: 32px;
-  transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
-}
-
-.landing-theme .premium-pricing-card:hover {
-  border-color: rgba(99, 102, 241, 0.6);
-  box-shadow: 0 20px 40px -15px rgba(99, 102, 241, 0.25), 0 10px 30px -10px rgba(0, 0, 0, 0.8);
-}
-
-.landing-theme .premium-pricing-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent 0%, #6366F1 50%, transparent 100%);
-  pointer-events: none;
-  z-index: 10;
-}
-
-/* Accessibility: prefers-reduced-motion overrides */
-@media (prefers-reduced-motion: reduce) {
-  .landing-theme *,
-  .landing-theme *::before,
-  .landing-theme *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-    transform: none !important;
-  }
-}
+/* Thin, unobtrusive scrollbars to match the app surfaces */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #D6D6DB; border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
