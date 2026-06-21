@@ -238,9 +238,9 @@ export default function BarcodeScanner({ onClose, onFoodFound }: BarcodeScannerP
 
           {/* Error */}
           {error && (
-            <div className="p-4 bg-red-50 rounded-2xl border border-red-100 text-center space-y-2">
-              <AlertTriangle size={24} className="text-red-400 mx-auto" />
-              <p className="text-xs font-bold text-red-500">{error}</p>
+            <div className="p-4 bg-red-500-50 rounded-2xl border border-red-100 text-center space-y-2">
+              <AlertTriangle size={24} className="text-red-500-400 mx-auto" />
+              <p className="text-xs font-bold text-red-500-500">{error}</p>
               <button onClick={() => { setError(null); setResult(null); }} className="text-[10px] font-bold text-[#635BFF] underline">Try Again</button>
             </div>
           )}

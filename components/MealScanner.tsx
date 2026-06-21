@@ -143,7 +143,7 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-bg/60 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-surface-muted/60 backdrop-blur-sm"
             onClick={handleClose}
           />
           <motion.div 
@@ -151,22 +151,22 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50 w-full max-w-2xl mx-auto bg-card border-t border-s rounded-t-[32px] overflow-hidden shadow-[0_-10px_40px_rgba(44,42,37,0.1)] flex flex-col max-h-[85vh]"
+            className="fixed inset-x-0 bottom-0 z-50 w-full max-w-2xl mx-auto bg-white border-t border-surface-line rounded-t-[32px] overflow-hidden shadow-[0_-10px_40px_rgba(44,42,37,0.1)] flex flex-col max-h-[85vh]"
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-s/60 bg-col">
+            <div className="flex items-center justify-between p-6 border-b border-surface-line/60 bg-surface-muted">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-orange-l text-orange">
+                <div className="p-2 rounded-xl bg-brand-l text-brand">
                   <Camera className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-txt">Meal Scanner</h3>
-                  <p className="text-xs text-txt-2">Upload a photo to extract macros.</p>
+                  <h3 className="text-lg font-bold text-ink">Meal Scanner</h3>
+                  <p className="text-xs text-ink-2">Upload a photo to extract macros.</p>
                 </div>
               </div>
               <button 
                 onClick={handleClose}
-                className="p-1.5 text-txt-2 hover:text-txt rounded-xl bg-input transition-all"
+                className="p-1.5 text-ink-2 hover:text-ink rounded-xl bg-white transition-all"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -175,17 +175,17 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
             {/* Content Switcher */}
             <div className="p-6 flex-1 overflow-y-auto">
               {uploadStep === 0 && (
-                <div className="relative border-2 border-dashed border-s hover:border-orange transition-all rounded-3xl bg-col p-8 text-center flex flex-col items-center justify-center gap-3 group cursor-pointer">
+                <div className="relative border-2 border-dashed border-surface-line hover:border-orange transition-all rounded-3xl bg-surface-muted p-8 text-center flex flex-col items-center justify-center gap-3 group cursor-pointer">
                   <input 
                     type="file" 
                     accept="image/*" 
                     onChange={handleFileChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                   />
-                  <div className="w-14 h-14 rounded-2xl bg-input flex items-center justify-center border border-s text-txt-2 group-hover:bg-orange-l group-hover:text-orange transition-all shadow-custom">
+                  <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center border border-surface-line text-ink-2 group-hover:bg-brand-l group-hover:text-brand transition-all shadow-custom">
                     <Upload className="w-7 h-7" />
                   </div>
-                  <p className="text-sm font-bold text-txt group-hover:text-orange transition-all">Tap to Upload Photo</p>
+                  <p className="text-sm font-bold text-ink group-hover:text-brand transition-all">Tap to Upload Photo</p>
                 </div>
               )}
 
@@ -194,14 +194,14 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
                   <div className="relative w-48 h-48 rounded-3xl overflow-hidden border-2 border-orange/30 shadow-2xl">
                     {selectedImage && <img src={selectedImage} alt="Scanning" className="w-full h-full object-cover" />}
                     <motion.div 
-                      className="absolute inset-x-0 h-1 bg-orange shadow-[0_0_15px_rgba(224,122,58,0.8)]"
+                      className="absolute inset-x-0 h-1 bg-brand shadow-[0_0_15px_rgba(224,122,58,0.8)]"
                       animate={{ top: ["0%", "100%", "0%"] }}
                       transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
                     />
                   </div>
                   <div className="mt-6 flex items-center gap-2">
-                    {isAnalyzing && <Loader2 className="w-4 h-4 text-orange animate-spin" />}
-                    <p className="text-sm font-medium text-txt animate-pulse">
+                    {isAnalyzing && <Loader2 className="w-4 h-4 text-brand animate-spin" />}
+                    <p className="text-sm font-medium text-ink animate-pulse">
                       {SCAN_MESSAGES[scanningMsgIdx]}
                     </p>
                   </div>
@@ -210,16 +210,16 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
 
               {uploadStep === 2 && analysisError && (
                 <div className="flex flex-col items-center text-center py-8 space-y-4">
-                  <div className="w-16 h-16 bg-red-l text-red rounded-full flex items-center justify-center">
+                  <div className="w-16 h-16 bg-red-500-l text-red-500 rounded-full flex items-center justify-center">
                     <AlertCircle className="w-8 h-8" />
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold text-txt">Oops!</h4>
-                    <p className="text-sm text-txt-2 mt-1">{analysisError}</p>
+                    <h4 className="text-lg font-bold text-ink">Oops!</h4>
+                    <p className="text-sm text-ink-2 mt-1">{analysisError}</p>
                   </div>
                   <button 
                     onClick={() => setUploadStep(0)}
-                    className="mt-4 px-6 py-2.5 bg-col border border-s rounded-xl font-semibold text-txt text-sm hover:bg-input transition-all"
+                    className="mt-4 px-6 py-2.5 bg-surface-muted border border-surface-line rounded-xl font-semibold text-ink text-sm hover:bg-white transition-all"
                   >
                     Try Another Photo
                   </button>
@@ -229,37 +229,37 @@ export function MealScanner({ isOpen, onClose, onScanSuccess, isPremium }: MealS
               {uploadStep === 2 && activeAnalysis && !analysisError && (
                 <div className="space-y-6">
                   <div className="flex gap-4 items-start">
-                    <img src={selectedImage || ""} className="w-24 h-24 rounded-2xl object-cover border border-s shadow-custom" />
+                    <img src={selectedImage || ""} className="w-24 h-24 rounded-2xl object-cover border border-surface-line shadow-custom" />
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="text-xl font-bold text-txt">{activeAnalysis.name || "Custom Meal"}</h4>
+                        <h4 className="text-xl font-bold text-ink">{activeAnalysis.name || "Custom Meal"}</h4>
                         {activeAnalysis.confidence && (
                           <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                            activeAnalysis.confidence > 0.8 ? 'bg-green-l text-green' : 'bg-orange-l text-orange'
+                            activeAnalysis.confidence > 0.8 ? 'bg-emerald-500-l text-emerald-500' : 'bg-brand-l text-brand'
                           }`}>
                             {(activeAnalysis.confidence * 100).toFixed(0)}% Match
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-txt-2 mt-1">{activeAnalysis.summary || "Extracted from your photo."}</p>
+                      <p className="text-sm text-ink-2 mt-1">{activeAnalysis.summary || "Extracted from your photo."}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-3">
-                    <div className="bg-col border border-s p-3 rounded-2xl text-center">
-                      <div className="text-xs text-txt-2 mb-1">Cals</div>
-                      <div className="text-lg font-black text-txt">{activeAnalysis.totalCalories}</div>
+                    <div className="bg-surface-muted border border-surface-line p-3 rounded-2xl text-center">
+                      <div className="text-xs text-ink-2 mb-1">Cals</div>
+                      <div className="text-lg font-black text-ink">{activeAnalysis.totalCalories}</div>
                     </div>
-                    <div className="bg-col border border-s p-3 rounded-2xl text-center">
-                      <div className="text-xs text-txt-2 mb-1">Protein</div>
-                      <div className="text-lg font-black text-green">{activeAnalysis.totalProtein}g</div>
+                    <div className="bg-surface-muted border border-surface-line p-3 rounded-2xl text-center">
+                      <div className="text-xs text-ink-2 mb-1">Protein</div>
+                      <div className="text-lg font-black text-emerald-500">{activeAnalysis.totalProtein}g</div>
                     </div>
-                    <div className="bg-col border border-s p-3 rounded-2xl text-center">
-                      <div className="text-xs text-txt-2 mb-1">Fat</div>
-                      <div className="text-lg font-black text-orange">{activeAnalysis.totalFat}g</div>
+                    <div className="bg-surface-muted border border-surface-line p-3 rounded-2xl text-center">
+                      <div className="text-xs text-ink-2 mb-1">Fat</div>
+                      <div className="text-lg font-black text-brand">{activeAnalysis.totalFat}g</div>
                     </div>
-                    <div className="bg-col border border-s p-3 rounded-2xl text-center">
-                      <div className="text-xs text-txt-2 mb-1">Fiber</div>
+                    <div className="bg-surface-muted border border-surface-line p-3 rounded-2xl text-center">
+                      <div className="text-xs text-ink-2 mb-1">Fiber</div>
                       <div className="text-lg font-black text-blue">{activeAnalysis.totalFiber}g</div>
                     </div>
                   </div>

@@ -204,7 +204,6 @@ export default async function DashboardPage() {
       todayMeals={mappedTodayMeals}
       activeStreak={activeStreak}
       totalMealsCount={allUserMealTimestamps.length}
-      weeklyData={weeklyData}
     />
   );
 }

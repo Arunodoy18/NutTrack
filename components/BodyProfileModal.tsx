@@ -174,7 +174,7 @@ export default function BodyProfileModal({ onClose, onGoalsCalculated }: BodyPro
               <motion.div key="step0" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-5">
                 <div className="text-center mb-2">
                   <h4 className="text-lg font-black text-[#3D3B38]">Your Body Stats</h4>
-                  <p className="text-sm font-bold text-[#8D8B86]">Used for precise BMR calculation</p>
+                  <p className="text-base font-bold text-[#8D8B86]">Used for precise BMR calculation</p>
                 </div>
 
                 <div className="flex gap-3">
@@ -187,15 +187,15 @@ export default function BodyProfileModal({ onClose, onGoalsCalculated }: BodyPro
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-black text-[#8D8B86] uppercase block mb-1">Age</label>
+                    <label className="text-sm font-black text-[#8D8B86] uppercase block mb-1">Age</label>
                     <input type="number" value={age} onChange={e => setAge(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-3 rounded-xl text-base font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#635BFF]" />
                   </div>
                   <div>
-                    <label className="text-xs font-black text-[#8D8B86] uppercase block mb-1">Weight (kg)</label>
+                    <label className="text-sm font-black text-[#8D8B86] uppercase block mb-1">Weight (kg)</label>
                     <input type="number" value={weight} onChange={e => setWeight(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-3 rounded-xl text-base font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#635BFF]" />
                   </div>
                   <div>
-                    <label className="text-xs font-black text-[#8D8B86] uppercase block mb-1">Height (cm)</label>
+                    <label className="text-sm font-black text-[#8D8B86] uppercase block mb-1">Height (cm)</label>
                     <input type="number" value={height} onChange={e => setHeight(e.target.value)} className="w-full bg-[#F7F5F0] border border-[#EBE8E0] px-3 py-3 rounded-xl text-base font-bold text-[#3D3B38] text-center focus:outline-none focus:border-[#635BFF]" />
                   </div>
                 </div>
@@ -211,7 +211,7 @@ export default function BodyProfileModal({ onClose, onGoalsCalculated }: BodyPro
               <motion.div key="step1" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-4">
                 <div className="text-center mb-2">
                   <h4 className="text-lg font-black text-[#3D3B38]">Activity Level</h4>
-                  <p className="text-sm font-bold text-[#8D8B86]">How active are you on a typical week?</p>
+                  <p className="text-base font-bold text-[#8D8B86]">How active are you on a typical week?</p>
                 </div>
 
                 <div className="space-y-2">
@@ -239,7 +239,7 @@ export default function BodyProfileModal({ onClose, onGoalsCalculated }: BodyPro
               <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-4">
                 <div className="text-center mb-2">
                   <h4 className="text-lg font-black text-[#3D3B38]">Your Goal</h4>
-                  <p className="text-sm font-bold text-[#8D8B86]">We'll calculate the perfect macro split</p>
+                  <p className="text-base font-bold text-[#8D8B86]">We'll calculate the perfect macro split</p>
                 </div>
 
                 <div className="space-y-3">
@@ -248,7 +248,7 @@ export default function BodyProfileModal({ onClose, onGoalsCalculated }: BodyPro
                       <span className="text-2xl">{GOAL_LABELS[goal].emoji}</span>
                       <div className="text-left">
                         <span className={`text-sm font-black block ${fitnessGoal === goal ? 'text-[#3D3B38]' : 'text-[#8D8B86]'}`}>{GOAL_LABELS[goal].label}</span>
-                        <span className="text-xs font-bold text-[#8D8B86]">{GOAL_LABELS[goal].desc}</span>
+                        <span className="text-sm font-bold text-[#8D8B86]">{GOAL_LABELS[goal].desc}</span>
                       </div>
                     </button>
                   ))}
@@ -270,54 +270,54 @@ export default function BodyProfileModal({ onClose, onGoalsCalculated }: BodyPro
               <motion.div key="step3" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="space-y-5">
                 <div className="text-center mb-2">
                   <h4 className="text-lg font-black text-[#3D3B38]">Your Personalized Plan</h4>
-                  <p className="text-sm font-bold text-[#8D8B86]">Based on Mifflin-St Jeor equation</p>
+                  <p className="text-base font-bold text-[#8D8B86]">Based on Mifflin-St Jeor equation</p>
                 </div>
 
                 {/* BMR & TDEE Cards */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-[#F7F5F0] rounded-2xl p-4 border border-[#EBE8E0] text-center">
-                    <span className="text-xs font-black text-[#8D8B86] uppercase tracking-widest block mb-1">BMR</span>
+                    <span className="text-sm font-black text-[#8D8B86] uppercase tracking-widest block mb-1">BMR</span>
                     <span className="text-2xl font-black text-[#3D3B38]">{bmr}</span>
-                    <span className="text-xs font-bold text-[#8D8B86] block mt-1">kcal/day at rest</span>
+                    <span className="text-sm font-bold text-[#8D8B86] block mt-1">kcal/day at rest</span>
                   </div>
                   <div className="bg-[#F7F5F0] rounded-2xl p-4 border border-[#EBE8E0] text-center">
-                    <span className="text-xs font-black text-[#8D8B86] uppercase tracking-widest block mb-1">TDEE</span>
+                    <span className="text-sm font-black text-[#8D8B86] uppercase tracking-widest block mb-1">TDEE</span>
                     <span className="text-2xl font-black text-[#635BFF]">{tdee}</span>
-                    <span className="text-xs font-bold text-[#8D8B86] block mt-1">kcal/day total</span>
+                    <span className="text-sm font-bold text-[#8D8B86] block mt-1">kcal/day total</span>
                   </div>
                 </div>
 
                 {/* Target Calories */}
                 <div className="bg-gradient-to-r from-[#635BFF]/10 to-[#83B593]/10 rounded-2xl p-5 border border-[#635BFF]/20 text-center">
-                  <span className="text-xs font-black text-[#635BFF] uppercase tracking-widest block mb-2">
+                  <span className="text-sm font-black text-[#635BFF] uppercase tracking-widest block mb-2">
                     {fitnessGoal === 'cut' ? '🔥 CUT TARGET (-500 kcal)' : fitnessGoal === 'bulk' ? '💪 BULK TARGET (+300 kcal)' : '⚖️ MAINTENANCE TARGET'}
                   </span>
                   <span className="text-4xl font-black text-[#3D3B38] block">{targetCalories}</span>
-                  <span className="text-sm font-bold text-[#8D8B86] block mt-1">calories per day</span>
+                  <span className="text-base font-bold text-[#8D8B86] block mt-1">calories per day</span>
                 </div>
 
                 {/* Macro Breakdown */}
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-[#FFFFFF] rounded-xl p-3 border border-[#EBE8E0] text-center shadow-sm">
-                    <span className="text-[10px] font-black text-[#83B593] uppercase tracking-widest block mb-1">Protein</span>
+                    <span className="text-xs font-black text-[#83B593] uppercase tracking-widest block mb-1">Protein</span>
                     <span className="text-xl font-black text-[#3D3B38]">{targetProtein}g</span>
-                    <span className="text-[10px] font-bold text-[#8D8B86] block mt-0.5">{(parseFloat(weight) ? (targetProtein / parseFloat(weight)).toFixed(1) : '2.0')}g/kg</span>
+                    <span className="text-xs font-bold text-[#8D8B86] block mt-0.5">{(parseFloat(weight) ? (targetProtein / parseFloat(weight)).toFixed(1) : '2.0')}g/kg</span>
                   </div>
                   <div className="bg-[#FFFFFF] rounded-xl p-3 border border-[#EBE8E0] text-center shadow-sm">
-                    <span className="text-[10px] font-black text-[#E67F63] uppercase tracking-widest block mb-1">Fat</span>
+                    <span className="text-xs font-black text-[#E67F63] uppercase tracking-widest block mb-1">Fat</span>
                     <span className="text-xl font-black text-[#3D3B38]">{targetFat}g</span>
-                    <span className="text-[10px] font-bold text-[#8D8B86] block mt-0.5">{Math.round((targetFat * 9 / targetCalories) * 100)}% of cals</span>
+                    <span className="text-xs font-bold text-[#8D8B86] block mt-0.5">{Math.round((targetFat * 9 / targetCalories) * 100)}% of cals</span>
                   </div>
                   <div className="bg-[#FFFFFF] rounded-xl p-3 border border-[#EBE8E0] text-center shadow-sm">
-                    <span className="text-[10px] font-black text-[#5C99D6] uppercase tracking-widest block mb-1">Fiber</span>
+                    <span className="text-xs font-black text-[#5C99D6] uppercase tracking-widest block mb-1">Fiber</span>
                     <span className="text-xl font-black text-[#3D3B38]">{targetFiber}g</span>
-                    <span className="text-[10px] font-bold text-[#8D8B86] block mt-0.5">gut health</span>
+                    <span className="text-xs font-bold text-[#8D8B86] block mt-0.5">gut health</span>
                   </div>
                 </div>
 
                 {/* Science Explanation */}
                 <div className="bg-[#F7F5F0] rounded-xl p-3 border border-[#EBE8E0]">
-                  <p className="text-xs font-bold text-[#8D8B86] leading-relaxed">
+                  <p className="text-sm font-bold text-[#8D8B86] leading-relaxed">
                     <strong className="text-[#3D3B38]">The Math:</strong> BMR is calculated using the Mifflin-St Jeor equation, multiplied by your activity level to get TDEE. 
                     {fitnessGoal === 'cut' && ' A 500 kcal deficit targets ~0.5kg fat loss/week while preserving muscle with high protein (2.2g/kg).'}
                     {fitnessGoal === 'bulk' && ' A 300 kcal surplus supports lean muscle gain without excessive fat. Protein at 1.8g/kg for optimal muscle protein synthesis.'}

@@ -65,34 +65,34 @@ export default function AIChatModal({ onClose }: AIChatModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-bg/85 backdrop-blur-md overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-surface-muted/85 backdrop-blur-md overflow-hidden">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="w-full max-w-2xl h-[85vh] bg-bg border border rounded-[32px] shadow-2xl flex flex-col relative"
+        className="w-full max-w-2xl h-[85vh] bg-surface-muted border border rounded-[32px] shadow-2xl flex flex-col relative"
       >
-        <div className="flex justify-between items-center p-6 border-b border/80 sticky top-0 bg-bg/90 backdrop-blur-md z-10 rounded-t-[32px]">
+        <div className="flex justify-between items-center p-6 border-b border/80 sticky top-0 bg-surface-muted/90 backdrop-blur-md z-10 rounded-t-[32px]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
               <Bot className="w-5 h-5 text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-txt tracking-tight">AI Advisor</h3>
-              <p className="text-xs text-txt-2">Personal Nutritionist</p>
+              <h3 className="text-xl font-black text-ink tracking-tight">AI Advisor</h3>
+              <p className="text-xs text-ink-2">Personal Nutritionist</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button 
               onClick={() => setShowSettings(!showSettings)}
-              className={`p-2 rounded-xl transition-all ${showSettings ? 'bg-indigo-500/10 text-indigo-400' : 'text-txt-2 hover:text-txt bg-card hover:bg-col'}`}
+              className={`p-2 rounded-xl transition-all ${showSettings ? 'bg-indigo-500/10 text-indigo-400' : 'text-ink-2 hover:text-ink bg-white hover:bg-surface-muted'}`}
               title="Dietary Preferences"
             >
               <Settings2 className="w-5 h-5" />
             </button>
             <button 
               onClick={onClose}
-              className="p-2 text-txt-2 hover:text-txt rounded-xl bg-card hover:bg-col transition-all"
+              className="p-2 text-ink-2 hover:text-ink rounded-xl bg-white hover:bg-surface-muted transition-all"
             >
               <X className="w-5 h-5" />
             </button>
@@ -105,15 +105,15 @@ export default function AIChatModal({ onClose }: AIChatModalProps) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="border-b border bg-card/50 overflow-hidden"
+              className="border-b border bg-white/50 overflow-hidden"
             >
               <div className="p-4 sm:p-6">
-                <label className="block text-sm font-bold text-txt mb-2">Dietary Preferences & Allergies</label>
+                <label className="block text-sm font-bold text-ink mb-2">Dietary Preferences & Allergies</label>
                 <textarea 
                   value={preferences}
                   onChange={(e) => setPreferences(e.target.value)}
                   placeholder="e.g. Vegan, allergic to peanuts, low-carb..."
-                  className="w-full bg-input border border-s rounded-xl p-3 text-sm text-txt focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
+                  className="w-full bg-white border border-surface-line rounded-xl p-3 text-sm text-ink focus:ring-2 focus:ring-indigo-500 min-h-[80px]"
                 />
                 <div className="flex justify-end mt-3">
                   <button 
@@ -134,10 +134,10 @@ export default function AIChatModal({ onClose }: AIChatModalProps) {
           {messages.map((msg, i) => (
             <div key={i} className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`flex gap-3 max-w-[85%] sm:max-w-[75%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-green/10 text-green' : 'bg-indigo-500/10 text-indigo-400'}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${msg.role === 'user' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-indigo-500/10 text-indigo-400'}`}>
                   {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                 </div>
-                <div className={`p-4 rounded-2xl ${msg.role === 'user' ? 'bg-green/10 text-green rounded-tr-sm' : 'bg-card border border-s text-txt rounded-tl-sm'}`}>
+                <div className={`p-4 rounded-2xl ${msg.role === 'user' ? 'bg-emerald-500/10 text-emerald-500 rounded-tr-sm' : 'bg-white border border-surface-line text-ink rounded-tl-sm'}`}>
                   <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                 </div>
               </div>
@@ -149,7 +149,7 @@ export default function AIChatModal({ onClose }: AIChatModalProps) {
                 <div className="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center flex-shrink-0">
                   <Bot className="w-4 h-4" />
                 </div>
-                <div className="p-4 rounded-2xl bg-card border border-s rounded-tl-sm flex items-center gap-2">
+                <div className="p-4 rounded-2xl bg-white border border-surface-line rounded-tl-sm flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" />
                   <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce delay-75" />
                   <div className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce delay-150" />
@@ -160,7 +160,7 @@ export default function AIChatModal({ onClose }: AIChatModalProps) {
           <div ref={endOfMessagesRef} />
         </div>
 
-        <div className="p-4 sm:p-6 border-t border bg-bg">
+        <div className="p-4 sm:p-6 border-t border bg-surface-muted">
           <form 
             onSubmit={(e) => { e.preventDefault(); handleSend(); }}
             className="relative flex items-center"
@@ -170,7 +170,7 @@ export default function AIChatModal({ onClose }: AIChatModalProps) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask for a meal suggestion..."
-              className="w-full bg-input border border-s rounded-2xl pl-4 pr-12 py-4 text-sm text-txt focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+              className="w-full bg-white border border-surface-line rounded-2xl pl-4 pr-12 py-4 text-sm text-ink focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
               disabled={loading}
             />
             <button 

@@ -168,7 +168,7 @@ export default function Paywall({ onClose, onSuccess }: PaywallProps) {
                     placeholder="e.g. 312345678901"
                     className="w-full bg-[#F7F5F0] border border-[#EBE8E0] rounded-xl px-4 py-3 text-sm font-bold text-[#3D3B38] focus:outline-none focus:ring-2 focus:ring-[#635BFF]/30 placeholder:text-[#8D8B86]/50"
                   />
-                  {errorMsg && <p className="text-[10px] font-bold text-red-500 ml-1">{errorMsg}</p>}
+                  {errorMsg && <p className="text-[10px] font-bold text-red-500-500 ml-1">{errorMsg}</p>}
                 </div>
 
                 <button disabled={isProcessing} onClick={handleManualVerify} className="w-full py-4 bg-[#83B593] hover:bg-[#6FA480] text-[#FFFFFF] rounded-2xl font-bold text-sm shadow-[0_8px_20px_rgba(131,181,147,0.3)] disabled:opacity-50 active:scale-95 transition-all flex justify-center items-center gap-2">
