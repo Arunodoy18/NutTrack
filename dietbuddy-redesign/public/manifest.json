@@ -1,0 +1,29 @@
+{
+  "name": "dietBuddy",
+  "short_name": "dietBuddy",
+  "description": "AI-powered calorie and nutrition estimator from meal photos.",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FC4C02",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
