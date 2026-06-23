@@ -40,7 +40,7 @@ import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, a
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from "next-auth/react";
 import { useSpeech } from "@/components/useSpeech";
-import FridgeRaider from "@/components/FridgeRaider";
+import MealScanner from "@/components/MealScanner";
 
 export interface FoodItemData {
   id: string;
@@ -97,9 +97,9 @@ export default function Dashboard({
   activeStreak = 1,
   totalMealsCount = 0,
 }: DashboardProps) {
+  const router = useRouter();
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isFridgeRaiderOpen, setIsFridgeRaiderOpen] = useState(false);
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Fiber'>('Calories');
 
   // AI-generated Nutrition Insight & Toast flags
@@ -1277,9 +1277,6 @@ export default function Dashboard({
           </motion.div>
         </div>
       )}
-
-      {/* Fridge Raider Modal */}
-      {isFridgeRaiderOpen && <FridgeRaider onClose={() => setIsFridgeRaiderOpen(false)} />}
     </div>
   );
 }
