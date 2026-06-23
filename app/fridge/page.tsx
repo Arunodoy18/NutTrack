@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import BottomNav from '@/components/BottomNav';
 import MealScanner from '@/components/MealScanner';
+import GroceryListModal from '@/components/GroceryListModal';
 import { Camera, Refrigerator, Upload, RefreshCw, AlertTriangle, ChevronDown, ChevronUp, Sparkles, Utensils } from 'lucide-react';
-import { analyzeFridgeImageAction } from "@/app/actions";
+import { analyzeFridgeImageAction, addIngredientsToGroceryListAction } from "@/app/actions";
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Recipe {
@@ -15,6 +16,7 @@ interface Recipe {
   fat: number;
   fiber: number;
   steps: string[];
+  ingredients_used: string[];
 }
 
 export default function FridgePage() {
@@ -24,9 +26,23 @@ export default function FridgePage() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isGroceryOpen, setIsGroceryOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ ingredients: string[], recipes: Recipe[] } | null>(null);
   const [expandedRecipeIdx, setExpandedRecipeIdx] = useState<number | null>(null);
+  const [addingGrocery, setAddingGrocery] = useState<number | null>(null);
+
+  const handleAddGrocery = async (idx: number, ingredients: string[]) => {
+    if (!ingredients || ingredients.length === 0) return;
+    setAddingGrocery(idx);
+    const res = await addIngredientsToGroceryListAction(ingredients);
+    setAddingGrocery(null);
+    if (res.success) {
+      alert((res.added ?? 0) > 0 ? `Added ${res.added} new items to Grocery List!` : "All items already in your list!");
+    } else {
+      alert("Failed to add items: " + res.error);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -66,12 +82,23 @@ export default function FridgePage() {
         
         {/* Header Section */}
         <div>
-          <div className="text-[10px] font-black tracking-widest text-ink-soft uppercase mb-1">
-            AI Recipes
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <div className="text-[10px] font-black tracking-widest text-ink-soft uppercase mb-1">
+                AI Recipes
+              </div>
+              <h1 className="text-3xl font-black tracking-tight text-ink">
+                Fridge Raider
+              </h1>
+            </div>
+            <button
+              onClick={() => setIsGroceryOpen(true)}
+              className="p-3 bg-brand-50 hover:bg-brand-100 text-brand rounded-2xl transition-all border border-brand-500/20 shadow-sm"
+              title="View Grocery List"
+            >
+              <Utensils className="w-6 h-6" />
+            </button>
           </div>
-          <h1 className="text-3xl font-black tracking-tight text-ink mb-6">
-            Fridge Raider
-          </h1>
 
           {/* Main Card */}
           <div className="bg-gradient-to-br from-white via-white to-emerald-50 rounded-[40px] p-8 shadow-sm border border-surface-line text-center relative overflow-hidden">
@@ -298,6 +325,28 @@ export default function FridgePage() {
                                         <p className="text-xs text-ink-soft leading-relaxed pt-1">{stepStr}</p>
                                       </div>
                                     ))}
+                                    {recipe.ingredients_used && recipe.ingredients_used.length > 0 && (
+                                      <div className="mt-4 border-t border-surface-line pt-4">
+                                        <h5 className="text-[10px] font-black text-ink-faint uppercase tracking-widest mb-2">Ingredients Used</h5>
+                                        <ul className="list-disc pl-5 space-y-1 mb-4">
+                                          {recipe.ingredients_used.map((item, i) => (
+                                            <li key={i} className="text-xs text-ink-soft">{item}</li>
+                                          ))}
+                                        </ul>
+                                        <button 
+                                          onClick={() => handleAddGrocery(idx, recipe.ingredients_used)}
+                                          disabled={addingGrocery === idx}
+                                          className="w-full px-4 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 border border-indigo-500/20 shadow-sm"
+                                        >
+                                          {addingGrocery === idx ? (
+                                            <RefreshCw className="w-4 h-4 animate-spin" />
+                                          ) : (
+                                            <Sparkles className="w-4 h-4" />
+                                          )}
+                                          <span>Add Missing to Grocery List</span>
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 </motion.div>
                               )}
@@ -330,6 +379,12 @@ export default function FridgePage() {
 
       <BottomNav onCameraClick={() => setIsScannerOpen(true)} />
       {isScannerOpen && <MealScanner onClose={() => setIsScannerOpen(false)} />}
+      {isGroceryOpen && (
+        <GroceryListModal 
+          userId="guest-user-uuid" 
+          onClose={() => setIsGroceryOpen(false)} 
+        />
+      )}
     </div>
   );
 }

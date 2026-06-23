@@ -492,22 +492,28 @@ export default function Dashboard({
         
         {/* Massive Circular Progress */}
         <div className="relative w-64 h-64 flex items-center justify-center">
-          {/* SVG Ring */}
-          <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+          {/* Realistic SVG Ring */}
+          <svg className="absolute inset-0 w-full h-full transform -rotate-90 drop-shadow-xl" style={{ filter: "drop-shadow(0px 10px 15px rgba(252, 76, 2, 0.2))" }}>
+            <defs>
+              <linearGradient id="calGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#ff7b47" />
+                <stop offset="100%" stopColor="#FC4C02" />
+              </linearGradient>
+            </defs>
             <circle
               cx="128"
               cy="128"
               r={radius}
               stroke="#F3F4F6"
-              strokeWidth="24"
+              strokeWidth="20"
               fill="transparent"
             />
             <circle
               cx="128"
               cy="128"
               r={radius}
-              stroke="#FC4C02"
-              strokeWidth="24"
+              stroke="url(#calGradient)"
+              strokeWidth="20"
               fill="transparent"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
@@ -516,65 +522,83 @@ export default function Dashboard({
             />
           </svg>
           
-          <div className="text-center z-10 flex flex-col items-center pt-2">
-            <span className="text-[72px] font-black leading-none tracking-tight text-ink">
+          <div className="text-center z-10 flex flex-col items-center pt-1">
+            <span className="text-4xl font-black leading-none tracking-tight text-ink">
               {todayTotals.calories}
             </span>
-            <span className="text-sm font-medium text-ink-soft mt-1">
-              of {dailyGoals.calories} kcal
+            <span className="text-xs font-medium text-ink-soft mt-1">
+              / {dailyGoals.calories} kcal
             </span>
-            <span className="text-sm font-bold text-ink-faint mt-2 font-mono tracking-widest">
+            <span className="text-[10px] font-bold text-ink-faint mt-1.5 uppercase tracking-widest bg-surface-muted px-2 py-0.5 rounded-full">
               {calsLeft} kcal left
             </span>
           </div>
         </div>
 
-        {/* 3 Pill Cards (Protein, Fat, Fiber) */}
-        <div className="flex w-full gap-3 mt-10 justify-center">
+        {/* 3 Circular Macro Cards (Protein, Fat, Fiber) */}
+        <div className="flex w-full gap-4 mt-8 justify-center px-2">
           
-          {/* Protein */}
-          <div className="flex-1 bg-surface rounded-3xl p-4 border border-surface-line shadow-sm">
-            <div className="flex items-center gap-1.5 mb-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
-              <span className="text-xs font-bold text-ink-soft tracking-widest uppercase">Protein</span>
+          {/* Protein Circle */}
+          <div className="flex-1 flex flex-col items-center gap-2">
+            <div className="relative w-20 h-20 flex items-center justify-center">
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90" style={{ filter: "drop-shadow(0px 4px 6px rgba(16, 185, 129, 0.2))" }}>
+                <circle cx="40" cy="40" r="32" stroke="#F3F4F6" strokeWidth="8" fill="transparent" />
+                <circle
+                  cx="40" cy="40" r="32"
+                  stroke="#10b981" strokeWidth="8" fill="transparent" strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 32}
+                  strokeDashoffset={(2 * Math.PI * 32) * (1 - (protPercent / 100))}
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+              <div className="text-center z-10 flex flex-col items-center mt-0.5">
+                <span className="text-sm font-black text-ink">{todayTotals.protein}g</span>
+                <span className="text-[9px] font-medium text-ink-faint -mt-0.5">{protPercent}%</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1 mb-3">
-              <span className="text-2xl font-black text-ink">{todayTotals.protein}</span>
-              <span className="text-sm text-ink-faint">/{dailyGoals.protein}g</span>
-            </div>
-            <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${protPercent}%` }}></div>
-            </div>
+            <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Protein</span>
           </div>
 
-          {/* Fat */}
-          <div className="flex-1 bg-surface rounded-3xl p-4 border border-surface-line shadow-sm">
-            <div className="flex items-center gap-1.5 mb-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-              <span className="text-xs font-bold text-ink-soft tracking-widest uppercase">Fat</span>
+          {/* Fat Circle */}
+          <div className="flex-1 flex flex-col items-center gap-2">
+            <div className="relative w-20 h-20 flex items-center justify-center">
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90" style={{ filter: "drop-shadow(0px 4px 6px rgba(245, 158, 11, 0.2))" }}>
+                <circle cx="40" cy="40" r="32" stroke="#F3F4F6" strokeWidth="8" fill="transparent" />
+                <circle
+                  cx="40" cy="40" r="32"
+                  stroke="#f59e0b" strokeWidth="8" fill="transparent" strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 32}
+                  strokeDashoffset={(2 * Math.PI * 32) * (1 - (fatPercent / 100))}
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+              <div className="text-center z-10 flex flex-col items-center mt-0.5">
+                <span className="text-sm font-black text-ink">{todayTotals.fat}g</span>
+                <span className="text-[9px] font-medium text-ink-faint -mt-0.5">{fatPercent}%</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1 mb-3">
-              <span className="text-2xl font-black text-ink">{todayTotals.fat}</span>
-              <span className="text-sm text-ink-faint">/{dailyGoals.fat}g</span>
-            </div>
-            <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-amber-500 rounded-full" style={{ width: `${fatPercent}%` }}></div>
-            </div>
+            <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Fat</span>
           </div>
 
-          {/* Fiber */}
-          <div className="flex-1 bg-surface rounded-3xl p-4 border border-surface-line shadow-sm">
-            <div className="flex items-center gap-1.5 mb-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]"></div>
-              <span className="text-xs font-bold text-ink-soft tracking-widest uppercase">Fiber</span>
+          {/* Fiber Circle */}
+          <div className="flex-1 flex flex-col items-center gap-2">
+            <div className="relative w-20 h-20 flex items-center justify-center">
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90" style={{ filter: "drop-shadow(0px 4px 6px rgba(59, 130, 246, 0.2))" }}>
+                <circle cx="40" cy="40" r="32" stroke="#F3F4F6" strokeWidth="8" fill="transparent" />
+                <circle
+                  cx="40" cy="40" r="32"
+                  stroke="#3b82f6" strokeWidth="8" fill="transparent" strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 32}
+                  strokeDashoffset={(2 * Math.PI * 32) * (1 - (fibPercent / 100))}
+                  className="transition-all duration-1000 ease-out"
+                />
+              </svg>
+              <div className="text-center z-10 flex flex-col items-center mt-0.5">
+                <span className="text-sm font-black text-ink">{todayTotals.fiber}g</span>
+                <span className="text-[9px] font-medium text-ink-faint -mt-0.5">{fibPercent}%</span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-1 mb-3">
-              <span className="text-2xl font-black text-ink">{todayTotals.fiber}</span>
-              <span className="text-sm text-ink-faint">/{dailyGoals.fiber}g</span>
-            </div>
-            <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-[#3b82f6] rounded-full" style={{ width: `${fibPercent}%` }}></div>
-            </div>
+            <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Fiber</span>
           </div>
 
         </div>
@@ -583,7 +607,7 @@ export default function Dashboard({
       <div className="px-6 py-8 max-w-lg mx-auto">
         
         {/* Buddy Coach Card */}
-        <div className="bg-[#fff1ec] rounded-[24px] p-5 border border-[#ffdfd4] flex gap-4 mb-10 shadow-sm relative overflow-hidden">
+        <div className="bg-[#fff1ec] rounded-[24px] p-5 border border-[#ffdfd4] flex gap-4 mb-8 shadow-sm relative overflow-hidden">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-brand/5 rounded-full blur-2xl"></div>
           <div className="w-10 h-10 bg-[#ffe5dc] rounded-2xl flex items-center justify-center shrink-0">
             <Sparkles className="w-5 h-5 text-brand" />
@@ -593,6 +617,59 @@ export default function Dashboard({
             <p className="text-sm font-medium text-ink leading-relaxed">
               You're at {todayTotals.protein}g protein — a chicken or tofu plate at dinner gets you to goal.
             </p>
+          </div>
+        </div>
+
+        {/* Weekly Macro Performance Chart (Recharts) */}
+        <div className="bg-white rounded-[32px] border border-surface-line p-6 shadow-sm relative mb-10">
+          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="font-display text-lg font-bold text-ink">Weekly Performance</h3>
+              <p className="text-xs text-ink-soft mt-0.5">Visualize your daily macro levels relative to target benchmarks.</p>
+            </div>
+            <div className="flex rounded-xl bg-surface-muted p-1 border border-surface-line w-full sm:w-auto overflow-x-auto custom-scrollbar">
+              {(['Calories', 'Protein', 'Fats', 'Fiber'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setActiveMetric(m)}
+                  className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap flex-1 sm:flex-none ${
+                    activeMetric === m
+                      ? 'bg-white text-ink shadow-sm border border-surface-line/50'
+                      : 'text-ink-soft hover:text-ink-soft'
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Responsive Chart Container */}
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E7E7EB" opacity={0.3} />
+                <XAxis dataKey="name" stroke="#9A9AA2" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#9A9AA2" fontSize={11} tickLine={false} axisLine={false} />
+                <Tooltip 
+                  cursor={{fill: '#f3f4f6', opacity: 0.4}}
+                  contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E7EB', borderRadius: '16px', color: '#242428', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                  formatter={(value: any) => [`${value} ${metricUnit[activeMetric]}`, activeMetric]}
+                />
+                <ReferenceLine 
+                  y={targetValue} 
+                  stroke="#ef4444" 
+                  strokeDasharray="4 4" 
+                  label={{ value: `Target`, position: 'top', fill: '#f87171', fontSize: 10, fontWeight: 'bold' }} 
+                />
+                <Bar 
+                  dataKey={activeMetric} 
+                  fill={metricColor[activeMetric]} 
+                  radius={[6, 6, 0, 0]} 
+                  maxBarSize={32}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
