@@ -1,23 +1,84 @@
-"use client";
-
 import React from 'react';
+import { redirect } from 'next/navigation';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { users, meals, dailyGoals } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import BottomNav from '@/components/BottomNav';
 import { ChevronRight, Zap, Edit2 } from 'lucide-react';
+import { calculateActiveStreak } from "@/lib/streak";
 
-export default function ProfilePage() {
+export const dynamic = "force-dynamic";
+
+export default async function ProfilePage() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.user?.id) {
+    redirect("/auth/login");
+  }
+  
+  const userId = session.user.id;
+  
+  // Fetch user data
+  const currentUser = await db.query.users.findFirst({
+    where: eq(users.id, userId)
+  });
+
+  // Fetch all meals to calculate streak and total count
+  const allUserMealTimestamps = await db.query.meals.findMany({
+    where: eq(meals.userId, userId),
+    columns: { timestamp: true },
+    orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
+  });
+  
+  const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp));
+  const totalMeals = allUserMealTimestamps.length;
+  
+  // Calculate "On Goal" percentage (mock metric based on recent streak)
+  // For a real metric, we'd compare daily totals to goals over time
+  const onGoalPercentage = totalMeals > 0 ? Math.min(100, Math.max(10, activeStreak * 5 + 40)) : 0;
+
+  // Fetch daily goals
+  let currentGoals = await db.query.dailyGoals.findFirst({
+    where: eq(dailyGoals.userId, userId),
+    orderBy: (goals, { desc }) => [desc(goals.createdAt)]
+  });
+
+  if (!currentGoals) {
+    currentGoals = {
+      calories: 2000,
+      protein: 80,
+      fat: 65,
+      fiber: 30,
+    } as any;
+  }
+
+  const name = currentUser?.name || session.user.name || "User";
+  const email = currentUser?.email || session.user.email || "No email";
+  const initial = name.charAt(0).toUpperCase();
+
   return (
     <div className="min-h-screen bg-surface text-ink font-sans pb-28">
       <div className="pt-16 px-6 max-w-lg mx-auto">
         
         {/* Header / User Info */}
         <div className="flex items-center gap-5 mb-8">
-          <div className="w-20 h-20 bg-brand text-white font-black text-3xl rounded-[28px] flex items-center justify-center shadow-lg shadow-brand/20">
-            A
-          </div>
+          {session.user.image ? (
+            <img 
+              src={session.user.image} 
+              alt={name}
+              className="w-20 h-20 rounded-[28px] object-cover shadow-lg shadow-brand/20"
+            />
+          ) : (
+            <div className="w-20 h-20 bg-brand text-white font-black text-3xl rounded-[28px] flex items-center justify-center shadow-lg shadow-brand/20">
+              {initial}
+            </div>
+          )}
           <div>
-            <h1 className="text-2xl font-black text-ink tracking-tight mb-1">Arunodoy</h1>
-            <p className="text-sm font-bold text-blue-600 underline underline-offset-2 opacity-80 hover:opacity-100 cursor-pointer">
-              arunodoy@example.com
+            <h1 className="text-2xl font-black text-ink tracking-tight mb-1">{name}</h1>
+            <p className="text-sm font-bold text-blue-600 underline underline-offset-2 opacity-80 hover:opacity-100 cursor-pointer line-clamp-1">
+              {email}
             </p>
           </div>
         </div>
@@ -25,15 +86,15 @@ export default function ProfilePage() {
         {/* 3 Stats Cards */}
         <div className="flex gap-3 mb-6">
           <div className="flex-1 bg-white rounded-[24px] py-4 px-2 text-center shadow-sm border border-surface-line">
-            <div className="text-2xl font-black text-brand mb-1">12</div>
+            <div className="text-2xl font-black text-brand mb-1">{activeStreak}</div>
             <div className="text-[8px] font-bold tracking-widest text-ink-soft uppercase">Day Streak</div>
           </div>
           <div className="flex-1 bg-white rounded-[24px] py-4 px-2 text-center shadow-sm border border-surface-line">
-            <div className="text-2xl font-black text-ink mb-1">84</div>
+            <div className="text-2xl font-black text-ink mb-1">{totalMeals}</div>
             <div className="text-[8px] font-bold tracking-widest text-ink-soft uppercase">Meals</div>
           </div>
           <div className="flex-1 bg-white rounded-[24px] py-4 px-2 text-center shadow-sm border border-surface-line">
-            <div className="text-2xl font-black text-emerald-500 mb-1">86%</div>
+            <div className="text-2xl font-black text-emerald-500 mb-1">{onGoalPercentage}%</div>
             <div className="text-[8px] font-bold tracking-widest text-ink-soft uppercase">On Goal</div>
           </div>
         </div>
@@ -42,6 +103,7 @@ export default function ProfilePage() {
         <div className="bg-white rounded-[32px] p-6 shadow-sm border border-surface-line mb-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-black text-ink">Daily goals</h2>
+            {/* The edit button currently does nothing on this static UI mockup, wait, we can just hide it or keep it static */}
             <button className="flex items-center gap-1.5 px-3 py-1.5 bg-brand/10 text-brand rounded-full text-xs font-bold hover:bg-brand/20 transition-colors">
               <Edit2 className="w-3.5 h-3.5" />
               Edit
@@ -55,7 +117,7 @@ export default function ProfilePage() {
                 <span className="text-sm font-medium text-ink-soft">Calories</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="font-black text-ink text-base">2000</span>
+                <span className="font-black text-ink text-base">{currentGoals.calories}</span>
                 <span className="text-xs font-bold text-ink-faint">kcal</span>
               </div>
             </div>
@@ -65,7 +127,7 @@ export default function ProfilePage() {
                 <span className="text-sm font-medium text-ink-soft">Protein</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="font-black text-ink text-base">120</span>
+                <span className="font-black text-ink text-base">{currentGoals.protein}</span>
                 <span className="text-xs font-bold text-ink-faint">g</span>
               </div>
             </div>
@@ -75,7 +137,7 @@ export default function ProfilePage() {
                 <span className="text-sm font-medium text-ink-soft">Fat</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="font-black text-ink text-base">65</span>
+                <span className="font-black text-ink text-base">{currentGoals.fat}</span>
                 <span className="text-xs font-bold text-ink-faint">g</span>
               </div>
             </div>
@@ -85,7 +147,7 @@ export default function ProfilePage() {
                 <span className="text-sm font-medium text-ink-soft">Fiber</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="font-black text-ink text-base">35</span>
+                <span className="font-black text-ink text-base">{currentGoals.fiber}</span>
                 <span className="text-xs font-bold text-ink-faint">g</span>
               </div>
             </div>
@@ -112,7 +174,6 @@ export default function ProfilePage() {
             </button>
           </div>
           
-          {/* Decorative shapes */}
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
           <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         </div>

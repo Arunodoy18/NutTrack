@@ -56,6 +56,7 @@ export interface MealLogData {
   id: string;
   timestamp: string;
   summary: string;
+  imageUrl?: string;
   totalCalories: number;
   totalProtein: number;
   totalFat: number;
@@ -608,9 +609,8 @@ export default function Dashboard({
             todayMeals.map(meal => (
               <div key={meal.id} className="bg-white rounded-[24px] p-4 flex items-center gap-4 shadow-sm border border-surface-line hover:shadow-md transition-shadow cursor-pointer">
                 <div className="w-16 h-16 bg-surface-muted rounded-2xl flex items-center justify-center shrink-0 border border-surface-line overflow-hidden relative">
-                  {/* For now, just show a placeholder icon or image */}
                   <Image 
-                    src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop" 
+                    src={meal.imageUrl || "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop"} 
                     alt={meal.summary}
                     fill
                     className="object-cover"

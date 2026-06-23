@@ -112,6 +112,7 @@ export default async function DashboardPage() {
       id: meal.id,
       timestamp: meal.timestamp.toISOString(),
       summary: meal.summary || "No description provided",
+      imageUrl: meal.imagePath || undefined,
       totalCalories: meal.totalCalories,
       totalProtein: meal.totalProtein,
       totalFat: meal.totalFat,
