@@ -97,7 +97,7 @@ export default function Dashboard({
   activeStreak = 1,
   totalMealsCount = 0,
 }: DashboardProps) {
-  const router = useRouter();
+
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Fiber'>('Calories');
