@@ -1,155 +1,191 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Camera, Check } from 'lucide-react';
+import React from "react";
+import { motion } from "framer-motion";
+import { Camera, Sparkles, Target, Check, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-surface font-sans text-ink">
-      
+    <div className="min-h-screen bg-surface-muted text-ink font-sans selection:bg-brand/20">
       {/* Navbar */}
-      <nav className="flex justify-between items-center px-6 py-6 max-w-lg mx-auto">
-        <div className="text-xl font-black tracking-tight flex items-center">
-          <span className="text-ink">diet</span>
-          <span className="text-brand">Buddy</span>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <main className="px-6 pt-6 pb-20 max-w-lg mx-auto space-y-8">
-        
-        {/* Coach Pill */}
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand/10 border border-brand/20">
-          <div className="w-2 h-2 rounded-full bg-brand"></div>
-          <span className="text-[10px] font-black tracking-widest text-brand uppercase">
-            AI Nutrition Coach
+      <nav className="sticky top-0 z-50 bg-surface-muted/85 backdrop-blur-md border-b border-surface-line">
+        <div className="max-w-6xl mx-auto flex items-center justify-between px-5 sm:px-6 py-4">
+          <span className="font-display text-2xl font-extrabold tracking-tight">
+            diet<span className="text-brand">Buddy</span>
           </span>
-        </div>
-
-        {/* Hero Headline */}
-        <div>
-          <h1 className="text-5xl font-black tracking-tight leading-[1.05] text-ink">
-            Snap your food.<br/>
-            Know your macros.<br/>
-            <span className="text-brand">Grow your health.</span>
-          </h1>
-          <p className="mt-5 text-[15px] leading-relaxed font-medium text-ink-soft pr-4">
-            Stop weighing. Stop searching. Stop guessing. Snap your plate and get calories, protein, fat & fiber in seconds.
-          </p>
-        </div>
-
-        {/* Hero Image / Mockup */}
-        <div className="w-full relative h-64 rounded-[32px] overflow-hidden shadow-2xl shadow-brand/10 border border-surface-line">
-          <Image 
-            src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=600&fit=crop"
-            alt="Healthy Food"
-            fill
-            className="object-cover"
-            unoptimized
-          />
-          {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent"></div>
-          
-          {/* Floating UI Elements */}
-          <div className="absolute top-4 left-4 inline-flex items-center gap-2 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full">
-            <div className="w-2 h-2 rounded-full bg-brand"></div>
-            <span className="text-[9px] font-black tracking-widest text-ink uppercase">AI Detected • 620 kcal</span>
-          </div>
-
-          <div className="absolute bottom-4 left-4 flex flex-wrap gap-2">
-            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl font-bold text-xs text-emerald-600 shadow-sm">P 42g</div>
-            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl font-bold text-xs text-amber-600 shadow-sm">F 22g</div>
-            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl font-bold text-xs text-blue-600 shadow-sm">Fib 8g</div>
-            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl font-bold text-xs text-indigo-600 shadow-sm">Na 480mg</div>
-            <div className="bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-xl font-bold text-xs text-rose-600 shadow-sm">Fe 3mg</div>
-          </div>
-        </div>
-
-        {/* Call to Actions */}
-        <div className="space-y-4 pt-4">
-          <Link href="/auth/signup" className="w-full bg-brand hover:bg-[#e63e00] text-white rounded-[20px] py-4 flex items-center justify-center gap-2 font-bold text-base shadow-lg shadow-brand/30 transition-transform active:scale-[0.98]">
-            <Camera className="w-5 h-5" />
-            Start scanning free
-          </Link>
-          <div className="text-center">
-            <Link href="/auth/login" className="text-sm font-bold text-ink-soft hover:text-ink transition-colors">
-              I already have an account
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/auth/login"
+              className="text-sm font-bold text-ink-soft hover:text-ink transition px-3 py-2"
+            >
+              Login
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="px-5 py-2.5 text-sm font-bold text-white bg-brand hover:bg-brand-600 rounded-full transition shadow-lg shadow-brand/25"
+            >
+              Get started
             </Link>
           </div>
         </div>
+      </nav>
 
-        {/* Steps Section */}
-        <div className="pt-12">
-          <h2 className="text-3xl font-black tracking-tight text-ink mb-6">
+      {/* Hero */}
+      <main className="max-w-6xl mx-auto px-5 sm:px-6 pt-14 sm:pt-20 pb-20">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-brand-50 border border-brand-100"
+            >
+              <span className="h-2 w-2 rounded-full bg-brand animate-pulse" />
+              <span className="text-[11px] font-mono font-semibold uppercase tracking-[0.14em] text-brand">
+                AI Nutrition Coach
+              </span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="font-display font-extrabold tracking-tight text-5xl sm:text-6xl lg:text-[68px] leading-[0.95] mt-6"
+            >
+              Snap your food.
+              <br />
+              Know your macros.
+              <br />
+              <span className="text-brand">Grow your health.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-lg text-ink-soft mt-6 max-w-md leading-relaxed"
+            >
+              Stop weighing. Stop searching. Stop guessing. Snap your plate and get
+              calories, protein, fat &amp; fiber in seconds.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="flex flex-col sm:flex-row gap-3 mt-8"
+            >
+              <Link
+                href="/auth/signup"
+                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-br from-brand to-brand-600 text-white font-display font-bold text-lg shadow-xl shadow-brand/30 hover:brightness-105 transition"
+              >
+                <Camera className="w-5 h-5" />
+                Start scanning free
+              </Link>
+              <a
+                href="#how"
+                className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-white border border-surface-line text-ink font-bold hover:bg-white/60 transition"
+              >
+                See how it works <ChevronRight className="w-4 h-4 text-ink-faint" />
+              </a>
+            </motion.div>
+          </div>
+
+          {/* Hero visual */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+            className="relative rounded-[28px] overflow-hidden border border-surface-line shadow-2xl shadow-black/10"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1498837167922-ddd27525d352?w=900&auto=format&fit=crop&q=70"
+              alt="Sharing a fresh, macro-balanced meal"
+              className="w-full h-[320px] sm:h-[420px] object-cover bg-surface-line"
+            />
+            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-xl bg-white/90 backdrop-blur flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-brand" />
+              <span className="text-[10px] font-mono font-semibold uppercase tracking-wide text-ink">
+                AI detected · 620 kcal
+              </span>
+            </div>
+            <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-2">
+              <span className="px-3 py-1.5 rounded-lg bg-white/90 text-xs font-bold text-emerald-600">P 42g</span>
+              <span className="px-3 py-1.5 rounded-lg bg-white/90 text-xs font-bold text-amber-600">F 22g</span>
+              <span className="px-3 py-1.5 rounded-lg bg-white/90 text-xs font-bold text-blue-600">Fib 8g</span>
+              <span className="px-3 py-1.5 rounded-lg bg-white/90 text-xs font-bold text-violet-600">Na 480mg</span>
+              <span className="px-3 py-1.5 rounded-lg bg-white/90 text-xs font-bold text-rose-600">Fe 3mg</span>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* How it works */}
+        <section id="how" className="mt-28">
+          <h2 className="font-display font-extrabold text-4xl sm:text-5xl tracking-tight text-center">
             Tracking, frictionless.
           </h2>
-          
-          <div className="space-y-4">
-            <div className="bg-white border border-surface-line rounded-[24px] p-5 flex gap-5 items-start shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 bg-brand/10 text-brand rounded-[14px] flex items-center justify-center font-black text-lg shrink-0">1</div>
-              <div>
-                <h3 className="font-bold text-ink text-base mb-1">Snap a photo</h3>
-                <p className="text-sm font-medium text-ink-soft leading-relaxed">Point your camera at any meal — no database searching.</p>
-              </div>
-            </div>
-            
-            <div className="bg-white border border-surface-line rounded-[24px] p-5 flex gap-5 items-start shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 bg-brand/10 text-brand rounded-[14px] flex items-center justify-center font-black text-lg shrink-0">2</div>
-              <div>
-                <h3 className="font-bold text-ink text-base mb-1">AI analyzes</h3>
-                <p className="text-sm font-medium text-ink-soft leading-relaxed">Vision model recognizes items and estimates precise macros.</p>
-              </div>
-            </div>
-
-            <div className="bg-white border border-surface-line rounded-[24px] p-5 flex gap-5 items-start shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-10 h-10 bg-brand/10 text-brand rounded-[14px] flex items-center justify-center font-black text-lg shrink-0">3</div>
-              <div>
-                <h3 className="font-bold text-ink text-base mb-1">Hit your goals</h3>
-                <p className="text-sm font-medium text-ink-soft leading-relaxed">Calories and protein flow straight into your daily rings.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Pricing Section */}
-        <div className="pt-8">
-          <div className="bg-[#fff1ec] border border-[#ffdfd4] rounded-[32px] p-8 shadow-sm">
-            <div className="text-[10px] font-black tracking-widest text-brand uppercase mb-4">
-              Lifetime Premium
-            </div>
-            <div className="flex items-baseline gap-2 mb-2">
-              <span className="text-5xl font-black text-ink tracking-tight">₹199</span>
-              <span className="text-sm font-bold text-ink-soft">/ forever</span>
-            </div>
-            <p className="text-sm font-medium text-ink-soft mb-8">
-              One payment. No subscriptions, ever.
-            </p>
-
-            <div className="space-y-4 mb-8">
-              {[
-                "Unlimited AI scans",
-                "Cloud sync across devices",
-                "Detailed macro breakdowns",
-                "Priority support"
-              ].map((feature, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                    <Check className="w-3 h-3" strokeWidth={3} />
-                  </div>
-                  <span className="text-sm font-bold text-ink">{feature}</span>
+          <p className="text-ink-soft text-center mt-3 max-w-xl mx-auto">
+            We removed the painful search-and-log process. Your camera is your food diary.
+          </p>
+          <div className="grid sm:grid-cols-3 gap-5 mt-12">
+            {[
+              { n: 1, icon: Camera, title: "Snap a photo", desc: "Point your camera at any meal — no database searching." },
+              { n: 2, icon: Sparkles, title: "AI analyzes", desc: "Our vision model recognizes items and estimates precise macros." },
+              { n: 3, icon: Target, title: "Hit your goals", desc: "Calories and protein flow straight into your daily rings." },
+            ].map((s) => (
+              <motion.div
+                key={s.n}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ delay: s.n * 0.08 }}
+                className="bg-white border border-surface-line rounded-3xl p-7 hover:shadow-xl hover:shadow-black/5 transition"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-brand-50 border border-brand-100 text-brand flex items-center justify-center">
+                  <s.icon className="w-6 h-6" />
                 </div>
-              ))}
-            </div>
-
-            <button className="w-full bg-ink text-white py-4 rounded-[20px] font-bold shadow-lg shadow-ink/20 hover:bg-black transition-colors">
-              Get lifetime access
-            </button>
+                <div className="mt-5 font-display font-bold text-xl">{s.title}</div>
+                <p className="text-ink-soft mt-2 leading-relaxed">{s.desc}</p>
+              </motion.div>
+            ))}
           </div>
-        </div>
+        </section>
 
+        {/* Pricing */}
+        <section className="mt-28 max-w-xl mx-auto">
+          <div className="rounded-[32px] border border-brand-100 bg-gradient-to-b from-brand-50 to-white p-8 sm:p-10 text-center">
+            <span className="text-[11px] font-mono font-semibold uppercase tracking-[0.16em] text-brand">
+              Lifetime Premium
+            </span>
+            <div className="flex items-baseline justify-center gap-2 mt-3">
+              <span className="font-display font-extrabold text-6xl tracking-tight">₹199</span>
+              <span className="text-ink-soft font-semibold">/ forever</span>
+            </div>
+            <p className="text-ink-soft mt-2">One payment. No subscriptions, ever.</p>
+            <ul className="mt-7 space-y-3 text-left max-w-xs mx-auto">
+              {["Unlimited AI scans", "Cloud sync across devices", "Detailed macro breakdowns", "Priority support"].map(
+                (f) => (
+                  <li key={f} className="flex items-center gap-3 text-ink font-medium">
+                    <Check className="w-5 h-5 text-emerald-500 shrink-0" strokeWidth={3} />
+                    {f}
+                  </li>
+                )
+              )}
+            </ul>
+            <Link
+              href="/auth/signup"
+              className="mt-8 w-full inline-flex items-center justify-center gap-2 py-4 rounded-2xl bg-ink text-white font-display font-bold text-lg hover:bg-black transition"
+            >
+              Get lifetime access <ChevronRight className="w-5 h-5" />
+            </Link>
+          </div>
+        </section>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-surface-line py-10 text-center text-ink-faint text-sm">
+        © {new Date().getFullYear()} dietBuddy · Grow your health. Instantly.
+      </footer>
     </div>
   );
 }

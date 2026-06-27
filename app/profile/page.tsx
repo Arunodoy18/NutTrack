@@ -8,6 +8,9 @@ import { eq } from "drizzle-orm";
 import BottomNav from '@/components/BottomNav';
 import { ChevronRight, Zap, Edit2 } from 'lucide-react';
 import { calculateActiveStreak } from "@/lib/streak";
+import Link from 'next/link';
+import ComingSoon from '@/components/ComingSoon';
+import LogoutButton from '@/components/LogoutButton';
 
 export const dynamic = "force-dynamic";
 
@@ -103,11 +106,10 @@ export default async function ProfilePage() {
         <div className="bg-white rounded-[32px] p-6 shadow-sm border border-surface-line mb-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-black text-ink">Daily goals</h2>
-            {/* The edit button currently does nothing on this static UI mockup, wait, we can just hide it or keep it static */}
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-brand/10 text-brand rounded-full text-xs font-bold hover:bg-brand/20 transition-colors">
+            <Link href="/dashboard" className="flex items-center gap-1.5 px-3 py-1.5 bg-brand/10 text-brand rounded-full text-xs font-bold hover:bg-brand/20 transition-colors">
               <Edit2 className="w-3.5 h-3.5" />
               Edit
-            </button>
+            </Link>
           </div>
 
           <div className="space-y-4">
@@ -117,7 +119,7 @@ export default async function ProfilePage() {
                 <span className="text-sm font-medium text-ink-soft">Calories</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="font-black text-ink text-base">{currentGoals.calories}</span>
+                <span className="font-black text-ink text-base">{currentGoals!.calories}</span>
                 <span className="text-xs font-bold text-ink-faint">kcal</span>
               </div>
             </div>
@@ -127,7 +129,7 @@ export default async function ProfilePage() {
                 <span className="text-sm font-medium text-ink-soft">Protein</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="font-black text-ink text-base">{currentGoals.protein}</span>
+                <span className="font-black text-ink text-base">{currentGoals!.protein}</span>
                 <span className="text-xs font-bold text-ink-faint">g</span>
               </div>
             </div>
@@ -137,7 +139,7 @@ export default async function ProfilePage() {
                 <span className="text-sm font-medium text-ink-soft">Fat</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="font-black text-ink text-base">{currentGoals.fat}</span>
+                <span className="font-black text-ink text-base">{currentGoals!.fat}</span>
                 <span className="text-xs font-bold text-ink-faint">g</span>
               </div>
             </div>
@@ -147,7 +149,7 @@ export default async function ProfilePage() {
                 <span className="text-sm font-medium text-ink-soft">Fiber</span>
               </div>
               <div className="flex items-baseline gap-1">
-                <span className="font-black text-ink text-base">{currentGoals.fiber}</span>
+                <span className="font-black text-ink text-base">{currentGoals!.fiber}</span>
                 <span className="text-xs font-bold text-ink-faint">g</span>
               </div>
             </div>
@@ -169,9 +171,11 @@ export default async function ProfilePage() {
               <span className="text-3xl font-black tracking-tight">₹199</span>
               <span className="text-xs font-bold text-white/80">/ lifetime</span>
             </div>
-            <button className="bg-white text-brand px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:scale-105 transition-transform">
-              Upgrade
-            </button>
+            <ComingSoon>
+              <button className="bg-white text-brand px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:scale-105 transition-transform">
+                Upgrade
+              </button>
+            </ComingSoon>
           </div>
           
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
@@ -179,14 +183,19 @@ export default async function ProfilePage() {
         </div>
 
         {/* Settings List */}
-        <div className="bg-white rounded-[32px] shadow-sm border border-surface-line overflow-hidden mb-6">
+        <div className="bg-white rounded-[32px] shadow-sm border border-surface-line overflow-hidden mb-2">
           {['Notifications', 'Units & measurements', 'Connected apps'].map((item, i) => (
-            <div key={item} className={`flex justify-between items-center p-5 cursor-pointer hover:bg-surface-muted transition-colors ${i !== 2 ? 'border-b border-surface-line' : ''}`}>
-              <span className="text-sm font-medium text-ink">{item}</span>
-              <ChevronRight className="w-5 h-5 text-ink-soft" />
-            </div>
+            <ComingSoon key={item}>
+              <div className={`flex justify-between items-center p-5 cursor-pointer hover:bg-surface-muted transition-colors ${i !== 2 ? 'border-b border-surface-line' : ''}`}>
+                <span className="text-sm font-medium text-ink">{item}</span>
+                <ChevronRight className="w-5 h-5 text-ink-soft" />
+              </div>
+            </ComingSoon>
           ))}
         </div>
+
+        {/* Logout Button */}
+        <LogoutButton />
 
       </div>
 

@@ -23,7 +23,8 @@ import {
   Zap,
   Mic,
   MicOff,
-  Utensils
+  Utensils,
+  Edit2
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -486,9 +487,28 @@ export default function Dashboard({
   const strokeDashoffset = circumference - (calPercent / 100) * circumference;
 
   return (
-    <div className="min-h-screen bg-surface text-ink font-sans pb-28">
-      {/* Top Header Section with massive circular progress */}
-      <div className="pt-12 pb-8 px-6 bg-white rounded-b-[40px] shadow-[0_8px_32px_rgba(0,0,0,0.03)] border-b border-surface-line relative z-10 flex flex-col items-center">
+    <div className="min-h-screen bg-surface-muted text-ink font-sans pb-28">
+      {/* Main Stats Panel Grid Wrapper */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+          
+          {/* Left Column: Concentric Progress Card, Coach, & Chart */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            {/* Top Header Section with massive circular progress */}
+            <div className="pt-10 pb-8 px-6 bg-white rounded-[40px] shadow-xl border border-surface-line relative z-10 flex flex-col items-center overflow-hidden">
+              
+              {/* Edit Goals Button */}
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="absolute top-6 right-6 w-10 h-10 bg-surface-muted rounded-full flex items-center justify-center text-ink-soft hover:bg-surface-line transition-colors z-20 shadow-sm"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+
+              {/* Highlight background elements */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-brand-50 rounded-full blur-3xl -z-10 pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
         
         {/* Massive Circular Progress */}
         <div className="relative w-64 h-64 flex items-center justify-center">
@@ -540,20 +560,26 @@ export default function Dashboard({
           
           {/* Protein Circle */}
           <div className="flex-1 flex flex-col items-center gap-2">
-            <div className="relative w-20 h-20 flex items-center justify-center">
-              <svg className="absolute inset-0 w-full h-full transform -rotate-90" style={{ filter: "drop-shadow(0px 4px 6px rgba(16, 185, 129, 0.2))" }}>
-                <circle cx="40" cy="40" r="32" stroke="#F3F4F6" strokeWidth="8" fill="transparent" />
+            <div className="relative w-20 h-20 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+                <defs>
+                  <linearGradient id="prot-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#34d399" />
+                    <stop offset="100%" stopColor="#059669" />
+                  </linearGradient>
+                </defs>
+                <circle cx="40" cy="40" r="32" stroke="transparent" strokeWidth="8" fill="transparent" />
                 <circle
                   cx="40" cy="40" r="32"
-                  stroke="#10b981" strokeWidth="8" fill="transparent" strokeLinecap="round"
+                  stroke="url(#prot-grad)" strokeWidth="8" fill="transparent" strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 32}
                   strokeDashoffset={(2 * Math.PI * 32) * (1 - (protPercent / 100))}
-                  className="transition-all duration-1000 ease-out"
+                  className="transition-all duration-1000 ease-out drop-shadow-[0_2px_4px_rgba(16,185,129,0.3)]"
                 />
               </svg>
               <div className="text-center z-10 flex flex-col items-center mt-0.5">
-                <span className="text-sm font-black text-ink">{todayTotals.protein}g</span>
-                <span className="text-[9px] font-medium text-ink-faint -mt-0.5">{protPercent}%</span>
+                <span className="text-xs font-black text-ink">{todayTotals.protein}g</span>
+                <span className="text-[9px] font-bold text-ink-soft -mt-0.5">{protPercent}%</span>
               </div>
             </div>
             <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Protein</span>
@@ -561,20 +587,26 @@ export default function Dashboard({
 
           {/* Fat Circle */}
           <div className="flex-1 flex flex-col items-center gap-2">
-            <div className="relative w-20 h-20 flex items-center justify-center">
-              <svg className="absolute inset-0 w-full h-full transform -rotate-90" style={{ filter: "drop-shadow(0px 4px 6px rgba(245, 158, 11, 0.2))" }}>
-                <circle cx="40" cy="40" r="32" stroke="#F3F4F6" strokeWidth="8" fill="transparent" />
+            <div className="relative w-20 h-20 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+                <defs>
+                  <linearGradient id="fat-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#fbbf24" />
+                    <stop offset="100%" stopColor="#d97706" />
+                  </linearGradient>
+                </defs>
+                <circle cx="40" cy="40" r="32" stroke="transparent" strokeWidth="8" fill="transparent" />
                 <circle
                   cx="40" cy="40" r="32"
-                  stroke="#f59e0b" strokeWidth="8" fill="transparent" strokeLinecap="round"
+                  stroke="url(#fat-grad)" strokeWidth="8" fill="transparent" strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 32}
                   strokeDashoffset={(2 * Math.PI * 32) * (1 - (fatPercent / 100))}
-                  className="transition-all duration-1000 ease-out"
+                  className="transition-all duration-1000 ease-out drop-shadow-[0_2px_4px_rgba(245,158,11,0.3)]"
                 />
               </svg>
               <div className="text-center z-10 flex flex-col items-center mt-0.5">
-                <span className="text-sm font-black text-ink">{todayTotals.fat}g</span>
-                <span className="text-[9px] font-medium text-ink-faint -mt-0.5">{fatPercent}%</span>
+                <span className="text-xs font-black text-ink">{todayTotals.fat}g</span>
+                <span className="text-[9px] font-bold text-ink-soft -mt-0.5">{fatPercent}%</span>
               </div>
             </div>
             <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Fat</span>
@@ -582,32 +614,66 @@ export default function Dashboard({
 
           {/* Fiber Circle */}
           <div className="flex-1 flex flex-col items-center gap-2">
-            <div className="relative w-20 h-20 flex items-center justify-center">
-              <svg className="absolute inset-0 w-full h-full transform -rotate-90" style={{ filter: "drop-shadow(0px 4px 6px rgba(59, 130, 246, 0.2))" }}>
-                <circle cx="40" cy="40" r="32" stroke="#F3F4F6" strokeWidth="8" fill="transparent" />
+            <div className="relative w-20 h-20 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+                <defs>
+                  <linearGradient id="fib-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#60a5fa" />
+                    <stop offset="100%" stopColor="#2563eb" />
+                  </linearGradient>
+                </defs>
+                <circle cx="40" cy="40" r="32" stroke="transparent" strokeWidth="8" fill="transparent" />
                 <circle
                   cx="40" cy="40" r="32"
-                  stroke="#3b82f6" strokeWidth="8" fill="transparent" strokeLinecap="round"
+                  stroke="url(#fib-grad)" strokeWidth="8" fill="transparent" strokeLinecap="round"
                   strokeDasharray={2 * Math.PI * 32}
                   strokeDashoffset={(2 * Math.PI * 32) * (1 - (fibPercent / 100))}
-                  className="transition-all duration-1000 ease-out"
+                  className="transition-all duration-1000 ease-out drop-shadow-[0_2px_4px_rgba(59,130,246,0.3)]"
                 />
               </svg>
               <div className="text-center z-10 flex flex-col items-center mt-0.5">
-                <span className="text-sm font-black text-ink">{todayTotals.fiber}g</span>
-                <span className="text-[9px] font-medium text-ink-faint -mt-0.5">{fibPercent}%</span>
+                <span className="text-xs font-black text-ink">{todayTotals.fiber}g</span>
+                <span className="text-[9px] font-bold text-ink-soft -mt-0.5">{fibPercent}%</span>
               </div>
             </div>
             <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Fiber</span>
           </div>
 
         </div>
-      </div>
 
-      <div className="px-6 py-8 max-w-lg mx-auto">
+        {/* Summary Callout Banner */}
+        {todayTotals.calories === 0 ? (
+          <div className="mt-8 w-full p-5 rounded-2xl bg-brand-50 border border-brand-500/30 flex flex-col sm:flex-row gap-4 items-center justify-between group">
+            <div className="flex gap-3 items-center">
+              <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                <Sparkles className="w-5 h-5 text-brand" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-ink">Ready to start tracking?</p>
+                <p className="text-xs text-ink-soft mt-0.5">Log your first meal using the AI scanner or voice.</p>
+              </div>
+            </div>
+            <button 
+              onClick={onAddMealClick || (() => setIsUploadModalOpen(true))}
+              className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center gap-2 whitespace-nowrap animate-pulse"
+            >
+              <Plus className="w-3.5 h-3.5" /> Log Meal
+            </button>
+          </div>
+        ) : (
+          <div className="mt-8 w-full p-4 rounded-2xl bg-brand-50 border border-brand-500/20 flex gap-3 items-center">
+            <Sparkles className="w-5 h-5 text-brand shrink-0" />
+            <p className="text-xs text-ink-soft leading-normal">
+              {isOverCal 
+                ? "You have surpassed your daily target calories of energy intake."
+                : `Great job! You have reached ${calPercent}% of your active calorie tracking goal.`}
+            </p>
+          </div>
+        )}
+        </div>
         
-        {/* Buddy Coach Card */}
-        <div className="bg-[#fff1ec] rounded-[24px] p-5 border border-[#ffdfd4] flex gap-4 mb-8 shadow-sm relative overflow-hidden">
+      {/* Buddy Coach Card */}
+      <div className="bg-[#fff1ec] rounded-[24px] p-5 border border-[#ffdfd4] flex gap-4 shadow-sm relative overflow-hidden">
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-brand/5 rounded-full blur-2xl"></div>
           <div className="w-10 h-10 bg-[#ffe5dc] rounded-2xl flex items-center justify-center shrink-0">
             <Sparkles className="w-5 h-5 text-brand" />
@@ -621,7 +687,7 @@ export default function Dashboard({
         </div>
 
         {/* Weekly Macro Performance Chart (Recharts) */}
-        <div className="bg-white rounded-[32px] border border-surface-line p-6 shadow-sm relative mb-10">
+        <div className="bg-white rounded-[32px] border border-surface-line p-6 shadow-sm relative">
           <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h3 className="font-display text-lg font-bold text-ink">Weekly Performance</h3>
@@ -672,6 +738,11 @@ export default function Dashboard({
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
+
+      {/* Right Column: Historical / Today Meal Log Stream */}
+      <div className="lg:col-span-4 space-y-6">
+        <div className="bg-white rounded-[32px] border border-surface-line p-6 shadow-sm h-full flex flex-col justify-start min-h-[400px]">
 
         {/* Today's Meals */}
         <div className="flex justify-between items-center mb-5">
@@ -695,10 +766,13 @@ export default function Dashboard({
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-ink text-base truncate">{meal.summary || "Meal Log"}</h3>
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-bold text-ink text-base truncate">{meal.summary || "Meal Log"}</h3>
+                    <span suppressHydrationWarning className="text-ink-soft text-xs whitespace-nowrap ml-2">
+                      {new Date(meal.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-2 mt-1 text-xs font-medium">
-                    <span className="text-ink-soft">{new Date(meal.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                    <span className="text-ink-soft">•</span>
                     <span className="text-emerald-500 font-bold">{meal.totalProtein}g protein</span>
                   </div>
                 </div>
@@ -709,11 +783,21 @@ export default function Dashboard({
               </div>
             ))
           ) : (
-            <div className="text-center py-10 bg-white rounded-[32px] border border-surface-line border-dashed">
-              <p className="text-ink-soft font-medium text-sm">No meals logged yet today.</p>
+            <div className="text-center py-10 bg-surface-muted rounded-[24px] border border-surface-line border-dashed">
+              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-surface-line text-ink-faint mx-auto mb-3 shadow-sm">
+                <Activity className="w-6 h-6" />
+              </div>
+              <p className="text-ink-soft font-bold text-sm">No meals logged yet today.</p>
+              <p className="text-xs text-ink-faint max-w-[200px] leading-relaxed mx-auto mt-2">
+                All meals captured via AI scanner or logged manually will be stored here.
+              </p>
             </div>
           )}
         </div>
+      </div>
+
+      </div>
+      </div>
       </div>
 
       <BottomNav onCameraClick={() => setIsUploadModalOpen(true)} />

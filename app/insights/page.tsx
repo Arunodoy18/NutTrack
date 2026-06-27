@@ -86,7 +86,7 @@ export default async function InsightsPage({
   });
 
   // Calculate stats based on active tab
-  let targetValue = currentGoals.calories;
+  let targetValue = currentGoals!.calories;
   let unit = 'kcal';
   let avgValue = 0;
   let bestDay = { day: '-', value: 0 };

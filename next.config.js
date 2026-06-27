@@ -35,9 +35,9 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
-              "font-src 'self' fonts.gstatic.com",
-              "img-src 'self' data: blob:",
-              "connect-src 'self' api.openai.com",
+              "font-src 'self' fonts.gstatic.com data:",
+              "img-src 'self' data: blob: images.unsplash.com *.googleusercontent.com",
+              "connect-src 'self' api.openai.com *.nsvcs.net",
             ].join("; "),
           },
           {

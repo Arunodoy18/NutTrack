@@ -381,7 +381,6 @@ export default function FridgePage() {
       {isScannerOpen && <MealScanner onClose={() => setIsScannerOpen(false)} />}
       {isGroceryOpen && (
         <GroceryListModal 
-          userId="guest-user-uuid" 
           onClose={() => setIsGroceryOpen(false)} 
         />
       )}
