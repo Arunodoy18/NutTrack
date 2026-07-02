@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Script from "next/script";
 import { PwaRegistry } from "@/components/PwaRegistry";
+import InstallPrompt from "@/components/InstallPrompt";
+
 export const metadata: Metadata = {
   title: "dietBuddy - Calorie & Nutrition Estimator",
   description: "AI-powered calorie and nutrition estimator from meal photos.",
@@ -26,6 +28,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="bg-surface-muted text-ink antialiased">
         <PwaRegistry />
+        <InstallPrompt />
         {children}
       </body>
     </html>
