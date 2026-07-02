@@ -24,7 +24,8 @@ import {
   Mic,
   MicOff,
   Utensils,
-  Edit2
+  Edit2,
+  Barcode
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -944,24 +945,24 @@ export default function Dashboard({
               {/* STEP 0: Select / Upload */}
               {uploadStep === 0 && (
                 <div className="space-y-6">
-                  {/* File Upload & Camera & Voice Zones */}
-                  <div className="grid grid-cols-3 gap-4">
+                  {/* File Upload & Camera & Voice & Barcode Zones */}
+                  <div className="grid grid-cols-2 gap-4">
                     {/* Upload from Gallery */}
-                    <div className="relative border-2 border-dashed border-surface-line hover:border-brand-500/60 transition-all rounded-3xl bg-surface-muted p-6 text-center flex flex-col items-center justify-center gap-3 group">
+                    <div className="relative border-2 border-dashed border-surface-line hover:border-brand-500/60 transition-all rounded-3xl bg-surface-muted p-4 text-center flex flex-col items-center justify-center gap-2 group">
                       <input 
                         type="file" 
                         accept="image/*" 
                         onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                       />
-                      <div className="w-12 h-12 rounded-2xl bg-surface-muted flex items-center justify-center border border-surface-line text-ink-soft group-hover:bg-brand-50 group-hover:text-brand transition-all shadow-md">
-                        <Upload className="w-6 h-6" />
+                      <div className="w-10 h-10 rounded-2xl bg-surface-muted flex items-center justify-center border border-surface-line text-ink-soft group-hover:bg-brand-50 group-hover:text-brand transition-all shadow-md">
+                        <Upload className="w-5 h-5" />
                       </div>
-                      <p className="text-sm font-bold text-ink group-hover:text-ink transition-all">Upload</p>
+                      <p className="text-xs font-bold text-ink group-hover:text-ink transition-all">Upload</p>
                     </div>
 
                     {/* Take Photo with Camera */}
-                    <div className="relative border-2 border-dashed border-surface-line hover:border-emerald-500/60 transition-all rounded-3xl bg-surface-muted p-6 text-center flex flex-col items-center justify-center gap-3 group">
+                    <div className="relative border-2 border-dashed border-surface-line hover:border-emerald-500/60 transition-all rounded-3xl bg-surface-muted p-4 text-center flex flex-col items-center justify-center gap-2 group">
                       <input 
                         type="file" 
                         accept="image/*" 
@@ -969,26 +970,35 @@ export default function Dashboard({
                         onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                       />
-                      <div className="w-12 h-12 rounded-2xl bg-surface-muted flex items-center justify-center border border-surface-line text-ink-soft group-hover:bg-emerald-600/10 group-hover:text-emerald-600 transition-all shadow-md">
-                        <Camera className="w-6 h-6" />
+                      <div className="w-10 h-10 rounded-2xl bg-surface-muted flex items-center justify-center border border-surface-line text-ink-soft group-hover:bg-emerald-600/10 group-hover:text-emerald-600 transition-all shadow-md">
+                        <Camera className="w-5 h-5" />
                       </div>
-                      <p className="text-sm font-bold text-ink group-hover:text-ink transition-all">Photo</p>
+                      <p className="text-xs font-bold text-ink group-hover:text-ink transition-all">Photo</p>
                     </div>
 
                     {/* Voice Logging */}
-                    <div className="relative border-2 border-dashed border-surface-line hover:border-red-500/60 transition-all rounded-3xl bg-surface-muted p-6 text-center flex flex-col items-center justify-center gap-3 group">
-                      <button 
-                        onPointerDown={startListening}
-                        onPointerUp={stopListening}
-                        onPointerLeave={stopListening}
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center border transition-all shadow-md z-10 relative ${isListening ? 'bg-red-600/20 border-red-500 text-red-600 animate-pulse' : 'bg-surface-muted border-surface-line text-ink-soft group-hover:bg-red-600/10 group-hover:text-red-600'}`}
-                      >
-                        {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
-                      </button>
-                      <p className="text-sm font-bold text-ink group-hover:text-ink transition-all leading-tight">
-                        {isListening ? "Listening..." : "Hold to Speak"}
-                      </p>
-                    </div>
+                    <ComingSoon>
+                      <div className="relative border-2 border-dashed border-surface-line hover:border-red-500/60 transition-all rounded-3xl bg-surface-muted p-4 text-center flex flex-col items-center justify-center gap-2 group w-full h-full">
+                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center border bg-surface-muted border-surface-line text-ink-soft transition-all shadow-md">
+                          <Mic className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-ink transition-all leading-tight">
+                          Speak
+                        </p>
+                      </div>
+                    </ComingSoon>
+
+                    {/* Barcode Scanning */}
+                    <ComingSoon>
+                      <div className="relative border-2 border-dashed border-surface-line hover:border-blue-500/60 transition-all rounded-3xl bg-surface-muted p-4 text-center flex flex-col items-center justify-center gap-2 group w-full h-full">
+                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center border bg-surface-muted border-surface-line text-ink-soft transition-all shadow-md">
+                          <Barcode className="w-5 h-5" />
+                        </div>
+                        <p className="text-xs font-bold text-ink transition-all leading-tight">
+                          Barcode
+                        </p>
+                      </div>
+                    </ComingSoon>
                   </div>
                   
                   {transcript && isListening && (
@@ -1018,32 +1028,32 @@ export default function Dashboard({
                   </div>
 
                   {/* Food Presets Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {FOOD_PRESETS.map((preset) => (
+                  <div className="grid grid-cols-2 gap-4">
+                    {FOOD_PRESETS.slice(0, 2).map((preset) => (
                       <div 
                         key={preset.id}
                         onClick={() => startAnalysisWithPreset(preset)}
                         className="bg-surface-muted hover:bg-surface-muted border border-surface-line hover:border-brand-500/50 rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-lg shadow-slate-950/20 hover:-translate-y-1"
                       >
-                        <div className="relative h-28 w-full overflow-hidden">
+                        <div className="relative h-20 w-full overflow-hidden">
                           <img 
                             src={preset.image} 
                             alt={preset.name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" 
                           />
-                          <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/50 rounded-lg text-[9px] font-bold text-brand-600 backdrop-blur-sm border border-brand-500/20">
+                          <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-black/50 rounded-lg text-[8px] font-bold text-brand-600 backdrop-blur-sm border border-brand-500/20">
                             {preset.totalCalories} kcal
                           </div>
                         </div>
-                        <div className="p-3.5 space-y-2 flex-grow flex flex-col justify-between">
+                        <div className="p-2 space-y-1 flex-grow flex flex-col justify-between">
                           <div>
-                            <h4 className="text-xs font-black text-ink line-clamp-1 group-hover:text-ink">{preset.name}</h4>
-                            <p className="text-[10px] text-ink-faint line-clamp-2 mt-0.5 leading-relaxed">{preset.summary}</p>
+                            <h4 className="text-[10px] font-black text-ink line-clamp-1 group-hover:text-ink">{preset.name}</h4>
+                            <p className="text-[9px] text-ink-faint line-clamp-2 leading-tight hidden">{preset.summary}</p>
                           </div>
-                          <div className="flex justify-between items-center text-[9px] font-bold text-ink-soft border-t border-surface-line pt-2 mt-1">
-                            <span className="text-emerald-600">P: {preset.totalProtein}g</span>
-                            <span className="text-amber-600">F: {preset.totalFat}g</span>
-                            <span className="text-blue-600">Fib: {preset.totalFiber}g</span>
+                          <div className="flex justify-between items-center text-[8px] font-bold text-ink-soft pt-1">
+                            <span className="text-emerald-600">P:{preset.totalProtein}g</span>
+                            <span className="text-amber-600">F:{preset.totalFat}g</span>
+                            <span className="text-blue-600">Fib:{preset.totalFiber}g</span>
                           </div>
                         </div>
                       </div>
