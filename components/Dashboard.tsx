@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import BottomNav from './BottomNav';
+import ComingSoon from '@/components/ComingSoon';
 import { 
   Flame, 
   Activity, 
