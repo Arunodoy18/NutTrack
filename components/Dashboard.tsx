@@ -26,7 +26,9 @@ import {
   MicOff,
   Utensils,
   Edit2,
-  Barcode
+  Barcode,
+  Maximize,
+  User
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -160,6 +162,7 @@ export default function Dashboard({
 
   // Custom logging & camera scan states
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [activeModalMode, setActiveModalMode] = useState<'camera' | 'speak' | 'barcode'>('camera');
   const [uploadStep, setUploadStep] = useState<number>(0); // 0: select preset/file, 1: scanning animation, 2: edit/review
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [customMealName, setCustomMealName] = useState("");
@@ -945,84 +948,134 @@ export default function Dashboard({
             <div className="p-6 flex-1 overflow-y-auto">
               {/* STEP 0: Select / Upload */}
               {uploadStep === 0 && (
-                <div className="space-y-6">
-                  {/* File Upload & Camera & Voice & Barcode Zones */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Upload from Gallery */}
-                    <div className="relative border-2 border-dashed border-surface-line hover:border-brand-500/60 transition-all rounded-3xl bg-surface-muted p-4 text-center flex flex-col items-center justify-center gap-2 group">
+                <div className="flex flex-col items-center justify-center space-y-6">
+                  {/* The Central Viewport */}
+                  <div className="relative w-full max-w-sm aspect-square bg-[#1a1a1a] rounded-[32px] border-4 border-surface-muted overflow-hidden flex flex-col items-center justify-center shadow-inner">
+                    {/* Expand icon in top right */}
+                    <button 
+                      onClick={() => setActiveModalMode('camera')}
+                      className="absolute top-4 right-4 w-10 h-10 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white/80 hover:text-white transition-colors z-20"
+                    >
+                      <Maximize className="w-5 h-5" />
+                    </button>
+
+                    {/* Viewport Content based on activeMode */}
+                    {activeModalMode === 'camera' && (
+                      <div className="flex flex-col items-center justify-center text-white/60">
+                        <Camera className="w-12 h-12 mb-4 opacity-50" />
+                        <p className="text-sm font-medium tracking-wide">Ready to Scan</p>
+                      </div>
+                    )}
+
+                    {activeModalMode === 'speak' && (
+                      <div className="flex flex-col items-center justify-center text-white/80 text-center px-8">
+                        <User className={`w-16 h-16 mb-4 ${isListening ? 'text-red-500 animate-pulse' : 'text-white/50'}`} />
+                        <p className="text-sm font-medium tracking-wide">
+                          {isListening 
+                            ? "Listening... speak now." 
+                            : "Press Capture to start listening. When you stop talking, it will process."}
+                        </p>
+                        {transcript && isListening && (
+                          <p className="text-xs text-red-400 italic mt-4">"{transcript}"</p>
+                        )}
+                      </div>
+                    )}
+
+                    {activeModalMode === 'barcode' && (
+                      <div className="flex flex-col items-center justify-center text-white/60">
+                        <Barcode className="w-16 h-16 mb-4 opacity-50" />
+                        <p className="text-sm font-medium tracking-wide">Ready to scan barcode</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Top 3 Control Buttons */}
+                  <div className="flex items-center justify-center gap-6 w-full max-w-sm">
+                    {/* Speak Button */}
+                    <button 
+                      onClick={() => setActiveModalMode('speak')}
+                      className={`flex flex-col items-center gap-2 transition-all ${activeModalMode === 'speak' ? 'scale-110' : 'opacity-60 hover:opacity-100'}`}
+                    >
+                      <div className={`w-14 h-14 rounded-full border-2 flex items-center justify-center ${activeModalMode === 'speak' ? 'border-brand bg-brand-50 text-brand' : 'border-surface-line bg-white text-ink-soft'}`}>
+                        <Mic className="w-6 h-6" />
+                      </div>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${activeModalMode === 'speak' ? 'text-brand' : 'text-ink-soft'}`}>Speak</span>
+                    </button>
+
+                    {/* Upload Button (Directly triggers file picker) */}
+                    <div className="relative flex flex-col items-center gap-2 transition-all opacity-60 hover:opacity-100">
                       <input 
                         type="file" 
                         accept="image/*" 
                         onChange={handleFileChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
                       />
-                      <div className="w-10 h-10 rounded-2xl bg-surface-muted flex items-center justify-center border border-surface-line text-ink-soft group-hover:bg-brand-50 group-hover:text-brand transition-all shadow-md">
-                        <Upload className="w-5 h-5" />
+                      <div className="w-14 h-14 rounded-full border-2 border-surface-line bg-white flex items-center justify-center text-ink-soft">
+                        <Upload className="w-6 h-6" />
                       </div>
-                      <p className="text-xs font-bold text-ink group-hover:text-ink transition-all">Upload</p>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-ink-soft">Upload</span>
                     </div>
 
-                    {/* Take Photo with Camera */}
-                    <div className="relative border-2 border-dashed border-surface-line hover:border-emerald-500/60 transition-all rounded-3xl bg-surface-muted p-4 text-center flex flex-col items-center justify-center gap-2 group">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        capture="environment"
-                        onChange={handleFileChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-                      />
-                      <div className="w-10 h-10 rounded-2xl bg-surface-muted flex items-center justify-center border border-surface-line text-ink-soft group-hover:bg-emerald-600/10 group-hover:text-emerald-600 transition-all shadow-md">
-                        <Camera className="w-5 h-5" />
+                    {/* Barcode Button */}
+                    <button 
+                      onClick={() => setActiveModalMode('barcode')}
+                      className={`flex flex-col items-center gap-2 transition-all ${activeModalMode === 'barcode' ? 'scale-110' : 'opacity-60 hover:opacity-100'}`}
+                    >
+                      <div className={`w-14 h-14 rounded-full border-2 flex items-center justify-center ${activeModalMode === 'barcode' ? 'border-brand bg-brand-50 text-brand' : 'border-surface-line bg-white text-ink-soft'}`}>
+                        <Barcode className="w-6 h-6" />
                       </div>
-                      <p className="text-xs font-bold text-ink group-hover:text-ink transition-all">Photo</p>
-                    </div>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider ${activeModalMode === 'barcode' ? 'text-brand' : 'text-ink-soft'}`}>Barcode</span>
+                    </button>
+                  </div>
 
-                    {/* Voice Logging */}
-                    <ComingSoon>
-                      <div className="relative border-2 border-dashed border-surface-line hover:border-red-500/60 transition-all rounded-3xl bg-surface-muted p-4 text-center flex flex-col items-center justify-center gap-2 group w-full h-full">
-                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center border bg-surface-muted border-surface-line text-ink-soft transition-all shadow-md">
-                          <Mic className="w-5 h-5" />
-                        </div>
-                        <p className="text-xs font-bold text-ink transition-all leading-tight">
-                          Speak
-                        </p>
+                  {/* Main Capture Button */}
+                  <div className="w-full max-w-sm pt-4">
+                    {activeModalMode === 'camera' && (
+                      <div className="relative w-full">
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          capture="environment"
+                          onChange={handleFileChange}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                        />
+                        <button className="w-full py-4 bg-brand rounded-full text-white font-black text-lg shadow-xl shadow-brand/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 border-4 border-brand-100">
+                          <Camera className="w-6 h-6" />
+                          CAPTURE
+                        </button>
                       </div>
-                    </ComingSoon>
+                    )}
 
-                    {/* Barcode Scanning */}
-                    <ComingSoon>
-                      <div className="relative border-2 border-dashed border-surface-line hover:border-blue-500/60 transition-all rounded-3xl bg-surface-muted p-4 text-center flex flex-col items-center justify-center gap-2 group w-full h-full">
-                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center border bg-surface-muted border-surface-line text-ink-soft transition-all shadow-md">
-                          <Barcode className="w-5 h-5" />
-                        </div>
-                        <p className="text-xs font-bold text-ink transition-all leading-tight">
-                          Barcode
-                        </p>
-                      </div>
-                    </ComingSoon>
+                    {activeModalMode === 'speak' && (
+                      <button 
+                        onPointerDown={startListening}
+                        onPointerUp={stopListening}
+                        onPointerLeave={stopListening}
+                        className={`w-full py-4 rounded-full text-white font-black text-lg shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 border-4 ${isListening ? 'bg-red-500 border-red-200 shadow-red-500/30 animate-pulse' : 'bg-ink border-ink-soft/30 shadow-ink/30'}`}
+                      >
+                        {isListening ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+                        {isListening ? "RECORDING..." : "HOLD TO SPEAK"}
+                      </button>
+                    )}
+
+                    {activeModalMode === 'barcode' && (
+                      <ComingSoon>
+                        <button className="w-full py-4 bg-ink rounded-full text-white font-black text-lg shadow-xl shadow-ink/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 border-4 border-ink-soft/30">
+                          <Barcode className="w-6 h-6" />
+                          SCAN BARCODE
+                        </button>
+                      </ComingSoon>
+                    )}
                   </div>
                   
-                  {transcript && isListening && (
-                    <div className="mt-2 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
-                       <p className="text-xs text-red-600 italic">"{transcript}"</p>
-                    </div>
-                  )}
                   {speechError && (
-                    <div className="mt-2 p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-xs text-red-600">
-                       Speech Error: {speechError}. (Ensure microphone permissions are granted).
+                    <div className="mt-2 p-3 bg-red-950/20 border border-red-500/20 rounded-xl text-xs text-red-600 w-full text-center">
+                       {speechError}
                     </div>
                   )}
 
-                  {selectedImage && (
-                    <div className="mt-4 px-4 py-2 rounded-2xl bg-brand-50 border border-brand-500/20 text-brand-600 text-xs font-semibold flex items-center gap-1.5 animate-bounce">
-                      <Check className="w-3.5 h-3.5 text-brand" /> Custom file loaded! Click "Analyze" below
-                    </div>
-                  )}
-
-
-                  {/* Bottom Start Custom Trigger */}
-                  {selectedImage && (
-                    <div className="flex justify-end pt-4 border-t border-surface-line">
+                  {selectedImage && activeModalMode !== 'camera' && (
+                    <div className="flex justify-center pt-2">
                       <button
                         type="button"
                         onClick={handleStartAnalysis}
