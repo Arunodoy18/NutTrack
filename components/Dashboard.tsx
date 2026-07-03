@@ -30,17 +30,9 @@ import {
   Maximize,
   User
 } from 'lucide-react';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  ReferenceLine
-} from 'recharts';
+import dynamic from 'next/dynamic';
+
+const WeeklyChart = dynamic(() => import('@/components/WeeklyChart'), { ssr: false });
 import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, analyzeMealImageAction, analyzeMealTextAction } from "@/app/actions";
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from "next-auth/react";
@@ -717,30 +709,13 @@ export default function Dashboard({
 
           {/* Responsive Chart Container */}
           <div className="h-56 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E7E7EB" opacity={0.3} />
-                <XAxis dataKey="name" stroke="#9A9AA2" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis stroke="#9A9AA2" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  cursor={{fill: '#f3f4f6', opacity: 0.4}}
-                  contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E7E7EB', borderRadius: '16px', color: '#242428', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
-                  formatter={(value: any) => [`${value} ${metricUnit[activeMetric]}`, activeMetric]}
-                />
-                <ReferenceLine 
-                  y={targetValue} 
-                  stroke="#ef4444" 
-                  strokeDasharray="4 4" 
-                  label={{ value: `Target`, position: 'top', fill: '#f87171', fontSize: 10, fontWeight: 'bold' }} 
-                />
-                <Bar 
-                  dataKey={activeMetric} 
-                  fill={metricColor[activeMetric]} 
-                  radius={[6, 6, 0, 0]} 
-                  maxBarSize={32}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            <WeeklyChart 
+              weeklyData={weeklyData} 
+              activeMetric={activeMetric} 
+              targetValue={targetValue} 
+              metricUnit={metricUnit} 
+              metricColor={metricColor} 
+            />
           </div>
         </div>
       </div>
