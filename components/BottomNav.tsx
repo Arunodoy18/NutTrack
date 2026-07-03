@@ -1,9 +1,10 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, BarChart2, Camera, Refrigerator, User } from 'lucide-react';
+import CameraModal from '@/components/CameraModal';
 
 export default function BottomNav({ onCameraClick }: { onCameraClick?: () => void }) {
   const pathname = usePathname();
@@ -13,6 +14,16 @@ export default function BottomNav({ onCameraClick }: { onCameraClick?: () => voi
   const isInsights = pathname === '/insights';
   const isFridge = pathname === '/fridge';
   const isProfile = pathname === '/profile';
+
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+
+  const handleCameraClick = () => {
+    if (onCameraClick) {
+      onCameraClick();
+    } else {
+      setIsCameraModalOpen(true);
+    }
+  };
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pb-6 px-4 pointer-events-none">
@@ -33,7 +44,7 @@ export default function BottomNav({ onCameraClick }: { onCameraClick?: () => voi
         {/* Floating Center Camera Button */}
         <div className="relative -top-8 mx-2">
           <button 
-            onClick={onCameraClick}
+            onClick={handleCameraClick}
             className="w-16 h-16 bg-brand rounded-full flex items-center justify-center text-white shadow-[0_8px_24px_rgba(252,76,2,0.4)] hover:scale-105 active:scale-95 transition-transform"
           >
             <Camera className="w-7 h-7" strokeWidth={2.5} />
@@ -53,6 +64,12 @@ export default function BottomNav({ onCameraClick }: { onCameraClick?: () => voi
         </Link>
 
       </div>
+
+      <CameraModal 
+        isOpen={isCameraModalOpen} 
+        onClose={() => setIsCameraModalOpen(false)} 
+        onMealSaved={() => window.location.reload()}
+      />
     </div>
   );
 }

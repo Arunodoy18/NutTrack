@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import BottomNav from '@/components/BottomNav';
-import MealScanner from '@/components/MealScanner';
 import GroceryListModal from '@/components/GroceryListModal';
 import { Camera, Refrigerator, Upload, RefreshCw, AlertTriangle, ChevronDown, ChevronUp, Sparkles, Utensils } from 'lucide-react';
 import { analyzeFridgeImageAction, addIngredientsToGroceryListAction } from "@/app/actions";
@@ -20,8 +19,6 @@ interface Recipe {
 }
 
 export default function FridgePage() {
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
-  
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
@@ -377,8 +374,7 @@ export default function FridgePage() {
         </div>
       </div>
 
-      <BottomNav onCameraClick={() => setIsScannerOpen(true)} />
-      {isScannerOpen && <MealScanner onClose={() => setIsScannerOpen(false)} />}
+      <BottomNav />
       {isGroceryOpen && (
         <GroceryListModal 
           onClose={() => setIsGroceryOpen(false)} 
