@@ -165,7 +165,7 @@ export default function Dashboard({
   const [mounted, setMounted] = useState(false);
   const [selectedMealForDetails, setSelectedMealForDetails] = useState<any | null>(null);
 
-  useEffect(() => {
+  React.useEffect(() => {
     setMounted(true);
   }, []);
 
