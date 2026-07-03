@@ -803,7 +803,7 @@ export default function Dashboard({
               <span className="text-[10px] font-black tracking-widest text-brand uppercase">Premium Plan</span>
               <div className="flex items-baseline justify-center gap-1.5 mt-1">
                 <span className="font-display text-3xl font-black text-ink">₹199</span>
-                <span className="text-ink-faint text-xs font-bold">/ month</span>
+                <span className="text-ink-faint text-xs font-bold">/ 6 months</span>
               </div>
               <p className="text-[10px] text-ink-faint mt-2">Cancel anytime. Risk-free subscription.</p>
             </div>

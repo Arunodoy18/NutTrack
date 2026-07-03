@@ -169,7 +169,7 @@ export default async function ProfilePage() {
           <div className="flex justify-between items-center relative z-10">
             <div className="flex items-baseline gap-1">
               <span className="text-3xl font-black tracking-tight">₹199</span>
-              <span className="text-xs font-bold text-white/80">/ lifetime</span>
+              <span className="text-xs font-bold text-white/80">/ 6 months</span>
             </div>
             <ComingSoon>
               <button className="bg-white text-brand px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:scale-105 transition-transform">
