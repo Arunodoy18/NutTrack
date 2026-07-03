@@ -181,6 +181,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
       const result = await saveMealAction(localUserId, {
         ...activeAnalysis,
         name: customMealName || activeAnalysis.name,
+        imageUrl: base64Image || undefined,
       });
 
       if (result.success) {

@@ -161,6 +161,14 @@ export default function Dashboard({
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
 
+  // Time hydration and Meal Details Modal
+  const [mounted, setMounted] = useState(false);
+  const [selectedMealForDetails, setSelectedMealForDetails] = useState<any | null>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Load premium state on mount
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -570,7 +578,11 @@ export default function Dashboard({
         <div className="space-y-4">
           {initialMeals.length > 0 ? (
             initialMeals.map((meal: any) => (
-              <div key={meal.id} className="bg-white rounded-[24px] p-4 flex items-center gap-4 shadow-sm border border-surface-line hover:shadow-md transition-shadow cursor-pointer">
+              <div 
+                key={meal.id} 
+                onClick={() => setSelectedMealForDetails(meal)}
+                className="bg-white rounded-[24px] p-4 flex items-center gap-4 shadow-sm border border-surface-line hover:shadow-md transition-shadow cursor-pointer"
+              >
                 <div className="w-16 h-16 bg-surface-muted rounded-2xl flex items-center justify-center shrink-0 border border-surface-line overflow-hidden relative">
                   <Image 
                     src={meal.imageUrl || "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop"} 
@@ -583,8 +595,8 @@ export default function Dashboard({
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <h3 className="font-bold text-ink text-base truncate">{meal.summary || "Meal Log"}</h3>
-                    <span suppressHydrationWarning className="text-ink-soft text-xs whitespace-nowrap ml-2">
-                      {new Date(meal.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    <span className="text-ink-soft text-xs whitespace-nowrap ml-2">
+                      {mounted ? new Date(meal.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1 text-xs font-medium">
@@ -724,6 +736,80 @@ export default function Dashboard({
           </div>
         </div>
       )}
+
+      {/* Meal Details Modal */}
+      <AnimatePresence>
+        {selectedMealForDetails && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+            onClick={() => setSelectedMealForDetails(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-[32px] p-6 w-full max-w-sm shadow-xl border border-surface-line relative overflow-hidden"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="text-xl font-black text-ink">{selectedMealForDetails.summary}</h3>
+                <button 
+                  onClick={() => setSelectedMealForDetails(null)}
+                  className="p-1 text-ink-soft hover:text-ink bg-surface-muted rounded-full"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="w-full aspect-video bg-surface-muted rounded-2xl relative overflow-hidden mb-5">
+                <Image 
+                  src={selectedMealForDetails.imageUrl || "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&h=300&fit=crop"} 
+                  alt={selectedMealForDetails.summary}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+
+              <div className="grid grid-cols-4 gap-2 mb-4">
+                <div className="bg-brand-50 rounded-xl p-2 text-center border border-brand-100">
+                  <div className="text-[10px] font-bold text-brand uppercase tracking-wider mb-0.5">Kcal</div>
+                  <div className="font-black text-brand text-sm">{selectedMealForDetails.totalCalories}</div>
+                </div>
+                <div className="bg-[#f0fdf4] rounded-xl p-2 text-center border border-emerald-100">
+                  <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mb-0.5">Pro</div>
+                  <div className="font-black text-emerald-700 text-sm">{selectedMealForDetails.totalProtein}g</div>
+                </div>
+                <div className="bg-[#fffbeb] rounded-xl p-2 text-center border border-amber-100">
+                  <div className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">Fat</div>
+                  <div className="font-black text-amber-700 text-sm">{selectedMealForDetails.totalFat}g</div>
+                </div>
+                <div className="bg-[#f5f3ff] rounded-xl p-2 text-center border border-purple-100">
+                  <div className="text-[10px] font-bold text-purple-600 uppercase tracking-wider mb-0.5">Fib</div>
+                  <div className="font-black text-purple-700 text-sm">{selectedMealForDetails.totalFiber}g</div>
+                </div>
+              </div>
+
+              {selectedMealForDetails.items && selectedMealForDetails.items.length > 0 && (
+                <div className="mt-4 border-t border-surface-line pt-4 max-h-[150px] overflow-y-auto">
+                  <h4 className="text-xs font-bold text-ink-soft uppercase tracking-widest mb-3">Detected Items</h4>
+                  <ul className="space-y-2">
+                    {selectedMealForDetails.items.map((item: any) => (
+                      <li key={item.id} className="flex justify-between items-center text-sm">
+                        <span className="font-medium text-ink">{item.name}</span>
+                        <span className="text-ink-soft font-bold">{item.calories} kcal</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Meal Upload & AI Image Scanning Modal */}
       <CameraModal 

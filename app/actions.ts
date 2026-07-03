@@ -108,6 +108,7 @@ export async function saveMealAction(
     totalIron?: number;
     totalCalcium?: number;
     totalVitaminC?: number;
+    imageUrl?: string;
     items: {
       name: string;
       calories: number;
@@ -149,6 +150,7 @@ export async function saveMealAction(
       totalIron: safeTotalIron,
       totalCalcium: safeTotalCalc,
       totalVitaminC: safeTotalVitC,
+      imagePath: mealData.imageUrl,
       timestamp: new Date(),
     }).returning();
 
