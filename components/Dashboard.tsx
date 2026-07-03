@@ -38,8 +38,6 @@ const WeeklyChart = dynamic(() => import('@/components/WeeklyChart'), { ssr: fal
 import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, analyzeMealImageAction, analyzeMealTextAction } from "@/app/actions";
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from "next-auth/react";
-import { useSpeech } from "@/components/useSpeech";
-import AICoach from "@/components/AICoach";
 
 export interface FoodItemData {
   id: string;
@@ -103,7 +101,8 @@ export default function Dashboard({
 
   // AI-generated Nutrition Insight & Toast flags
   const [aiTip, setAiTip] = useState<string>("");
-  const [aiTipLoading, setAiTipLoading] = useState(false);
+  const [isAiTipLoading, setAiTipLoading] = useState(false);
+  const router = useRouter();
   const [showCelebration, setShowCelebration] = useState(false);
 
   // Hook to fetch AI Nutrition Tip
@@ -249,163 +248,7 @@ export default function Dashboard({
     }
   ];
 
-  // Dynamic laser scanning progress ticker
-  React.useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (uploadStep === 1) {
-      setScanningMsgIdx(0);
-      interval = setInterval(() => {
-        setScanningMsgIdx((prev) => {
-          if (prev < SCAN_MESSAGES.length - 1) {
-            return prev + 1;
-          } else {
-            // Wait until API call resolves before finishing animation step
-            if (isAnalyzing) {
-              return prev;
-            }
-            clearInterval(interval);
-            setUploadStep(2);
-            return prev;
-          }
-        });
-      }, 950);
-    }
-    return () => clearInterval(interval);
-  }, [uploadStep, isAnalyzing]);
 
-  // Transition immediately if API finishes after animation is at the last message
-  React.useEffect(() => {
-    if (uploadStep === 1 && !isAnalyzing && activeAnalysis && scanningMsgIdx === SCAN_MESSAGES.length - 1) {
-      setUploadStep(2);
-    }
-    if (uploadStep === 1 && !isAnalyzing && analysisError && scanningMsgIdx === SCAN_MESSAGES.length - 1) {
-      setUploadStep(2);
-    }
-  }, [isAnalyzing, activeAnalysis, analysisError, uploadStep, scanningMsgIdx]);
-
-  const handleStartAnalysis = () => {
-    if (checkScanLimit()) {
-      setIsPaywallOpen(true);
-      return;
-    }
-    setUploadStep(1);
-    if (base64Image) {
-      runAiAnalysis(base64Image);
-    }
-  };
-
-  const runAiAnalysis = async (b64: string) => {
-    setIsAnalyzing(true);
-    setAnalysisError(null);
-    try {
-      const res = await analyzeMealImageAction(b64);
-      if (res.success && res.analysis) {
-        setActiveAnalysis(res.analysis);
-        setCustomMealName(res.analysis.name || customMealName);
-        incrementScanCount();
-      } else {
-        setAnalysisError(res.error || "Failed to analyze the meal image.");
-      }
-    } catch (err) {
-      setAnalysisError("Unexpected error during image analysis.");
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const { isListening, transcript, startListening, stopListening, isSupported, error: speechError } = useSpeech();
-
-  // Watch transcript and trigger analysis when stopped
-  React.useEffect(() => {
-    if (!isListening && transcript.trim().length > 0 && uploadStep === 0) {
-      runVoiceAnalysis(transcript);
-    }
-  }, [isListening, transcript]);
-
-  const runVoiceAnalysis = async (text: string) => {
-    if (checkScanLimit()) {
-      setIsPaywallOpen(true);
-      return;
-    }
-    setUploadStep(1); // Show scanning animation
-    setIsAnalyzing(true);
-    setAnalysisError(null);
-    try {
-      const res = await analyzeMealTextAction(text);
-      if (res.success && res.analysis) {
-        setActiveAnalysis(res.analysis);
-        setCustomMealName(res.analysis.name || customMealName);
-        incrementScanCount();
-      } else {
-        setAnalysisError(res.error || "Failed to analyze the voice input.");
-      }
-    } catch (err) {
-      setAnalysisError("Unexpected error during voice analysis.");
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-
-  const handleSaveMeal = async () => {
-    if (!activeAnalysis) return;
-    setIsSavingMeal(true);
-    setMealSaveError(null);
-
-    const mealPayload = {
-      summary: customMealName || activeAnalysis.name,
-      totalCalories: activeAnalysis.totalCalories,
-      totalProtein: activeAnalysis.totalProtein,
-      totalFat: activeAnalysis.totalFat,
-      totalFiber: activeAnalysis.totalFiber,
-      items: activeAnalysis.items
-    };
-
-    const response = await saveMealAction(userId, mealPayload);
-    setIsSavingMeal(false);
-
-    if (response.success) {
-      setIsUploadModalOpen(false);
-      setSelectedImage(null);
-      setActiveAnalysis(null);
-    } else {
-      setMealSaveError(response.error || "Could not log this meal event.");
-    }
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setSelectedImage(url);
-      setCustomMealName(file.name.replace(/\.[^/.]+$/, "").split("-").join(" ").split("_").join(" "));
-      setAnalysisError(null);
-      setActiveAnalysis(null);
-
-      // Convert to Base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        // Strip out the data:image/*;base64, prefix
-        const base64 = result.split(",")[1];
-        setBase64Image(base64);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const startAnalysisWithPreset = (preset: typeof FOOD_PRESETS[0]) => {
-    setBase64Image(null); // No base64 for presets
-    setAnalysisError(null);
-    setSelectedImage(preset.image);
-    setActiveAnalysis(preset);
-    setCustomMealName(preset.name);
-    
-    if (checkScanLimit()) {
-      setIsPaywallOpen(true);
-      return;
-    }
-    setUploadStep(1); // triggers scanning beam
-  };
 
   // Recharts metric configuration
   const metricColor = {
@@ -720,13 +563,13 @@ export default function Dashboard({
         <div className="flex justify-between items-center mb-5">
           <h2 className="text-xl font-black text-ink">Today's meals</h2>
           <span className="text-xs font-bold text-ink-soft bg-white border border-surface-line px-3 py-1 rounded-full shadow-sm">
-            {todayMeals.length} logged
+            {initialMeals.length} logged
           </span>
         </div>
 
         <div className="space-y-4">
-          {todayMeals.length > 0 ? (
-            todayMeals.map(meal => (
+          {initialMeals.length > 0 ? (
+            initialMeals.map((meal: any) => (
               <div key={meal.id} className="bg-white rounded-[24px] p-4 flex items-center gap-4 shadow-sm border border-surface-line hover:shadow-md transition-shadow cursor-pointer">
                 <div className="w-16 h-16 bg-surface-muted rounded-2xl flex items-center justify-center shrink-0 border border-surface-line overflow-hidden relative">
                   <Image 

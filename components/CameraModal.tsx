@@ -69,9 +69,9 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
     clearInterval(msgInterval);
     setIsAnalyzing(false);
 
-    if (res.success && res.data) {
-      setActiveAnalysis(res.data);
-      setCustomMealName(res.data.name || "My Meal");
+    if (res.success && res.analysis) {
+      setActiveAnalysis(res.analysis);
+      setCustomMealName(res.analysis.name || "My Meal");
       setUploadStep(2);
     } else {
       setAnalysisError(res.error || "Failed to analyze speech.");
@@ -117,9 +117,9 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
     clearInterval(msgInterval);
     setIsAnalyzing(false);
 
-    if (res.success && res.data) {
-      setActiveAnalysis(res.data);
-      setCustomMealName(res.data.name || "My Meal");
+    if (res.success && res.analysis) {
+      setActiveAnalysis(res.analysis);
+      setCustomMealName(res.analysis.name || "My Meal");
       setUploadStep(2);
     } else {
       setAnalysisError(res.error || "Failed to analyze image.");
