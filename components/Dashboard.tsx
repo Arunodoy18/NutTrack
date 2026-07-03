@@ -1019,47 +1019,6 @@ export default function Dashboard({
                     </div>
                   )}
 
-                  {/* Healthy Gourmet Presets Title */}
-                  <div className="text-center pt-2">
-                    <div className="h-[1px] w-full bg-surface-line flex items-center justify-center">
-                      <span className="px-4 bg-surface-muted text-[10px] font-black uppercase text-brand tracking-widest">
-                        Or select a visual preset
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Food Presets Grid */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {FOOD_PRESETS.slice(0, 2).map((preset) => (
-                      <div 
-                        key={preset.id}
-                        onClick={() => startAnalysisWithPreset(preset)}
-                        className="bg-surface-muted hover:bg-surface-muted border border-surface-line hover:border-brand-500/50 rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer flex flex-col justify-between group shadow-lg shadow-slate-950/20 hover:-translate-y-1"
-                      >
-                        <div className="relative h-20 w-full overflow-hidden">
-                          <img 
-                            src={preset.image} 
-                            alt={preset.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-all duration-500" 
-                          />
-                          <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-black/50 rounded-lg text-[8px] font-bold text-brand-600 backdrop-blur-sm border border-brand-500/20">
-                            {preset.totalCalories} kcal
-                          </div>
-                        </div>
-                        <div className="p-2 space-y-1 flex-grow flex flex-col justify-between">
-                          <div>
-                            <h4 className="text-[10px] font-black text-ink line-clamp-1 group-hover:text-ink">{preset.name}</h4>
-                            <p className="text-[9px] text-ink-faint line-clamp-2 leading-tight hidden">{preset.summary}</p>
-                          </div>
-                          <div className="flex justify-between items-center text-[8px] font-bold text-ink-soft pt-1">
-                            <span className="text-emerald-600">P:{preset.totalProtein}g</span>
-                            <span className="text-amber-600">F:{preset.totalFat}g</span>
-                            <span className="text-blue-600">Fib:{preset.totalFiber}g</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
 
                   {/* Bottom Start Custom Trigger */}
                   {selectedImage && (
