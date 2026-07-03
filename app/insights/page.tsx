@@ -61,7 +61,7 @@ export default async function InsightsPage({
     const d = new Date(sevenDaysAgo);
     d.setDate(d.getDate() + i);
     return {
-      date: d,
+      dateStr: d.toISOString(),
       day: daysOfWeek[d.getDay()],
       calories: 0,
       protein: 0,

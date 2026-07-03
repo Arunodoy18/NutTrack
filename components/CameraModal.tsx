@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, X, Mic, MicOff, Barcode, Maximize, User, RefreshCw, AlertTriangle, Check, Sparkles } from 'lucide-react';
 import ComingSoon from "@/components/ComingSoon";
-import BarcodeScanner from "./BarcodeScanner";
+import dynamic from "next/dynamic";
+const BarcodeScanner = dynamic(() => import("./BarcodeScanner"), { ssr: false });
 import { useSpeech } from "@/components/useSpeech";
 import { 
   analyzeMealImageAction, 
