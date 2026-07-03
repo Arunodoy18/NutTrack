@@ -3,9 +3,15 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, X, Mic, MicOff, Barcode, Maximize, User, RefreshCw, AlertTriangle, Check, Sparkles } from 'lucide-react';
-import ComingSoon from '@/components/ComingSoon';
+import ComingSoon from "@/components/ComingSoon";
+import BarcodeScanner from "./BarcodeScanner";
 import { useSpeech } from "@/components/useSpeech";
-import { analyzeMealImageAction, analyzeMealTextAction, saveMealAction } from "@/app/actions";
+import { 
+  analyzeMealImageAction, 
+  analyzeMealTextAction, 
+  saveMealAction,
+  lookupBarcodeAction 
+} from "@/app/actions";
 
 const SCAN_MESSAGES = [
   "Identifying ingredients...",
@@ -124,6 +130,41 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
     } else {
       setAnalysisError(res.error || "Failed to analyze image.");
       setUploadStep(2);
+    }
+  };
+
+  const handleBarcodeSuccess = async (barcode: string) => {
+    // Only run if not already analyzing to prevent duplicate scans
+    if (isAnalyzing || uploadStep !== 0) return;
+    
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+    setUploadStep(1); // Move to analyzing screen
+    
+    let dots = 0;
+    const msgInterval = setInterval(() => {
+      dots = (dots + 1) % 4;
+      setAnalyzeMsg("Looking up barcode" + ".".repeat(dots));
+    }, 500);
+
+    try {
+      const res = await lookupBarcodeAction(barcode);
+      clearInterval(msgInterval);
+      setIsAnalyzing(false);
+
+      if (res.success && res.analysis) {
+        setActiveAnalysis(res.analysis);
+        setCustomMealName(res.analysis.name || "Scanned Product");
+        setUploadStep(2);
+      } else {
+        setAnalysisError(res.error || "Failed to lookup barcode.");
+        setUploadStep(0);
+      }
+    } catch (err) {
+      clearInterval(msgInterval);
+      setIsAnalyzing(false);
+      setAnalysisError("An unexpected error occurred.");
+      setUploadStep(0);
     }
   };
 
@@ -246,9 +287,11 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                   )}
 
                   {activeModalMode === 'barcode' && (
-                    <div className="flex flex-col items-center justify-center text-white/60">
-                      <Barcode className="w-16 h-16 mb-4 opacity-50" />
-                      <p className="text-sm font-medium tracking-wide">Ready to scan barcode</p>
+                    <div className="w-full h-full relative z-30">
+                      <BarcodeScanner 
+                        onScanSuccess={handleBarcodeSuccess} 
+                        onScanError={(err) => console.log(err)} 
+                      />
                     </div>
                   )}
                 </div>
@@ -323,12 +366,10 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                   )}
 
                   {activeModalMode === 'barcode' && (
-                    <ComingSoon>
-                      <button className="w-full py-4 bg-ink rounded-full text-white font-black text-lg shadow-xl shadow-ink/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 border-4 border-ink-soft/30">
-                        <Barcode className="w-6 h-6" />
-                        SCAN BARCODE
-                      </button>
-                    </ComingSoon>
+                    <div className="w-full py-4 bg-ink rounded-full text-white/50 font-black text-lg shadow-xl shadow-ink/10 flex items-center justify-center gap-2 border-4 border-ink-soft/30 cursor-not-allowed">
+                      <Barcode className="w-6 h-6" />
+                      SCANNING...
+                    </div>
                   )}
                 </div>
                 

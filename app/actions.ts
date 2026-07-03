@@ -859,3 +859,47 @@ export async function verifyManualPaymentAction(utr: string) {
     return { success: false, error: error.message };
   }
 }
+
+export async function lookupBarcodeAction(barcode: string) {
+  try {
+    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
+    const data = await res.json();
+
+    if (data.status !== 1) {
+      return { success: false, error: "Product not found in OpenFoodFacts database." };
+    }
+
+    const p = data.product;
+    const name = p.product_name || "Unknown Product";
+    const nutriments = p.nutriments || {};
+    
+    // We try to get per 100g, or serving, default to 0
+    const calories = Math.round(nutriments['energy-kcal_100g'] || nutriments['energy-kcal'] || 0);
+    const protein = Math.round(nutriments['proteins_100g'] || nutriments['proteins'] || 0);
+    const fat = Math.round(nutriments['fat_100g'] || nutriments['fat'] || 0);
+    const fiber = Math.round(nutriments['fiber_100g'] || nutriments['fiber'] || 0);
+
+    const analysis = {
+      name,
+      totalCalories: calories,
+      totalProtein: protein,
+      totalFat: fat,
+      totalFiber: fiber,
+      items: [
+        {
+          name,
+          calories,
+          protein,
+          fat,
+          fiber,
+        }
+      ]
+    };
+
+    return { success: true, analysis };
+  } catch (err: any) {
+    console.error("Barcode lookup error:", err);
+    return { success: false, error: err.message || "Failed to lookup barcode" };
+  }
+}
+
