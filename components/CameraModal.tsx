@@ -79,7 +79,13 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
     }
   };
 
-  const { isListening, transcript, error: speechError, startListening, stopListening } = useSpeech(handleSpeechResult);
+  const { isListening, transcript, error: speechError, startListening, stopListening } = useSpeech();
+
+  useEffect(() => {
+    if (!isListening && transcript.trim().length > 0 && uploadStep === 0) {
+      handleSpeechResult(transcript);
+    }
+  }, [isListening, transcript, uploadStep]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
