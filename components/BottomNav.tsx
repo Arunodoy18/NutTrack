@@ -30,13 +30,13 @@ export default function BottomNav({ onCameraClick }: { onCameraClick?: () => voi
       <div className="bg-white rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] border border-surface-line px-6 py-4 flex items-center justify-between w-full max-w-md pointer-events-auto relative">
         
         {/* Home */}
-        <Link href="/dashboard" className="flex flex-col items-center gap-1 min-w-[50px] group">
+        <Link href="/dashboard" prefetch={true} className="flex flex-col items-center gap-1 min-w-[50px] group">
           <Home className={`w-6 h-6 transition-colors ${isHome ? 'text-brand' : 'text-ink-soft group-hover:text-ink'}`} />
           <span className={`text-[10px] font-bold transition-colors ${isHome ? 'text-brand' : 'text-ink-soft group-hover:text-ink'}`}>Home</span>
         </Link>
 
         {/* Insights */}
-        <Link href="/insights" className="flex flex-col items-center gap-1 min-w-[50px] group">
+        <Link href="/insights" prefetch={true} className="flex flex-col items-center gap-1 min-w-[50px] group">
           <BarChart2 className={`w-6 h-6 transition-colors ${isInsights ? 'text-brand' : 'text-ink-soft group-hover:text-ink'}`} />
           <span className={`text-[10px] font-bold transition-colors ${isInsights ? 'text-brand' : 'text-ink-soft group-hover:text-ink'}`}>Insights</span>
         </Link>
@@ -52,13 +52,13 @@ export default function BottomNav({ onCameraClick }: { onCameraClick?: () => voi
         </div>
 
         {/* Fridge */}
-        <Link href="/fridge" className="flex flex-col items-center gap-1 min-w-[50px] group">
+        <Link href="/fridge" prefetch={true} className="flex flex-col items-center gap-1 min-w-[50px] group">
           <Refrigerator className={`w-6 h-6 transition-colors ${isFridge ? 'text-brand' : 'text-ink-soft group-hover:text-ink'}`} />
           <span className={`text-[10px] font-bold transition-colors ${isFridge ? 'text-brand' : 'text-ink-soft group-hover:text-ink'}`}>Fridge</span>
         </Link>
 
         {/* Profile */}
-        <Link href="/profile" className="flex flex-col items-center gap-1 min-w-[50px] group">
+        <Link href="/profile" prefetch={true} className="flex flex-col items-center gap-1 min-w-[50px] group">
           <User className={`w-6 h-6 transition-colors ${isProfile ? 'text-brand' : 'text-ink-soft group-hover:text-ink'}`} />
           <span className={`text-[10px] font-bold transition-colors ${isProfile ? 'text-brand' : 'text-ink-soft group-hover:text-ink'}`}>Profile</span>
         </Link>
