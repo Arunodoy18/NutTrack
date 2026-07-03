@@ -73,16 +73,23 @@ export default async function InsightsPage({
   last7DaysMeals.forEach(meal => {
     const mealDate = new Date(meal.timestamp);
     // Find matching day in our array
-    const dayObj = dailyTotals.find(d => 
-      d.date.getDate() === mealDate.getDate() && 
-      d.date.getMonth() === mealDate.getMonth()
-    );
+    const dayObj = dailyTotals.find(d => {
+      const dDate = new Date(d.dateStr);
+      return dDate.getDate() === mealDate.getDate() && 
+             dDate.getMonth() === mealDate.getMonth();
+    });
     if (dayObj) {
       dayObj.calories += meal.totalCalories;
       dayObj.protein += meal.totalProtein;
       dayObj.fat += meal.totalFat;
       dayObj.fiber += meal.totalFiber;
     }
+  });
+
+  const allUserMealTimestamps = await db.query.meals.findMany({
+    where: eq(meals.userId, userId),
+    columns: { timestamp: true },
+    orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
   });
 
   const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp));
