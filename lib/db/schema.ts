@@ -14,6 +14,7 @@ export const users = pgTable("user", {
   image: text("image"),
   otpLockedUntil: timestamp("otp_locked_until", { mode: "date" }),
   dietaryPreferences: text("dietary_preferences"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 
 export const accounts = pgTable(

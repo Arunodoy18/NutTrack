@@ -22,8 +22,17 @@ export default async function DashboardPage() {
     where: eq(users.id, userId)
   });
   let isPremium = currentUser?.isPremium || false;
+  let isTrialActive = false;
+  
+  if (currentUser?.createdAt) {
+    const accountAgeDays = (Date.now() - new Date(currentUser.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (accountAgeDays <= 30) {
+      isPremium = true;
+      isTrialActive = true;
+    }
+  }
 
-  if (isPremium && currentUser?.premiumSince) {
+  if (isPremium && !isTrialActive && currentUser?.premiumSince) {
     const premiumDate = new Date(currentUser.premiumSince);
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);

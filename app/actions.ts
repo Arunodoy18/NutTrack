@@ -29,11 +29,16 @@ async function checkAiAccess() {
   const userRecord = await db.query.users.findFirst({
     where: eq(users.id, userId)
   });
+  let isPremium = userRecord?.isPremium ?? false;
+  if (userRecord?.createdAt) {
+    const ageDays = (Date.now() - new Date(userRecord.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (ageDays <= 30) isPremium = true;
+  }
   
-  const { allowed } = await checkScanRateLimit(userId, userRecord?.isPremium ?? false);
+  const { allowed } = await checkScanRateLimit(userId, isPremium);
   
   if (!allowed) {
-    if (userRecord?.isPremium) {
+    if (isPremium) {
       throw new Error("Premium rate limit exceeded (200 scans/day). Please try again later.");
     } else {
       throw new Error("Rate limit exceeded (5 scans/hour). Please upgrade to premium for more scans.");

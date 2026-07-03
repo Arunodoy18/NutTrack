@@ -27,6 +27,19 @@ export default async function ProfilePage() {
   const currentUser = await db.query.users.findFirst({
     where: eq(users.id, userId)
   });
+  
+  let isPremium = currentUser?.isPremium || false;
+  let isTrialActive = false;
+  let trialDaysLeft = 0;
+  
+  if (currentUser?.createdAt) {
+    const ageDays = (Date.now() - new Date(currentUser.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (ageDays <= 30) {
+      isPremium = true;
+      isTrialActive = true;
+      trialDaysLeft = Math.ceil(30 - ageDays);
+    }
+  }
 
   // Fetch all meals to calculate streak and total count
   const allUserMealTimestamps = await db.query.meals.findMany({
@@ -167,15 +180,28 @@ export default async function ProfilePage() {
             Deep insights, cloud sync & no daily limits.
           </p>
           <div className="flex justify-between items-center relative z-10">
-            <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-black tracking-tight">₹199</span>
-              <span className="text-xs font-bold text-white/80">/ 6 months</span>
-            </div>
-            <ComingSoon>
-              <button className="bg-white text-brand px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:scale-105 transition-transform">
-                Upgrade
+            {isTrialActive ? (
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-black tracking-tight text-white/90">Trial Active</span>
+                <span className="text-sm font-bold text-white/80">({trialDaysLeft} days left)</span>
+              </div>
+            ) : (
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-black tracking-tight">₹199</span>
+                <span className="text-xs font-bold text-white/80">/ 6 months</span>
+              </div>
+            )}
+            {!isPremium && !isTrialActive ? (
+              <ComingSoon>
+                <button className="bg-white text-brand px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:scale-105 transition-transform">
+                  Upgrade
+                </button>
+              </ComingSoon>
+            ) : (
+              <button disabled className="bg-white/20 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm">
+                Active
               </button>
-            </ComingSoon>
+            )}
           </div>
           
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
