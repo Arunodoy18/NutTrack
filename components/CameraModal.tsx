@@ -370,7 +370,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                   {activeModalMode === 'barcode' && (
                     <div className="w-full py-4 bg-ink rounded-full text-white/50 font-black text-lg shadow-xl shadow-ink/10 flex items-center justify-center gap-2 border-4 border-ink-soft/30 cursor-not-allowed">
                       <Barcode className="w-6 h-6" />
-                      SCANNING...
+                      POINT AT BARCODE
                     </div>
                   )}
                 </div>
@@ -381,7 +381,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                   </div>
                 )}
 
-                {selectedImage && activeModalMode !== 'camera' && (
+                {selectedImage && activeModalMode !== 'barcode' && (
                   <div className="flex justify-center pt-2">
                     <button
                       type="button"
@@ -390,6 +390,19 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                     >
                       <Sparkles className="w-4 h-4" />
                       <span>Run AI Analyzer</span>
+                    </button>
+                  </div>
+                )}
+                
+                {selectedImage && activeModalMode === 'barcode' && (
+                  <div className="flex justify-center pt-2">
+                    <button
+                      type="button"
+                      disabled={true}
+                      className="w-full bg-surface-muted border-2 border-surface-line text-ink-soft font-black text-sm tracking-widest uppercase rounded-[20px] py-4 flex items-center justify-center gap-2 cursor-not-allowed"
+                    >
+                      <Barcode className="w-5 h-5" />
+                      Point at Barcode
                     </button>
                   </div>
                 )}

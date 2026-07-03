@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import { Html5QrcodeScanner, Html5QrcodeScanType } from "html5-qrcode";
+import React, { useEffect } from "react";
+import { Html5Qrcode } from "html5-qrcode";
 
 interface BarcodeScannerProps {
   onScanSuccess: (decodedText: string) => void;
@@ -9,45 +9,41 @@ interface BarcodeScannerProps {
 }
 
 export default function BarcodeScanner({ onScanSuccess, onScanError }: BarcodeScannerProps) {
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
-
   useEffect(() => {
-    // Only initialize once
-    if (!scannerRef.current) {
-      scannerRef.current = new Html5QrcodeScanner(
-        "barcode-reader",
-        { 
-          fps: 10, 
-          qrbox: { width: 250, height: 150 },
-          supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-          rememberLastUsedCamera: true
-        },
-        /* verbose= */ false
-      );
+    let isMounted = true;
+    const scanner = new Html5Qrcode("barcode-reader");
 
-      scannerRef.current.render(
-        (decodedText) => {
-          if (scannerRef.current) {
-            scannerRef.current.clear();
-          }
+    scanner.start(
+      { facingMode: "environment" },
+      {
+        fps: 10,
+        qrbox: { width: 250, height: 150 }
+      },
+      (decodedText) => {
+        if (isMounted) {
+          scanner.stop().catch(() => {});
           onScanSuccess(decodedText);
-        },
-        (error) => {
-          if (onScanError) onScanError(error);
         }
-      );
-    }
+      },
+      (error) => {
+        if (isMounted && onScanError) onScanError(error);
+      }
+    ).catch(err => {
+      console.error("Error starting camera", err);
+    });
 
     return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(e => console.error("Failed to clear scanner", e));
-        scannerRef.current = null;
+      isMounted = false;
+      try {
+        scanner.stop().then(() => scanner.clear()).catch(() => scanner.clear());
+      } catch (e) {
+        scanner.clear();
       }
     };
   }, [onScanSuccess, onScanError]);
 
   return (
-    <div className="w-full max-w-sm mx-auto bg-white rounded-[24px] overflow-hidden [&_#barcode-reader]:border-none [&_#barcode-reader_img]:hidden">
+    <div className="w-full max-w-sm mx-auto bg-black rounded-[24px] overflow-hidden flex items-center justify-center min-h-[250px]">
       <div id="barcode-reader" className="w-full"></div>
     </div>
   );
