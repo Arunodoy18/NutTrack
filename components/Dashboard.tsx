@@ -659,7 +659,7 @@ export default function Dashboard({
               </div>
             </div>
             <button 
-              onClick={onAddMealClick || (() => setIsUploadModalOpen(true))}
+              onClick={onAddMealClick || (() => { setIsUploadModalOpen(true); setActiveModalMode('camera'); })}
               className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center gap-2 whitespace-nowrap animate-pulse"
             >
               <Plus className="w-3.5 h-3.5" /> Log Meal
@@ -805,7 +805,7 @@ export default function Dashboard({
       </div>
       </div>
 
-      <BottomNav onCameraClick={() => setIsUploadModalOpen(true)} />
+      <BottomNav onCameraClick={() => { setIsUploadModalOpen(true); setActiveModalMode('camera'); }} />
 
       {/* Target Nutritional Goals Setup Modal */}
       {isModalOpen && (
@@ -937,7 +937,7 @@ export default function Dashboard({
                 </div>
               </div>
               <button 
-                onClick={() => setIsUploadModalOpen(false)}
+                onClick={() => { setIsUploadModalOpen(false); setActiveModalMode('camera'); }}
                 className="p-1.5 text-ink-soft hover:text-ink rounded-xl bg-surface-line transition-all focus:ring-2 focus:ring-brand-500"
               >
                 <X className="w-5 h-5" />
