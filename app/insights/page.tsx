@@ -141,7 +141,7 @@ export default async function InsightsPage({
   const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp));
 
   return (
-    <div className="min-h-screen bg-surface text-ink font-sans pb-28">
+    <div className="min-h-screen bg-surface text-ink font-sans pb-40">
       <div className="pt-16 px-6 max-w-lg mx-auto">
         <div className="text-[10px] font-black tracking-widest text-ink-soft uppercase mb-1">
           Last 7 Days
@@ -182,7 +182,7 @@ export default async function InsightsPage({
           </div>
 
           {/* Simple Mock Bar Chart SVG with REAL DATA */}
-          <div className="h-48 w-full relative flex items-end justify-between px-2">
+          <div className="h-48 w-full relative flex items-end justify-between px-2 pt-4">
             {/* Target Line */}
             <div 
               className="absolute left-0 right-0 border-t border-dashed border-[#f08a5d]/60 z-0"
@@ -197,16 +197,20 @@ export default async function InsightsPage({
               else if (activeTab === 'Fat') val = d.fat;
               else if (activeTab === 'Fiber') val = d.fiber;
 
+              // Ensure at least 5% height so the bar is visible even on 0 days
               const heightPct = Math.max(5, (val / maxChartValue) * 100);
               const isToday = i === 6;
 
               return (
-                <div key={i} className="relative z-10 w-10 flex flex-col items-center gap-3">
+                <div key={i} className="relative z-10 w-10 h-full flex flex-col items-center justify-end gap-2">
+                  {val > 0 && (
+                    <span className="text-[8px] font-bold text-ink-soft mb-1">{val}</span>
+                  )}
                   <div 
                     className={`w-8 rounded-t-lg transition-all ${isToday ? 'bg-brand shadow-[0_4px_12px_rgba(252,76,2,0.3)]' : 'bg-[#d1d5db]'}`} 
                     style={{ height: `${heightPct}%` }}
                   ></div>
-                  <span className={`text-[10px] font-bold ${isToday ? 'text-brand' : 'text-ink-soft'}`}>{d.day}</span>
+                  <span className={`text-[10px] font-bold mt-1 ${isToday ? 'text-brand' : 'text-ink-soft'}`}>{d.day}</span>
                 </div>
               );
             })}
@@ -228,7 +232,7 @@ export default async function InsightsPage({
         </div>
 
         {/* Streak Card */}
-        <div className="bg-[#fff1ec] rounded-[24px] p-5 border border-[#ffdfd4] flex items-center gap-4 shadow-sm relative overflow-hidden">
+        <div className="bg-[#fff1ec] rounded-[24px] p-5 border border-[#ffdfd4] flex items-center gap-4 shadow-sm relative overflow-hidden mb-10">
           <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 shadow-sm">
             <Flame className="w-5 h-5 text-brand" />
           </div>
