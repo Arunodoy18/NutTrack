@@ -74,7 +74,7 @@ export default function ProfileHeaderClient({
 
       {/* Settings Sheet (Your Body Metrics) */}
       {showSettings && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 backdrop-blur-sm transition-opacity">
           <div className="bg-surface w-full max-w-lg rounded-t-[32px] p-6 pb-12 shadow-2xl animate-in slide-in-from-bottom-full duration-300">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-black text-ink">Your body metrics</h2>
@@ -150,7 +150,7 @@ export default function ProfileHeaderClient({
 
       {/* Avatar Editor Sheet */}
       {showAvatar && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm transition-opacity">
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 backdrop-blur-sm transition-opacity">
           <div className="bg-surface w-full max-w-lg rounded-t-[32px] p-6 pb-12 shadow-2xl animate-in slide-in-from-bottom-full duration-300">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-black text-ink">Edit Avatar</h2>
