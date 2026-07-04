@@ -11,6 +11,8 @@ import { calculateActiveStreak } from "@/lib/streak";
 import Link from 'next/link';
 import ComingSoon from '@/components/ComingSoon';
 import LogoutButton from '@/components/LogoutButton';
+import ProfileHeaderClient from '@/components/ProfileHeaderClient';
+import { computeFullProfile, mapProfileGoalToLabel } from "@/lib/nutritionEngine";
 
 export const dynamic = "force-dynamic";
 
@@ -78,30 +80,37 @@ export default async function ProfilePage() {
   const email = currentUser?.email || session.user.email || "No email";
   const initial = name.charAt(0).toUpperCase();
 
+  // Compute analytics profile
+  const goalLabel = mapProfileGoalToLabel(currentUser?.primaryGoal || "Maintain");
+  const fullProfile = computeFullProfile(
+    currentUser?.weightKg ?? 70,
+    currentUser?.heightCm ?? 170,
+    currentUser?.age ?? 25,
+    (currentUser?.gender as string) ?? "Male",
+    (currentUser?.activityLevel as string) ?? "Moderately active",
+    goalLabel,
+    currentUser?.bodyFat || null
+  );
+
+  const analyticsProfile = {
+    bmi: fullProfile.bmi,
+    bmr: fullProfile.bmr,
+    tdee: fullProfile.tdee,
+    ffm: fullProfile.ffm,
+  };
+
   return (
     <div className="min-h-screen bg-surface text-ink font-sans pb-28">
       <div className="pt-16 px-6 max-w-lg mx-auto">
         
-        {/* Header / User Info */}
-        <div className="flex items-center gap-5 mb-8">
-          {session.user.image ? (
-            <img 
-              src={session.user.image} 
-              alt={name}
-              className="w-20 h-20 rounded-[28px] object-cover shadow-lg shadow-brand/20"
-            />
-          ) : (
-            <div className="w-20 h-20 bg-brand text-white font-black text-3xl rounded-[28px] flex items-center justify-center shadow-lg shadow-brand/20">
-              {initial}
-            </div>
-          )}
-          <div>
-            <h1 className="text-2xl font-black text-ink tracking-tight mb-1">{name}</h1>
-            <p className="text-sm font-bold text-blue-600 underline underline-offset-2 opacity-80 hover:opacity-100 cursor-pointer line-clamp-1">
-              {email}
-            </p>
-          </div>
-        </div>
+        {/* Header / User Info Client Component */}
+        <ProfileHeaderClient 
+          name={name}
+          email={email}
+          initial={initial}
+          image={session.user.image}
+          analyticsProfile={analyticsProfile}
+        />
 
         {/* 3 Stats Cards */}
         <div className="flex gap-3 mb-6">
