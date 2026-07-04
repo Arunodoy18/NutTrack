@@ -6,6 +6,7 @@ import BottomNav from './BottomNav';
 import ComingSoon from '@/components/ComingSoon';
 import CameraModal from '@/components/CameraModal';
 import { useRouter } from 'next/navigation';
+import { generateBuddyCoachTip } from '@/lib/nutritionEngine';
 import { 
   Flame, 
   Activity, 
@@ -557,7 +558,7 @@ export default function Dashboard({
           <div className="flex flex-col justify-center">
             <span className="text-[10px] font-black text-brand tracking-widest uppercase mb-1">Buddy Coach</span>
             <p className="text-sm font-medium text-ink leading-relaxed">
-              You're at {todayTotals.protein}g protein — a chicken or tofu plate at dinner gets you to goal.
+              {generateBuddyCoachTip(todayTotals, dailyGoals)}
             </p>
           </div>
         </div>

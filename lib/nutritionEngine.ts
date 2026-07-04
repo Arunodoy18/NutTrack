@@ -273,3 +273,80 @@ export function computeFullProfile(
 
   return { bmi, bmr, tdee, bodyFatPercent, ffm, leanMuscleMass, macros, micros, metabolicHealth };
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * BUDDY COACH — Dynamic Heuristics Engine
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+export interface DailyTotals {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}
+
+export interface DailyGoals {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}
+
+export function generateBuddyCoachTip(
+  todayTotals: DailyTotals,
+  dailyGoals: DailyGoals,
+  currentTime: Date = new Date()
+): string {
+  const hour = currentTime.getHours();
+  
+  // Calculate remaining amounts (can be negative if over)
+  const remCals = dailyGoals.calories - todayTotals.calories;
+  const remProtein = dailyGoals.protein - todayTotals.protein;
+  const remFiber = dailyGoals.fiber - todayTotals.fiber;
+
+  // Meal context based on time of day
+  let nextMeal = "your next meal";
+  if (hour >= 5 && hour < 11) nextMeal = "breakfast";
+  else if (hour >= 11 && hour < 15) nextMeal = "lunch";
+  else if (hour >= 15 && hour < 18) nextMeal = "an afternoon snack";
+  else if (hour >= 18 && hour < 22) nextMeal = "dinner";
+
+  // Check if they are completely done / over
+  if (remCals <= -200) {
+    return "You're slightly over your calorie target for today. Focus on hydration and rest to recover!";
+  }
+
+  // Priority 1: Huge calorie gap early in day
+  if (hour >= 14 && todayTotals.calories < (dailyGoals.calories * 0.3)) {
+    return `You've eaten very little today! Make sure to grab a substantial ${nextMeal} to keep your energy levels stable.`;
+  }
+
+  // Priority 2: Missing protein
+  if (remProtein > 30) {
+    return `You're missing ${remProtein}g of protein. A chicken breast, tofu scramble, or protein shake for ${nextMeal} will close the gap perfectly.`;
+  } else if (remProtein > 10 && remProtein <= 30) {
+    return `You're just ${remProtein}g of protein away from your goal! Add some greek yogurt or nuts to ${nextMeal}.`;
+  }
+
+  // Priority 3: Missing fiber
+  if (remFiber > 15) {
+    return `Don't forget your micronutrients! You still need ${remFiber}g of fiber. Try adding leafy greens, beans, or chia seeds to ${nextMeal}.`;
+  }
+
+  // Priority 4: Nearing the end of the day, looking good
+  if (hour >= 19 && remCals > 0 && remCals < 400) {
+    return `You're winding down the day perfectly. You have ${remCals} kcal left — perfect for a light evening snack.`;
+  }
+
+  // Fallback: General encouragement based on progress
+  const progress = (todayTotals.calories / dailyGoals.calories) * 100;
+  if (progress < 50) {
+    return `You're at ${Math.round(progress)}% of your daily calories. Keep fueling up for the rest of the day!`;
+  } else if (progress >= 100) {
+    return `Incredible job! You hit your calorie target for the day. Rest up and get ready for tomorrow.`;
+  } else {
+    return `You're doing great! You have ${remCals} kcal left. Keep making smart choices for ${nextMeal}.`;
+  }
+}

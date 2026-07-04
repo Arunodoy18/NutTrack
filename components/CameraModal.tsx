@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, X, Mic, MicOff, Barcode, Maximize, User, RefreshCw, AlertTriangle, Check, Sparkles } from 'lucide-react';
 import ComingSoon from "@/components/ComingSoon";
 import dynamic from "next/dynamic";
-const BarcodeScanner = dynamic(() => import("./BarcodeScanner"), { ssr: false });
+
+const BarcodeScanner = dynamic(() => import('./BarcodeScanner'), { ssr: false });
 import { useSpeech } from "@/components/useSpeech";
 import { 
   analyzeMealImageAction, 
@@ -402,7 +403,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                       className="w-full bg-surface-muted border-2 border-surface-line text-ink-soft font-black text-sm tracking-widest uppercase rounded-[20px] py-4 flex items-center justify-center gap-2 cursor-not-allowed"
                     >
                       <Barcode className="w-5 h-5" />
-                      Point at Barcode
+                      Scanning Barcode...
                     </button>
                   </div>
                 )}
@@ -422,8 +423,17 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                     />
                   ) : (
                     <div className="p-6 text-center z-20">
-                       <Mic className="w-12 h-12 text-brand mx-auto mb-4 animate-pulse" />
-                       <p className="text-xs font-semibold text-ink-soft italic">"{transcript}"</p>
+                      {activeModalMode === 'barcode' ? (
+                        <>
+                          <Barcode className="w-12 h-12 text-brand mx-auto mb-4 animate-pulse" />
+                          <p className="text-xs font-semibold text-ink-soft italic">{analyzeMsg || "Querying OpenFoodFacts..."}</p>
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="w-12 h-12 text-brand mx-auto mb-4 animate-pulse" />
+                          <p className="text-xs font-semibold text-ink-soft italic">"{transcript}"</p>
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -441,17 +451,25 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                 <div className="text-center space-y-2">
                   <div className="flex items-center justify-center gap-2">
                     <RefreshCw className="w-4 h-4 text-brand animate-spin" />
-                    <span className="text-sm font-black text-ink tracking-wide uppercase">AI Dissection Live</span>
+                    <span className="text-sm font-black text-ink tracking-wide uppercase">
+                      {activeModalMode === 'barcode' ? 'Looking up Database' : 'AI Dissection Live'}
+                    </span>
                   </div>
-                  <motion.p 
-                    key={scanningMsgIdx}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-brand font-extrabold text-sm min-h-[20px]"
-                  >
-                    {SCAN_MESSAGES[scanningMsgIdx]}
-                  </motion.p>
-                  <p className="text-xs text-ink-faint">Wait a few seconds for computer-vision calorie estimation...</p>
+                  {activeModalMode !== 'barcode' && (
+                    <motion.p 
+                      key={scanningMsgIdx}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-brand font-extrabold text-sm min-h-[20px]"
+                    >
+                      {SCAN_MESSAGES[scanningMsgIdx]}
+                    </motion.p>
+                  )}
+                  <p className="text-xs text-ink-faint">
+                    {activeModalMode === 'barcode' 
+                      ? 'Wait a second while we fetch exact nutrition facts...' 
+                      : 'Wait a few seconds for computer-vision calorie estimation...'}
+                  </p>
                 </div>
 
                 <div className="w-48 h-1 bg-white rounded-full overflow-hidden border border-surface-line">
@@ -504,14 +522,21 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
                       {/* Left Side: Photo preview details */}
                       <div className="md:col-span-5 space-y-4">
-                        <div className="relative h-44 rounded-2xl overflow-hidden border border-surface-line shadow-lg bg-white">
-                          <img 
-                            src={selectedImage || ""} 
-                            alt="Analyzed food" 
-                            className="w-full h-full object-cover"
-                          />
+                        <div className="relative h-44 rounded-2xl overflow-hidden border border-surface-line shadow-lg bg-surface-muted flex items-center justify-center">
+                          {selectedImage ? (
+                            <img 
+                              src={selectedImage} 
+                              alt="Analyzed food" 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center text-ink-soft opacity-50">
+                              <Barcode className="w-16 h-16 mb-2" />
+                              <span className="text-xs font-bold uppercase tracking-widest">Scanned Product</span>
+                            </div>
+                          )}
                           <div className="absolute top-3 left-3 px-2 py-0.5 bg-emerald-500/20 text-emerald-600 text-[10px] font-black tracking-widest rounded-lg border border-emerald-500/20 backdrop-blur-sm shadow-sm uppercase">
-                            USDA Matched
+                            USDA / OFF Matched
                           </div>
                         </div>
 

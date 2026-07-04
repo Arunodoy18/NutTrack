@@ -147,26 +147,7 @@ export default function ProfileSetup() {
     </div>
   );
 
-  /* ─── step tabs (top) ─── */
-  const StepTabs = () => (
-    <div className="flex gap-1 overflow-x-auto no-scrollbar">
-      {STEPS.map((s) => (
-        <button
-          key={s.id}
-          onClick={() => { if (s.id < step) setStep(s.id); }}
-          className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold tracking-wide whitespace-nowrap transition-all
-            ${s.id === step
-              ? "bg-brand text-white"
-              : s.id < step
-                ? "bg-surface-muted text-ink-soft"
-                : "bg-surface-muted text-ink-faint"
-            }`}
-        >
-          {s.id < 10 ? `0${s.id}` : s.id}{"  "}{s.label}
-        </button>
-      ))}
-    </div>
-  );
+
 
   return (
     <div className="h-[100dvh] flex flex-col bg-white font-sans text-ink overflow-hidden">
@@ -185,7 +166,6 @@ export default function ProfileSetup() {
           )}
           <ProgressBar />
         </div>
-        <StepTabs />
       </div>
 
       {/* Scrollable content area */}
@@ -401,16 +381,7 @@ export default function ProfileSetup() {
 
       {/* Bottom sticky bar */}
       <div className="shrink-0 px-6 pb-8 pt-4 bg-white border-t border-surface-line/50">
-        {/* Footer text */}
-        <div className="text-center mb-3">
-          <span className="text-xs font-bold text-ink">Setup · Step {step}</span>
-          <span className="block text-[11px] text-ink-soft font-medium">
-            {step === 1 && "Name, age & gender."}
-            {step === 2 && "Height & weight."}
-            {step === 3 && "Activity level & Body fat."}
-            {step === 4 && "Goals, diet & medical."}
-          </span>
-        </div>
+
         <button
           onClick={next}
           disabled={!canContinue() || saving}
