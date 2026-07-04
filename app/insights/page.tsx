@@ -8,6 +8,7 @@ import { eq, and, gte, lte } from "drizzle-orm";
 import BottomNav from '@/components/BottomNav';
 import { calculateActiveStreak } from "@/lib/streak";
 import InsightsClient from '@/components/InsightsClient';
+import { computeFullProfile, mapProfileGoalToLabel } from "@/lib/nutritionEngine";
 
 export const dynamic = "force-dynamic";
 
@@ -103,15 +104,29 @@ export default async function InsightsPage({
 
   const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp));
 
-  // Build user metrics for Analytics tab
-  const userMetrics = {
-    heightCm: currentUser?.heightCm ?? 170,
-    weightKg: currentUser?.weightKg ?? 70,
-    age: currentUser?.age ?? 25,
-    gender: (currentUser?.gender as string) ?? "Male",
-    activityLevel: (currentUser?.activityLevel as string) ?? "Moderately active",
-    primaryGoal: (currentUser?.primaryGoal as string) ?? "Maintain",
-    bodyFat: (currentUser?.bodyFat as string) ?? "",
+  // 3. Compute full analytics profile server-side using centralized engine
+  const goalLabel = mapProfileGoalToLabel(currentUser?.primaryGoal || "Maintain");
+  const fullProfile = computeFullProfile(
+    currentUser?.weightKg ?? 70,
+    currentUser?.heightCm ?? 170,
+    currentUser?.age ?? 25,
+    (currentUser?.gender as string) ?? "Male",
+    (currentUser?.activityLevel as string) ?? "Moderately active",
+    goalLabel,
+    currentUser?.bodyFat || null
+  );
+
+  // Serialize for client (strip non-serializable values)
+  const analyticsProfile = {
+    bmi: fullProfile.bmi,
+    bmr: fullProfile.bmr,
+    tdee: fullProfile.tdee,
+    bodyFatPercent: fullProfile.bodyFatPercent,
+    ffm: fullProfile.ffm,
+    leanMuscleMass: fullProfile.leanMuscleMass,
+    metabolicHealth: fullProfile.metabolicHealth,
+    macros: fullProfile.macros,
+    currentGoalLabel: goalLabel,
   };
 
   return (
@@ -128,7 +143,7 @@ export default async function InsightsPage({
           dailyTotals={dailyTotals} 
           currentGoals={currentGoals} 
           activeStreak={activeStreak}
-          userMetrics={userMetrics}
+          analyticsProfile={analyticsProfile}
         />
 
       </div>

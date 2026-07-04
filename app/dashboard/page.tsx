@@ -7,6 +7,7 @@ import { meals, mealItems, dailyGoals, users } from "@/lib/db/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import Dashboard, { MealLogData, FoodItemData } from "@/components/Dashboard";
 import { calculateActiveStreak } from "@/lib/streak";
+import { computeFullProfile, mapProfileGoalToLabel } from "@/lib/nutritionEngine";
 
 export const dynamic = "force-dynamic";
 
@@ -54,33 +55,44 @@ export default async function DashboardPage() {
     orderBy: (goals, { desc }) => [desc(goals.createdAt)]
   });
 
-  // If no custom daily goal exists, populate with standard dietary guidelines
+  // If no custom daily goal exists, calculate from user's stored metrics
   if (!currentGoals) {
+    const goalLabel = mapProfileGoalToLabel(currentUser?.primaryGoal || "Maintain");
+    const profile = computeFullProfile(
+      currentUser?.weightKg ?? 70,
+      currentUser?.heightCm ?? 170,
+      currentUser?.age ?? 25,
+      (currentUser?.gender as string) ?? "Male",
+      (currentUser?.activityLevel as string) ?? "Moderately active",
+      goalLabel,
+      currentUser?.bodyFat || null
+    );
+
     try {
       const [newGoal] = await db.insert(dailyGoals).values({
         userId: userId,
-        calories: 2000,
-        protein: 80,
-        fat: 65,
-        fiber: 30,
-        sodium: 2300,
-        iron: 18,
-        calcium: 1000,
-        vitaminC: 90
+        calories: profile.macros.calories,
+        protein: profile.macros.proteinG,
+        fat: profile.macros.fatG,
+        fiber: profile.macros.fiberG,
+        sodium: profile.micros.sodium,
+        iron: profile.micros.iron,
+        calcium: profile.micros.calcium,
+        vitaminC: profile.micros.vitaminC,
       }).returning();
       currentGoals = newGoal;
     } catch (err) {
       currentGoals = {
-        id: "default-id",
+        id: "fallback",
         userId: userId,
-        calories: 2000,
-        protein: 80,
-        fat: 65,
-        fiber: 30,
-        sodium: 2300,
-        iron: 18,
-        calcium: 1000,
-        vitaminC: 90,
+        calories: profile.macros.calories,
+        protein: profile.macros.proteinG,
+        fat: profile.macros.fatG,
+        fiber: profile.macros.fiberG,
+        sodium: profile.micros.sodium,
+        iron: profile.micros.iron,
+        calcium: profile.micros.calcium,
+        vitaminC: profile.micros.vitaminC,
         createdAt: new Date()
       };
     }

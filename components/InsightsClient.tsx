@@ -1,29 +1,23 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Flame, TrendingUp, Zap, Lock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Flame, TrendingUp, Zap, Lock, Loader2 } from 'lucide-react';
 
 /* ─── types ─── */
-interface UserMetrics {
-  heightCm: number;
-  weightKg: number;
-  age: number;
-  gender: string;
-  activityLevel: string;
-  primaryGoal: string;
-  bodyFat: string;
+interface AnalyticsProfile {
+  bmi: { value: number; label: string };
+  bmr: number;
+  tdee: number;
+  bodyFatPercent: number;
+  ffm: number;
+  leanMuscleMass: number;
+  metabolicHealth: string;
+  macros: { calories: number; proteinG: number; fatG: number; carbsG: number; fiberG: number };
+  currentGoalLabel: string;
 }
 
-/* ─── TDEE multipliers ─── */
-const ACTIVITY_MULTIPLIERS: Record<string, number> = {
-  Sedentary: 1.2,
-  "Lightly active": 1.375,
-  "Moderately active": 1.55,
-  "Very active": 1.725,
-  Athlete: 1.9,
-};
-
-/* ─── goal adjustments ─── */
+/* ─── goal options ─── */
 const GOAL_OPTIONS = [
   { label: "Fat loss", adjust: -500, desc: "–500 kcal / day" },
   { label: "Maintenance", adjust: 0, desc: "match your TDEE" },
@@ -31,57 +25,50 @@ const GOAL_OPTIONS = [
   { label: "Surplus", adjust: 500, desc: "+500 kcal / day" },
 ];
 
-function mapGoalToLabel(goal: string): string {
-  if (goal === "Lose weight") return "Fat loss";
-  if (goal === "Build muscle") return "Muscle gain";
-  if (goal === "Improve health") return "Maintenance";
-  return "Maintenance";
-}
-
 export default function InsightsClient({ 
   dailyTotals, 
   currentGoals, 
   activeStreak,
-  userMetrics,
+  analyticsProfile,
 }: { 
   dailyTotals: any[]; 
   currentGoals: any; 
   activeStreak: number;
-  userMetrics: UserMetrics;
+  analyticsProfile: AnalyticsProfile;
 }) {
+  const router = useRouter();
   const [section, setSection] = useState<'trends' | 'analytics'>('trends');
   const [activeTab, setActiveTab] = useState('Calories');
-  const [selectedGoal, setSelectedGoal] = useState(() => mapGoalToLabel(userMetrics.primaryGoal));
+  const [selectedGoal, setSelectedGoal] = useState(analyticsProfile.currentGoalLabel);
   const [goldRevealed, setGoldRevealed] = useState(false);
+  const [savingGoal, setSavingGoal] = useState(false);
+  const [dailyTarget, setDailyTarget] = useState(analyticsProfile.macros.calories);
 
-  /* ─── analytics calculations ─── */
-  const bmi = userMetrics.weightKg / Math.pow(userMetrics.heightCm / 100, 2);
-  const bmiRounded = Math.round(bmi * 10) / 10;
-  const bmiLabel = bmi < 18.5 ? "Underweight" : bmi < 25 ? "Normal" : bmi < 30 ? "Overweight" : "Obese";
+  /* ─── Wire goal setter to the database ─── */
+  const handleGoalChange = async (goalLabel: string) => {
+    if (goalLabel === selectedGoal || savingGoal) return;
+    setSelectedGoal(goalLabel);
+    setSavingGoal(true);
 
-  let bmr: number;
-  if (userMetrics.gender === "Male") {
-    bmr = 10 * userMetrics.weightKg + 6.25 * userMetrics.heightCm - 5 * userMetrics.age + 5;
-  } else {
-    bmr = 10 * userMetrics.weightKg + 6.25 * userMetrics.heightCm - 5 * userMetrics.age - 161;
-  }
-  const bmrRounded = Math.round(bmr);
-
-  const multiplier = ACTIVITY_MULTIPLIERS[userMetrics.activityLevel] ?? 1.55;
-  const tdee = Math.round(bmr * multiplier);
-
-  const goalOption = GOAL_OPTIONS.find(g => g.label === selectedGoal) ?? GOAL_OPTIONS[1];
-  const dailyTarget = Math.max(1200, tdee + goalOption.adjust);
-
-  // Fat-Free Mass (Boer formula approximation)
-  let ffm: number;
-  if (userMetrics.gender === "Male") {
-    ffm = (0.407 * userMetrics.weightKg) + (0.267 * userMetrics.heightCm) - 19.2;
-  } else {
-    ffm = (0.252 * userMetrics.weightKg) + (0.473 * userMetrics.heightCm) - 48.3;
-  }
-  const ffmRounded = Math.round(ffm * 10) / 10;
-  const leanMuscle = Math.round(ffm * 0.5 * 10) / 10;
+    try {
+      const res = await fetch("/api/insights/update-goal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goal: goalLabel }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDailyTarget(data.dailyTarget);
+        // Refresh server data so dashboard picks up new goals
+        router.refresh();
+      }
+    } catch (e) {
+      // Revert on error
+      setSelectedGoal(analyticsProfile.currentGoalLabel);
+    } finally {
+      setSavingGoal(false);
+    }
+  };
 
   /* ─── trends calculations ─── */
   let targetValue = currentGoals.calories;
@@ -127,6 +114,9 @@ export default function InsightsClient({
   if (targetValue > maxChartValue) maxChartValue = targetValue;
   avgValue = Math.round(avgValue / 7);
 
+  /* ─── Shorthand for server-computed analytics ─── */
+  const { bmi, bmr, tdee, bodyFatPercent, ffm, leanMuscleMass, metabolicHealth, macros } = analyticsProfile;
+
   return (
     <>
       {/* ─── SECTION SWITCHER ─── */}
@@ -156,7 +146,6 @@ export default function InsightsClient({
               : 'bg-brand/5 border-brand/10 hover:border-brand/20'
           }`}
         >
-          {/* PRO badge */}
           <span className="absolute top-3 right-3 text-[8px] font-black tracking-widest text-brand bg-brand/10 px-2 py-0.5 rounded-full uppercase">
             Pro
           </span>
@@ -271,20 +260,20 @@ export default function InsightsClient({
           <div className="flex gap-3">
             <div className="flex-1 bg-white rounded-[24px] p-5 shadow-sm border border-surface-line">
               <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-2">BMI</div>
-              <div className="text-4xl font-black text-ink leading-none">{bmiRounded}</div>
+              <div className="text-4xl font-black text-ink leading-none">{bmi.value}</div>
               <div className="mt-2">
                 <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                  bmiLabel === 'Normal' ? 'bg-emerald-50 text-emerald-600' : 
-                  bmiLabel === 'Underweight' ? 'bg-amber-50 text-amber-600' :
+                  bmi.label === 'Normal' ? 'bg-emerald-50 text-emerald-600' : 
+                  bmi.label === 'Underweight' ? 'bg-amber-50 text-amber-600' :
                   'bg-red-50 text-red-500'
                 }`}>
-                  {bmiLabel}
+                  {bmi.label}
                 </span>
               </div>
             </div>
             <div className="flex-1 bg-white rounded-[24px] p-5 shadow-sm border border-surface-line">
               <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-2">BMR</div>
-              <div className="text-4xl font-black text-ink leading-none">{bmrRounded}</div>
+              <div className="text-4xl font-black text-ink leading-none">{bmr}</div>
               <div className="text-xs font-medium text-ink-soft mt-2">kcal at rest / day</div>
             </div>
           </div>
@@ -303,6 +292,20 @@ export default function InsightsClient({
             </p>
           </div>
 
+          {/* Body Fat % info card */}
+          <div className="bg-white rounded-[24px] p-5 shadow-sm border border-surface-line">
+            <div className="flex justify-between items-center">
+              <div>
+                <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-1">Body Fat %</div>
+                <div className="text-2xl font-black text-ink">{bodyFatPercent}%</div>
+              </div>
+              <div className="text-right">
+                <div className="text-[8px] font-mono font-bold tracking-wider text-ink-faint uppercase">Deurenberg eq.</div>
+                <div className="text-[10px] font-medium text-ink-soft mt-0.5">1.20×BMI + 0.23×Age – 10.8×Sex – 5.4</div>
+              </div>
+            </div>
+          </div>
+
           {/* Goal Setter */}
           <div>
             <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-3 ml-1">
@@ -312,12 +315,13 @@ export default function InsightsClient({
               {GOAL_OPTIONS.map(g => (
                 <button
                   key={g.label}
-                  onClick={() => setSelectedGoal(g.label)}
+                  onClick={() => handleGoalChange(g.label)}
+                  disabled={savingGoal}
                   className={`rounded-[20px] p-4 text-left border transition-all ${
                     selectedGoal === g.label
                       ? 'border-brand bg-brand/5'
                       : 'border-surface-line bg-white hover:border-ink-soft/30'
-                  }`}
+                  } ${savingGoal ? 'opacity-70' : ''}`}
                 >
                   <div className={`text-sm font-bold ${selectedGoal === g.label ? 'text-brand' : 'text-ink'}`}>
                     {g.label}
@@ -329,8 +333,9 @@ export default function InsightsClient({
 
             {/* Live daily target */}
             <div className="flex items-center justify-between mt-4 px-1">
-              <span className="text-sm font-bold text-ink">
+              <span className="text-sm font-bold text-ink flex items-center gap-2">
                 Your daily target · {selectedGoal}
+                {savingGoal && <Loader2 className="w-3.5 h-3.5 animate-spin text-brand" />}
               </span>
               <span className="text-2xl font-black text-brand tracking-tight">{dailyTarget}</span>
             </div>
@@ -353,34 +358,43 @@ export default function InsightsClient({
               <div className="space-y-4 text-left">
                 <div>
                   <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-brand uppercase mb-1">Fat-Free Mass</div>
-                  <div className="text-3xl font-black text-ink">{ffmRounded} <span className="text-base font-bold text-ink-soft">kg</span></div>
+                  <div className="text-3xl font-black text-ink">{ffm} <span className="text-base font-bold text-ink-soft">kg</span></div>
+                  <div className="text-[10px] font-medium text-ink-soft mt-0.5">
+                    Weight × (1 – {bodyFatPercent}% / 100)
+                  </div>
                 </div>
                 <div className="h-px bg-surface-line" />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-1">Lean Muscle Mass</div>
-                    <div className="text-xl font-black text-ink">{leanMuscle} <span className="text-xs font-bold text-ink-soft">kg</span></div>
+                    <div className="text-xl font-black text-ink">{leanMuscleMass} <span className="text-xs font-bold text-ink-soft">kg</span></div>
                   </div>
                   <div>
                     <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-1">Metabolic Health</div>
-                    <div className="text-xl font-black text-emerald-500">{bmiLabel === 'Normal' ? 'Optimal' : 'At Risk'}</div>
+                    <div className={`text-xl font-black ${metabolicHealth === 'Optimal' ? 'text-emerald-500' : metabolicHealth === 'At Risk' ? 'text-amber-500' : 'text-red-500'}`}>
+                      {metabolicHealth}
+                    </div>
                   </div>
                 </div>
                 <div className="h-px bg-surface-line" />
                 <div>
                   <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-2">Personalized Macro Targets</div>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-4 gap-2">
                     <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
-                      <div className="text-lg font-black text-ink">{currentGoals.protein}</div>
-                      <div className="text-[9px] font-bold text-ink-soft uppercase">Protein</div>
+                      <div className="text-lg font-black text-ink">{macros.proteinG}</div>
+                      <div className="text-[8px] font-bold text-ink-soft uppercase">Protein</div>
                     </div>
                     <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
-                      <div className="text-lg font-black text-ink">{currentGoals.fat}</div>
-                      <div className="text-[9px] font-bold text-ink-soft uppercase">Fat</div>
+                      <div className="text-lg font-black text-ink">{macros.carbsG}</div>
+                      <div className="text-[8px] font-bold text-ink-soft uppercase">Carbs</div>
                     </div>
                     <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
-                      <div className="text-lg font-black text-ink">{currentGoals.fiber}</div>
-                      <div className="text-[9px] font-bold text-ink-soft uppercase">Fiber</div>
+                      <div className="text-lg font-black text-ink">{macros.fatG}</div>
+                      <div className="text-[8px] font-bold text-ink-soft uppercase">Fat</div>
+                    </div>
+                    <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
+                      <div className="text-lg font-black text-ink">{macros.fiberG}</div>
+                      <div className="text-[8px] font-bold text-ink-soft uppercase">Fiber</div>
                     </div>
                   </div>
                 </div>
