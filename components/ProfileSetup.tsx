@@ -152,26 +152,24 @@ export default function ProfileSetup() {
   return (
     <div className="h-[100dvh] flex flex-col bg-white font-sans text-ink overflow-hidden">
       {/* Top bar: back + progress */}
-      <div className="shrink-0 px-5 pt-5 pb-3 flex flex-col gap-3">
+      <div className="shrink-0 px-5 pt-3 pb-2 flex flex-col gap-3">
         <div className="flex items-center gap-4">
-          {step > 1 ? (
+          {step > 1 && (
             <button
               onClick={back}
               className="w-9 h-9 rounded-full border border-surface-line flex items-center justify-center text-ink-soft hover:text-ink transition-colors shrink-0"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-          ) : (
-            <div className="w-9" />
           )}
           <ProgressBar />
         </div>
       </div>
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto px-6 pb-6">
+      <div className="flex-1 overflow-y-auto px-6 pb-4">
         {/* Step header */}
-        <div className="mb-6">
+        <div className="mb-4">
           <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-brand uppercase">
             {STEPS[step - 1].eyebrow}
           </span>
@@ -189,7 +187,7 @@ export default function ProfileSetup() {
 
         {/* ─── STEP 1: THE BASICS ─── */}
         {step === 1 && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             <div>
               <label className="block text-[10px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-2 ml-1">
                 Full Name
@@ -199,7 +197,7 @@ export default function ProfileSetup() {
                 value={data.name}
                 onChange={(e) => set("name", e.target.value)}
                 placeholder="Arunodoy Banerjee"
-                className="w-full bg-surface-muted rounded-[20px] px-5 py-4 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
+                className="w-full bg-surface-muted rounded-[20px] px-5 py-3 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
               />
             </div>
 
@@ -214,7 +212,7 @@ export default function ProfileSetup() {
                   value={data.age}
                   onChange={(e) => set("age", e.target.value)}
                   placeholder="24"
-                  className="w-full bg-surface-muted rounded-[20px] px-5 py-4 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
+                  className="w-full bg-surface-muted rounded-[20px] px-5 py-3 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
                 />
               </div>
               <div className="flex-1">
@@ -227,7 +225,7 @@ export default function ProfileSetup() {
                       key={g}
                       type="button"
                       onClick={() => set("gender", g)}
-                      className={`flex-1 rounded-[20px] py-4 text-sm font-bold transition-all border ${
+                      className={`flex-1 rounded-[20px] py-3 text-sm font-bold transition-all border ${
                         data.gender === g
                           ? "border-brand bg-brand/5 text-brand"
                           : "border-surface-line bg-surface-muted text-ink hover:border-ink-soft/40"
@@ -248,7 +246,7 @@ export default function ProfileSetup() {
                 type="date"
                 value={data.birthdate}
                 onChange={(e) => set("birthdate", e.target.value)}
-                className="w-full bg-surface-muted rounded-[20px] px-5 py-4 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
+                className="w-full bg-surface-muted rounded-[20px] px-5 py-3 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
               />
             </div>
           </div>
@@ -268,7 +266,7 @@ export default function ProfileSetup() {
                   value={data.heightCm}
                   onChange={(e) => set("heightCm", e.target.value)}
                   placeholder="176"
-                  className="w-full bg-surface-muted rounded-[20px] px-5 py-4 pr-14 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
+                  className="w-full bg-surface-muted rounded-[20px] px-5 py-3 pr-14 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
                 />
                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">cm</span>
               </div>
@@ -285,7 +283,7 @@ export default function ProfileSetup() {
                   value={data.weightKg}
                   onChange={(e) => set("weightKg", e.target.value)}
                   placeholder="72"
-                  className="w-full bg-surface-muted rounded-[20px] px-5 py-4 pr-14 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
+                  className="w-full bg-surface-muted rounded-[20px] px-5 py-3 pr-14 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
                 />
                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">kg</span>
               </div>
@@ -380,7 +378,7 @@ export default function ProfileSetup() {
       </div>
 
       {/* Bottom sticky bar */}
-      <div className="shrink-0 px-6 pb-8 pt-4 bg-white border-t border-surface-line/50">
+      <div className="shrink-0 px-6 pb-6 pt-3 bg-white border-t border-surface-line/50">
 
         <button
           onClick={next}
