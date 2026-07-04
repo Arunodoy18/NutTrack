@@ -167,16 +167,15 @@ export default function ProfileSetup() {
       </div>
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto px-6 pb-4">
+      <div className="flex-1 overflow-y-auto px-6 pb-2">
         {/* Step header */}
-        <div className="mb-4">
+        <div className="mb-2">
           <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-brand uppercase">
             {STEPS[step - 1].eyebrow}
           </span>
-          <h1 className="font-display font-black text-[32px] tracking-tight leading-none mt-1 text-ink">
+          <h1 className="font-display font-black text-[32px] tracking-tight leading-none text-ink">
             {STEPS[step - 1].heading}
           </h1>
-          <p className="text-sm text-ink-soft font-medium mt-1">Step {step} of 4</p>
         </div>
 
         {error && (
@@ -187,7 +186,7 @@ export default function ProfileSetup() {
 
         {/* ─── STEP 1: THE BASICS ─── */}
         {step === 1 && (
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div>
               <label className="block text-[10px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-2 ml-1">
                 Full Name
@@ -197,7 +196,7 @@ export default function ProfileSetup() {
                 value={data.name}
                 onChange={(e) => set("name", e.target.value)}
                 placeholder="Arunodoy Banerjee"
-                className="w-full bg-surface-muted rounded-[20px] px-5 py-3 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
+                className="w-full bg-surface-muted rounded-[16px] px-4 py-2.5 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
               />
             </div>
 
@@ -212,7 +211,7 @@ export default function ProfileSetup() {
                   value={data.age}
                   onChange={(e) => set("age", e.target.value)}
                   placeholder="24"
-                  className="w-full bg-surface-muted rounded-[20px] px-5 py-3 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
+                  className="w-full bg-surface-muted rounded-[16px] px-4 py-2.5 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
                 />
               </div>
               <div className="flex-1">
@@ -225,7 +224,7 @@ export default function ProfileSetup() {
                       key={g}
                       type="button"
                       onClick={() => set("gender", g)}
-                      className={`flex-1 rounded-[20px] py-3 text-sm font-bold transition-all border ${
+                      className={`flex-1 rounded-[16px] py-2.5 text-sm font-bold transition-all border ${
                         data.gender === g
                           ? "border-brand bg-brand/5 text-brand"
                           : "border-surface-line bg-surface-muted text-ink hover:border-ink-soft/40"
@@ -246,7 +245,7 @@ export default function ProfileSetup() {
                 type="date"
                 value={data.birthdate}
                 onChange={(e) => set("birthdate", e.target.value)}
-                className="w-full bg-surface-muted rounded-[20px] px-5 py-3 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
+                className="w-full bg-surface-muted rounded-[16px] px-4 py-2.5 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
               />
             </div>
           </div>
@@ -378,12 +377,12 @@ export default function ProfileSetup() {
       </div>
 
       {/* Bottom sticky bar */}
-      <div className="shrink-0 px-6 pb-6 pt-3 bg-white border-t border-surface-line/50">
+      <div className="shrink-0 px-6 pb-4 pt-2 bg-white border-t border-surface-line/50">
 
         <button
           onClick={next}
           disabled={!canContinue() || saving}
-          className={`w-full rounded-[20px] py-4 font-bold text-base transition-all
+          className={`w-full rounded-[16px] py-3 font-bold text-base transition-all
             ${
               canContinue() && !saving
                 ? "bg-brand text-white shadow-lg shadow-brand/30 hover:bg-[#e63e00] active:scale-[0.98]"
