@@ -45,6 +45,7 @@ export interface FoodItemData {
   calories: number;
   protein: number;
   fat: number;
+  carbs: number;
   fiber: number;
   estimatedQuantity: string;
 }
@@ -57,6 +58,7 @@ export interface MealLogData {
   totalCalories: number;
   totalProtein: number;
   totalFat: number;
+  totalCarbs: number;
   totalFiber: number;
   items: FoodItemData[];
 }
@@ -68,12 +70,14 @@ export interface DashboardProps {
     calories: number;
     protein: number;
     fat: number;
+    carbs: number;
     fiber: number;
   };
   todayTotals: {
     calories: number;
     protein: number;
     fat: number;
+    carbs: number;
     fiber: number;
   };
   todayMeals: MealLogData[];
@@ -86,8 +90,8 @@ export interface DashboardProps {
 export default function Dashboard({
   userId = "guest-user-uuid",
   isPremiumUser = false,
-  dailyGoals = { calories: 2000, protein: 80, fat: 65, fiber: 30 },
-  todayTotals = { calories: 0, protein: 0, fat: 0, fiber: 0 },
+  dailyGoals = { calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30 },
+  todayTotals = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 },
   todayMeals: initialMeals = [],
   onAddMealClick,
   onRefreshClick,
@@ -97,7 +101,7 @@ export default function Dashboard({
 
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Fiber'>('Calories');
+  const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Carbs' | 'Fiber'>('Calories');
 
   // AI-generated Nutrition Insight & Toast flags
   const [aiTip, setAiTip] = useState<string>("");
@@ -126,7 +130,7 @@ export default function Dashboard({
       setAiTipLoading(false);
     }
     fetchTip();
-  }, [todayTotals.calories, todayTotals.protein, todayTotals.fat, todayTotals.fiber, dailyGoals.calories, dailyGoals.protein, userId]);
+  }, [todayTotals.calories, todayTotals.protein, todayTotals.fat, todayTotals.carbs, todayTotals.fiber, dailyGoals.calories, dailyGoals.protein, userId]);
 
   // Hook to check & trigger celebration when first reaching protein target on active login session
   React.useEffect(() => {
@@ -149,6 +153,7 @@ export default function Dashboard({
   const [targetCals, setTargetCals] = useState(dailyGoals.calories.toString());
   const [targetProtein, setTargetProtein] = useState(dailyGoals.protein.toString());
   const [targetFat, setTargetFat] = useState(dailyGoals.fat.toString());
+  const [targetCarbs, setTargetCarbs] = useState(dailyGoals.carbs.toString());
   const [targetFiber, setTargetFiber] = useState(dailyGoals.fiber.toString());
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -263,6 +268,7 @@ export default function Dashboard({
     Calories: '#FC4C02',
     Protein: '#10b981',
     Fats: '#f59e0b',
+    Carbs: '#8b5cf6',
     Fiber: '#3b82f6',
   };
 
@@ -270,6 +276,7 @@ export default function Dashboard({
     Calories: 'kcal',
     Protein: 'g',
     Fats: 'g',
+    Carbs: 'g',
     Fiber: 'g',
   };
 
@@ -277,6 +284,7 @@ export default function Dashboard({
     Calories: dailyGoals.calories,
     Protein: dailyGoals.protein,
     Fats: dailyGoals.fat,
+    Carbs: dailyGoals.carbs,
     Fiber: dailyGoals.fiber,
   }[activeMetric];
 
@@ -295,6 +303,7 @@ export default function Dashboard({
   const calPercent = Math.min(100, Math.round((todayTotals.calories / dailyGoals.calories) * 100)) || 0;
   const protPercent = Math.min(100, Math.round((todayTotals.protein / dailyGoals.protein) * 100)) || 0;
   const fatPercent = Math.min(100, Math.round((todayTotals.fat / dailyGoals.fat) * 100)) || 0;
+  const carbPercent = Math.min(100, Math.round((todayTotals.carbs / dailyGoals.carbs) * 100)) || 0;
   const fibPercent = Math.min(100, Math.round((todayTotals.fiber / dailyGoals.fiber) * 100)) || 0;
 
   const isOverCal = todayTotals.calories > dailyGoals.calories;
@@ -452,6 +461,33 @@ export default function Dashboard({
             <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Fat</span>
           </div>
 
+          {/* Carbs Circle */}
+          <div className="flex-1 flex flex-col items-center gap-2">
+            <div className="relative w-20 h-20 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90">
+                <defs>
+                  <linearGradient id="carb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#8b5cf6" />
+                    <stop offset="100%" stopColor="#6d28d9" />
+                  </linearGradient>
+                </defs>
+                <circle cx="40" cy="40" r="32" stroke="transparent" strokeWidth="8" fill="transparent" />
+                <circle
+                  cx="40" cy="40" r="32"
+                  stroke="url(#carb-grad)" strokeWidth="8" fill="transparent" strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 32}
+                  strokeDashoffset={(2 * Math.PI * 32) * (1 - (carbPercent / 100))}
+                  className="transition-all duration-1000 ease-out drop-shadow-[0_2px_4px_rgba(139,92,246,0.3)]"
+                />
+              </svg>
+              <div className="text-center z-10 flex flex-col items-center mt-0.5">
+                <span className="text-xs font-black text-ink">{todayTotals.carbs}g</span>
+                <span className="text-[9px] font-bold text-ink-soft -mt-0.5">{carbPercent}%</span>
+              </div>
+            </div>
+            <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Carbs</span>
+          </div>
+
           {/* Fiber Circle */}
           <div className="flex-1 flex flex-col items-center gap-2">
             <div className="relative w-20 h-20 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
@@ -534,7 +570,7 @@ export default function Dashboard({
               <p className="text-xs text-ink-soft mt-0.5">Visualize your daily macro levels relative to target benchmarks.</p>
             </div>
             <div className="flex rounded-xl bg-surface-muted p-1 border border-surface-line w-full sm:w-auto overflow-x-auto custom-scrollbar">
-              {(['Calories', 'Protein', 'Fats', 'Fiber'] as const).map((m) => (
+              {(['Calories', 'Protein', 'Fats', 'Carbs', 'Fiber'] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setActiveMetric(m)}

@@ -83,6 +83,7 @@ export default function InsightsClient({
     if (activeTab === 'Calories') val = d.calories;
     else if (activeTab === 'Protein') val = d.protein;
     else if (activeTab === 'Fat') val = d.fat;
+    else if (activeTab === 'Carbs') val = d.carbs || 0;
     else if (activeTab === 'Fiber') val = d.fiber;
 
     avgValue += val;
@@ -100,6 +101,10 @@ export default function InsightsClient({
       if (val >= targetValue * 0.9) onTargetDays++;
     } else if (activeTab === 'Fat') {
       targetValue = currentGoals.fat;
+      unit = 'g';
+      if (val >= targetValue * 0.9) onTargetDays++;
+    } else if (activeTab === 'Carbs') {
+      targetValue = currentGoals.carbs || 250;
       unit = 'g';
       if (val >= targetValue * 0.9) onTargetDays++;
     } else if (activeTab === 'Fiber') {
@@ -162,7 +167,7 @@ export default function InsightsClient({
         <>
           {/* Segmented Control */}
           <div className="flex bg-white rounded-full p-1 border border-surface-line shadow-sm mb-8">
-            {['Calories', 'Protein', 'Fat', 'Fiber'].map(tab => (
+            {['Calories', 'Protein', 'Fat', 'Carbs', 'Fiber'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -203,6 +208,7 @@ export default function InsightsClient({
                 if (activeTab === 'Calories') val = d.calories;
                 else if (activeTab === 'Protein') val = d.protein;
                 else if (activeTab === 'Fat') val = d.fat;
+                else if (activeTab === 'Carbs') val = d.carbs || 0;
                 else if (activeTab === 'Fiber') val = d.fiber;
 
                 const heightPct = Math.max(5, (val / maxChartValue) * 100);

@@ -46,6 +46,7 @@ export default async function InsightsPage({
       calories: 2000,
       protein: 80,
       fat: 65,
+      carbs: 250,
       fiber: 30,
     } as any;
   }
@@ -76,6 +77,7 @@ export default async function InsightsPage({
       calories: 0,
       protein: 0,
       fat: 0,
+      carbs: 0,
       fiber: 0
     };
   });
@@ -92,6 +94,7 @@ export default async function InsightsPage({
       dayObj.calories += meal.totalCalories;
       dayObj.protein += meal.totalProtein;
       dayObj.fat += meal.totalFat;
+      dayObj.carbs += meal.totalCarbs || 0;
       dayObj.fiber += meal.totalFiber;
     }
   });

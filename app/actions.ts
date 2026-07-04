@@ -103,6 +103,7 @@ export async function saveMealAction(
     totalCalories: number;
     totalProtein: number;
     totalFat: number;
+    totalCarbs: number;
     totalFiber: number;
     totalSodium?: number;
     totalIron?: number;
@@ -114,6 +115,7 @@ export async function saveMealAction(
       calories: number;
       protein: number;
       fat: number;
+      carbs: number;
       fiber: number;
       sodium?: number;
       iron?: number;
@@ -133,6 +135,7 @@ export async function saveMealAction(
     const safeTotalCals = Math.min(Math.max(0, mealData.totalCalories || 0), 20000);
     const safeTotalProt = Math.min(Math.max(0, mealData.totalProtein || 0), 1000);
     const safeTotalFat = Math.min(Math.max(0, mealData.totalFat || 0), 1000);
+    const safeTotalCarbs = Math.min(Math.max(0, mealData.totalCarbs || 0), 1000);
     const safeTotalFib = Math.min(Math.max(0, mealData.totalFiber || 0), 200);
     const safeTotalSod = Math.min(Math.max(0, mealData.totalSodium || 0), 10000);
     const safeTotalIron = Math.min(Math.max(0, mealData.totalIron || 0), 100);
@@ -145,6 +148,7 @@ export async function saveMealAction(
       totalCalories: safeTotalCals,
       totalProtein: safeTotalProt,
       totalFat: safeTotalFat,
+      totalCarbs: safeTotalCarbs,
       totalFiber: safeTotalFib,
       totalSodium: safeTotalSod,
       totalIron: safeTotalIron,
@@ -160,6 +164,7 @@ export async function saveMealAction(
       const safeItemCals = Math.min(Math.max(0, item.calories || 0), 5000);
       const safeItemProt = Math.min(Math.max(0, item.protein || 0), 500);
       const safeItemFat = Math.min(Math.max(0, item.fat || 0), 500);
+      const safeItemCarbs = Math.min(Math.max(0, item.carbs || 0), 500);
       const safeItemFib = Math.min(Math.max(0, item.fiber || 0), 100);
       const safeItemSod = Math.min(Math.max(0, item.sodium || 0), 5000);
       const safeItemIron = Math.min(Math.max(0, item.iron || 0), 100);
@@ -172,6 +177,7 @@ export async function saveMealAction(
         calories: safeItemCals,
         protein: safeItemProt,
         fat: safeItemFat,
+        carbs: safeItemCarbs,
         fiber: safeItemFib,
         sodium: safeItemSod,
         iron: safeItemIron,
@@ -879,6 +885,7 @@ export async function lookupBarcodeAction(barcode: string) {
     const calories = Math.round(nutriments['energy-kcal_100g'] || nutriments['energy-kcal'] || 0);
     const protein = Math.round(nutriments['proteins_100g'] || nutriments['proteins'] || 0);
     const fat = Math.round(nutriments['fat_100g'] || nutriments['fat'] || 0);
+    const carbs = Math.round(nutriments['carbohydrates_100g'] || nutriments['carbohydrates'] || 0);
     const fiber = Math.round(nutriments['fiber_100g'] || nutriments['fiber'] || 0);
 
     const analysis = {
@@ -886,6 +893,7 @@ export async function lookupBarcodeAction(barcode: string) {
       totalCalories: calories,
       totalProtein: protein,
       totalFat: fat,
+      totalCarbs: carbs,
       totalFiber: fiber,
       items: [
         {
@@ -893,6 +901,7 @@ export async function lookupBarcodeAction(barcode: string) {
           calories,
           protein,
           fat,
+          carbs,
           fiber,
         }
       ]

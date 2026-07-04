@@ -125,6 +125,7 @@ export default async function DashboardPage() {
       calories: item.calories,
       protein: item.protein,
       fat: item.fat,
+      carbs: item.carbs || 0,
       fiber: item.fiber,
       sodium: item.sodium || 0,
       iron: item.iron || 0,
@@ -141,6 +142,7 @@ export default async function DashboardPage() {
       totalCalories: meal.totalCalories,
       totalProtein: meal.totalProtein,
       totalFat: meal.totalFat,
+      totalCarbs: meal.totalCarbs || 0,
       totalFiber: meal.totalFiber,
       totalSodium: meal.totalSodium || 0,
       totalIron: meal.totalIron || 0,
@@ -156,13 +158,14 @@ export default async function DashboardPage() {
       calories: acc.calories + meal.totalCalories,
       protein: acc.protein + meal.totalProtein,
       fat: acc.fat + meal.totalFat,
+      carbs: acc.carbs + (meal.totalCarbs || 0),
       fiber: acc.fiber + meal.totalFiber,
       sodium: acc.sodium + (meal.totalSodium || 0),
       iron: acc.iron + (meal.totalIron || 0),
       calcium: acc.calcium + (meal.totalCalcium || 0),
       vitaminC: acc.vitaminC + (meal.totalVitaminC || 0),
     };
-  }, { calories: 0, protein: 0, fat: 0, fiber: 0, sodium: 0, iron: 0, calcium: 0, vitaminC: 0 });
+  }, { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0, iron: 0, calcium: 0, vitaminC: 0 });
 
   // 5. Calculate global user streak based on all historic logged meals
   // Efficient query: Only fetch the timestamp column to avoid loading massive arrays into memory
@@ -184,7 +187,7 @@ export default async function DashboardPage() {
     d.setDate(d.getDate() - i);
     const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
     const dateStr = d.toDateString();
-    weeklyDataMap.set(dateStr, { name: dayName, Calories: 0, Protein: 0, Fats: 0, Fiber: 0 });
+    weeklyDataMap.set(dateStr, { name: dayName, Calories: 0, Protein: 0, Fats: 0, Carbs: 0, Fiber: 0 });
   }
 
   // Fetch only recent meals to build the chart, omitting heavy nested relations
@@ -196,7 +199,7 @@ export default async function DashboardPage() {
       eq(meals.userId, userId),
       gte(meals.timestamp, sevenDaysAgo)
     ),
-    columns: { timestamp: true, totalCalories: true, totalProtein: true, totalFat: true, totalFiber: true }
+    columns: { timestamp: true, totalCalories: true, totalProtein: true, totalFat: true, totalCarbs: true, totalFiber: true }
   });
 
   // Populate actuals
@@ -210,6 +213,7 @@ export default async function DashboardPage() {
       dayData.Calories += meal.totalCalories;
       dayData.Protein += meal.totalProtein;
       dayData.Fats += meal.totalFat;
+      dayData.Carbs += meal.totalCarbs || 0;
       dayData.Fiber += meal.totalFiber;
     }
   });
@@ -224,6 +228,7 @@ export default async function DashboardPage() {
         calories: currentGoals.calories,
         protein: currentGoals.protein,
         fat: currentGoals.fat,
+        carbs: currentGoals.carbs,
         fiber: currentGoals.fiber,
       }}
       todayTotals={todayTotals}
