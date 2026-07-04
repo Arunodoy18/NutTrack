@@ -73,8 +73,8 @@ export default function OnboardingCarousel() {
           style={{ transform: `translateX(-${25 * onbSlide}%)` }}
         >
           {/* Slide 0: EARN EVERY BITE */}
-          <div className="w-[25%] h-full flex flex-col px-8 pt-8">
-            <div className="flex-1 w-full bg-surface-muted rounded-[32px] border-4 border-surface-line overflow-hidden relative flex items-center justify-center">
+          <div className="w-[25%] h-full flex flex-col px-6 pt-4 pb-2">
+            <div className="flex-1 w-full bg-surface-muted rounded-[32px] border-4 border-surface-line overflow-hidden relative flex items-center justify-center min-h-0">
               {/* Glowing ring mockup */}
               <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent"></div>
               <div className="relative">
@@ -99,16 +99,16 @@ export default function OnboardingCarousel() {
               </div>
             </div>
             
-            <div className="mt-8 mb-12 text-center pointer-events-none">
+            <div className="mt-6 mb-4 text-center pointer-events-none shrink-0">
               <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-brand uppercase">{SLIDES[0].eyebrow}</span>
-              <h2 className="font-display font-black text-4xl mt-3 tracking-tight leading-none text-ink">{SLIDES[0].title}</h2>
-              <p className="mt-4 text-sm font-medium text-ink-soft leading-relaxed max-w-[280px] mx-auto">{SLIDES[0].subcopy}</p>
+              <h2 className="font-display font-black text-3xl sm:text-4xl mt-2 tracking-tight leading-none text-ink">{SLIDES[0].title}</h2>
+              <p className="mt-3 text-sm font-medium text-ink-soft leading-relaxed max-w-[280px] mx-auto">{SLIDES[0].subcopy}</p>
             </div>
           </div>
 
           {/* Slide 1: SNAP ANY PLATE */}
-          <div className="w-[25%] h-full flex flex-col px-8 pt-8">
-            <div className="flex-1 w-full bg-ink rounded-[32px] border-4 border-ink-soft/20 overflow-hidden relative flex items-center justify-center">
+          <div className="w-[25%] h-full flex flex-col px-6 pt-4 pb-2">
+            <div className="flex-1 w-full bg-ink rounded-[32px] border-4 border-ink-soft/20 overflow-hidden relative flex items-center justify-center min-h-0">
               {/* Fake food photo background */}
               <div className="absolute inset-0 bg-[#2d2d31] opacity-50" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.05\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")' }}></div>
               
@@ -130,16 +130,16 @@ export default function OnboardingCarousel() {
               </div>
             </div>
             
-            <div className="mt-8 mb-12 text-center pointer-events-none">
+            <div className="mt-6 mb-4 text-center pointer-events-none shrink-0">
               <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-brand uppercase">{SLIDES[1].eyebrow}</span>
-              <h2 className="font-display font-black text-4xl mt-3 tracking-tight leading-none text-ink">{SLIDES[1].title}</h2>
-              <p className="mt-4 text-sm font-medium text-ink-soft leading-relaxed max-w-[280px] mx-auto">{SLIDES[1].subcopy}</p>
+              <h2 className="font-display font-black text-3xl sm:text-4xl mt-2 tracking-tight leading-none text-ink">{SLIDES[1].title}</h2>
+              <p className="mt-3 text-sm font-medium text-ink-soft leading-relaxed max-w-[280px] mx-auto">{SLIDES[1].subcopy}</p>
             </div>
           </div>
 
           {/* Slide 2: KNOW EVERY MACRO */}
-          <div className="w-[25%] h-full flex flex-col px-8 pt-8">
-            <div className="flex-1 w-full bg-surface-muted rounded-[32px] border-4 border-surface-line overflow-hidden relative flex items-center justify-center p-8">
+          <div className="w-[25%] h-full flex flex-col px-6 pt-4 pb-2">
+            <div className="flex-1 w-full bg-surface-muted rounded-[32px] border-4 border-surface-line overflow-hidden relative flex items-center justify-center p-6 min-h-0">
                <div className="w-full bg-white rounded-[24px] p-6 shadow-xl shadow-ink/5 border border-surface-line flex flex-col gap-5">
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs font-bold">
@@ -171,16 +171,16 @@ export default function OnboardingCarousel() {
                </div>
             </div>
             
-            <div className="mt-8 mb-12 text-center pointer-events-none">
+            <div className="mt-6 mb-4 text-center pointer-events-none shrink-0">
               <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-brand uppercase">{SLIDES[2].eyebrow}</span>
-              <h2 className="font-display font-black text-4xl mt-3 tracking-tight leading-none text-ink">{SLIDES[2].title}</h2>
-              <p className="mt-4 text-sm font-medium text-ink-soft leading-relaxed max-w-[280px] mx-auto">{SLIDES[2].subcopy}</p>
+              <h2 className="font-display font-black text-3xl sm:text-4xl mt-2 tracking-tight leading-none text-ink">{SLIDES[2].title}</h2>
+              <p className="mt-3 text-sm font-medium text-ink-soft leading-relaxed max-w-[280px] mx-auto">{SLIDES[2].subcopy}</p>
             </div>
           </div>
 
           {/* Slide 3: CRUSH YOUR GOALS */}
-          <div className="w-[25%] h-full flex flex-col px-8 pt-8">
-            <div className="flex-1 w-full bg-brand-50 rounded-[32px] border-4 border-brand-100 overflow-hidden relative flex items-center justify-center p-8">
+          <div className="w-[25%] h-full flex flex-col px-6 pt-4 pb-2">
+            <div className="flex-1 w-full bg-brand-50 rounded-[32px] border-4 border-brand-100 overflow-hidden relative flex items-center justify-center p-6 min-h-0">
               <div className="absolute inset-0 bg-[radial-gradient(#fc4c0222_1px,transparent_1px)] [background-size:16px_16px]"></div>
               
               <div className="relative">
@@ -197,10 +197,10 @@ export default function OnboardingCarousel() {
               </div>
             </div>
             
-            <div className="mt-8 mb-12 text-center pointer-events-none">
+            <div className="mt-6 mb-4 text-center pointer-events-none shrink-0">
               <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-brand uppercase">{SLIDES[3].eyebrow}</span>
-              <h2 className="font-display font-black text-4xl mt-3 tracking-tight leading-none text-ink">{SLIDES[3].title}</h2>
-              <p className="mt-4 text-sm font-medium text-ink-soft leading-relaxed max-w-[280px] mx-auto">{SLIDES[3].subcopy}</p>
+              <h2 className="font-display font-black text-3xl sm:text-4xl mt-2 tracking-tight leading-none text-ink">{SLIDES[3].title}</h2>
+              <p className="mt-3 text-sm font-medium text-ink-soft leading-relaxed max-w-[280px] mx-auto">{SLIDES[3].subcopy}</p>
             </div>
           </div>
 
@@ -208,9 +208,9 @@ export default function OnboardingCarousel() {
       </div>
 
       {/* Bottom Controls */}
-      <div className="px-6 pb-12 bg-white">
+      <div className="px-6 pb-8 bg-white shrink-0">
         {/* Pagination Dots */}
-        <div className="flex justify-center gap-2 mb-8">
+        <div className="flex justify-center gap-2 mb-6">
           {[0, 1, 2, 3].map((index) => (
             <button
               key={index}
