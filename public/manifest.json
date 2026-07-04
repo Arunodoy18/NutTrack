@@ -2,7 +2,7 @@
   "name": "dietBuddy",
   "short_name": "dietBuddy",
   "description": "AI-powered calorie and nutrition estimator from meal photos.",
-  "start_url": "/dashboard",
+  "start_url": "/launch",
   "display": "standalone",
   "background_color": "#FFFFFF",
   "theme_color": "#FC4C02",
