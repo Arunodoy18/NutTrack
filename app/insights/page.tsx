@@ -103,20 +103,32 @@ export default async function InsightsPage({
 
   const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp));
 
+  // Build user metrics for Analytics tab
+  const userMetrics = {
+    heightCm: currentUser?.heightCm ?? 170,
+    weightKg: currentUser?.weightKg ?? 70,
+    age: currentUser?.age ?? 25,
+    gender: (currentUser?.gender as string) ?? "Male",
+    activityLevel: (currentUser?.activityLevel as string) ?? "Moderately active",
+    primaryGoal: (currentUser?.primaryGoal as string) ?? "Maintain",
+    bodyFat: (currentUser?.bodyFat as string) ?? "",
+  };
+
   return (
     <div className="min-h-screen bg-surface text-ink font-sans pb-40">
       <div className="pt-16 px-6 max-w-lg mx-auto">
-        <div className="text-[10px] font-black tracking-widest text-ink-soft uppercase mb-1">
-          Last 7 Days
+        <div className="text-[10px] font-mono font-bold tracking-[0.2em] text-ink-soft uppercase mb-1">
+          Your Trends &amp; Analytics
         </div>
         <h1 className="text-3xl font-black tracking-tight text-ink mb-6">
-          Your trends
+          Insights
         </h1>
 
         <InsightsClient 
           dailyTotals={dailyTotals} 
           currentGoals={currentGoals} 
-          activeStreak={activeStreak} 
+          activeStreak={activeStreak}
+          userMetrics={userMetrics}
         />
 
       </div>
