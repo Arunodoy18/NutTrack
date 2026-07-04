@@ -265,9 +265,19 @@ export default function ProfileSetup() {
                   value={data.heightCm}
                   onChange={(e) => set("heightCm", e.target.value)}
                   placeholder="176"
-                  className="w-full bg-surface-muted rounded-[20px] px-5 py-3 pr-14 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
+                  className="w-full bg-surface-muted rounded-[20px] px-5 py-3 pr-24 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
                 />
-                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">cm</span>
+                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft whitespace-nowrap">
+                  {(() => {
+                    const h = parseFloat(data.heightCm);
+                    if (isNaN(h) || h <= 0) return "cm";
+                    const totalInches = h / 2.54;
+                    let ft = Math.floor(totalInches / 12);
+                    let inc = Math.round(totalInches % 12);
+                    if (inc === 12) { ft += 1; inc = 0; }
+                    return `cm / ${ft}'${inc}"`;
+                  })()}
+                </span>
               </div>
             </div>
 
@@ -282,9 +292,15 @@ export default function ProfileSetup() {
                   value={data.weightKg}
                   onChange={(e) => set("weightKg", e.target.value)}
                   placeholder="72"
-                  className="w-full bg-surface-muted rounded-[20px] px-5 py-3 pr-14 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
+                  className="w-full bg-surface-muted rounded-[20px] px-5 py-3 pr-24 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
                 />
-                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">kg</span>
+                <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft whitespace-nowrap">
+                  {(() => {
+                    const w = parseFloat(data.weightKg);
+                    if (isNaN(w) || w <= 0) return "kg";
+                    return `kg / ${Math.round(w * 2.20462)} lbs`;
+                  })()}
+                </span>
               </div>
             </div>
 
