@@ -405,12 +405,12 @@ export default function Dashboard({
           </div>
         </div>
 
-        {/* 3 Circular Macro Cards (Protein, Fat, Fiber) */}
-        <div className="flex w-full gap-4 mt-8 justify-center px-2">
+        {/* 4 Circular Macro Cards (Protein, Fat, Carbs, Fiber) */}
+        <div className="flex w-full justify-between items-start mt-8 px-5">
           
           {/* Protein Circle */}
-          <div className="flex-1 flex flex-col items-center gap-2">
-            <div className="relative w-20 h-20 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
+          <div className="flex flex-col items-center gap-1.5 shrink-0">
+            <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
               <svg className="absolute inset-0 w-full h-full transform -rotate-90">
                 <defs>
                   <linearGradient id="prot-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -436,8 +436,8 @@ export default function Dashboard({
           </div>
 
           {/* Fat Circle */}
-          <div className="flex-1 flex flex-col items-center gap-2">
-            <div className="relative w-20 h-20 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
+          <div className="flex flex-col items-center gap-1.5 shrink-0">
+            <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
               <svg className="absolute inset-0 w-full h-full transform -rotate-90">
                 <defs>
                   <linearGradient id="fat-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -463,8 +463,8 @@ export default function Dashboard({
           </div>
 
           {/* Carbs Circle */}
-          <div className="flex-1 flex flex-col items-center gap-2">
-            <div className="relative w-20 h-20 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
+          <div className="flex flex-col items-center gap-1.5 shrink-0">
+            <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
               <svg className="absolute inset-0 w-full h-full transform -rotate-90">
                 <defs>
                   <linearGradient id="carb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -490,8 +490,8 @@ export default function Dashboard({
           </div>
 
           {/* Fiber Circle */}
-          <div className="flex-1 flex flex-col items-center gap-2">
-            <div className="relative w-20 h-20 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
+          <div className="flex flex-col items-center gap-1.5 shrink-0">
+            <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
               <svg className="absolute inset-0 w-full h-full transform -rotate-90">
                 <defs>
                   <linearGradient id="fib-grad" x1="0%" y1="0%" x2="100%" y2="100%">
