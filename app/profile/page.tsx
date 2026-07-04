@@ -27,7 +27,11 @@ export default async function ProfilePage() {
   const currentUser = await db.query.users.findFirst({
     where: eq(users.id, userId)
   });
-  
+
+  // Gate: force profile setup for incomplete profiles
+  if (!currentUser?.profileComplete) {
+    redirect("/setup");
+  }
   let isPremium = currentUser?.isPremium || false;
   let isTrialActive = false;
   let trialDaysLeft = 0;

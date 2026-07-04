@@ -8,7 +8,7 @@ import { ChevronLeft } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -29,7 +29,17 @@ export default function SignupPage() {
         throw new Error(data.message || 'Registration failed');
       }
 
-      router.push('/auth/login?registered=true');
+      // Auto sign-in then redirect to profile setup
+      const signInRes = await signIn('credentials', {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      });
+      if (signInRes?.ok) {
+        router.push('/setup');
+      } else {
+        router.push('/auth/login?registered=true');
+      }
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration');
     } finally {
@@ -100,20 +110,7 @@ export default function SignupPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          
-          <div>
-            <label className="block text-[10px] font-black tracking-widest text-ink-soft uppercase mb-2 ml-1">
-              Full Name
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Arunodoy Banerjee"
-              className="w-full bg-surface-muted rounded-[20px] px-5 py-4 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </div>
+
 
           <div>
             <label className="block text-[10px] font-black tracking-widest text-ink-soft uppercase mb-2 ml-1">

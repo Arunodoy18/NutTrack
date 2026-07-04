@@ -14,6 +14,18 @@ export const users = pgTable("user", {
   image: text("image"),
   otpLockedUntil: timestamp("otp_locked_until", { mode: "date" }),
   dietaryPreferences: text("dietary_preferences"),
+  // Profile Setup fields
+  age: integer("age"),
+  gender: text("gender"),
+  heightCm: integer("height_cm"),
+  weightKg: integer("weight_kg"),
+  birthdate: text("birthdate"),
+  activityLevel: text("activity_level"),
+  bodyFat: text("body_fat"),
+  primaryGoal: text("primary_goal"),
+  medicalConditions: text("medical_conditions"),
+  trainingFrequency: text("training_frequency"),
+  profileComplete: boolean("profile_complete").default(false),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 

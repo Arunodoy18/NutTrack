@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { meals, dailyGoals } from "@/lib/db/schema";
+import { meals, dailyGoals, users } from "@/lib/db/schema";
 import { eq, and, gte, lte } from "drizzle-orm";
 import BottomNav from '@/components/BottomNav';
 import { calculateActiveStreak } from "@/lib/streak";
@@ -23,6 +23,15 @@ export default async function InsightsPage({
   }
   
   const userId = session.user.id;
+
+  // Gate: force profile setup for incomplete profiles
+  const currentUser = await db.query.users.findFirst({
+    where: eq(users.id, userId)
+  });
+  if (!currentUser?.profileComplete) {
+    redirect("/setup");
+  }
+
   const activeTab = (searchParams.tab as string) || 'Calories';
 
   // 1. Fetch user's Daily Nutrition Goals
