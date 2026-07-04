@@ -7,9 +7,9 @@ import { ChevronRight, Target, Flame, Camera, ChevronLeft, ScanLine, Dumbbell } 
 
 const SLIDES = [
   {
-    eyebrow: "GAMIFICATION",
-    title: "EARN EVERY BITE",
-    subcopy: "Level up your nutrition with streaks and badges.",
+    eyebrow: "CONSISTENCY",
+    title: "EARN EVERY BITE.",
+    subcopy: "",
   },
   {
     eyebrow: "AI CAPTURE",
@@ -74,35 +74,33 @@ export default function OnboardingCarousel() {
         >
           {/* Slide 0: EARN EVERY BITE */}
           <div className="w-[25%] h-full flex flex-col px-6 pt-4 pb-2">
-            <div className="flex-1 w-full bg-surface-muted rounded-[32px] border-4 border-surface-line overflow-hidden relative flex items-center justify-center min-h-0">
+            <div className="flex-1 w-full relative flex flex-col items-center justify-center min-h-0 gap-8">
               {/* Glowing ring mockup */}
-              <div className="absolute inset-0 bg-gradient-to-br from-brand/5 to-transparent"></div>
-              <div className="relative">
-                <div className="w-40 h-40 rounded-full border-[12px] border-surface-line flex items-center justify-center">
-                  <div className="w-full h-full rounded-full border-[12px] border-brand border-t-transparent border-l-transparent rotate-45"></div>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center -rotate-0 text-center">
-                    <Flame className="w-8 h-8 text-brand mb-1" />
-                    <span className="font-black text-2xl text-ink tracking-tighter">12</span>
-                    <span className="text-[9px] font-bold text-ink-soft tracking-widest uppercase">Day Streak</span>
+              <div className="relative flex flex-col items-center">
+                <div className="w-56 h-56 sm:w-64 sm:h-64 rounded-full border-[14px] border-surface-line/30 flex items-center justify-center relative">
+                  <div className="absolute inset-0 rounded-full border-[14px] border-brand border-l-transparent rotate-[15deg]"></div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center pt-2">
+                    <Flame className="w-7 h-7 sm:w-8 sm:h-8 text-brand mb-0 stroke-[2]" />
+                    <span className="font-black text-[72px] sm:text-[84px] text-ink tracking-tighter leading-[0.9]">12</span>
+                    <span className="text-[9px] sm:text-[10px] font-bold text-ink-soft tracking-[0.2em] sm:tracking-[0.3em] uppercase mt-1">• Day Streak •</span>
                   </div>
                 </div>
                 
                 {/* Floating Chips */}
-                <div className="absolute -top-6 -right-12 bg-white px-4 py-2 rounded-2xl shadow-xl border border-surface-line flex items-center gap-2 rotate-6">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full" />
-                  <span className="text-xs font-bold text-ink">+240 XP</span>
-                </div>
-                <div className="absolute -bottom-4 -left-8 bg-brand px-4 py-2 rounded-2xl shadow-xl shadow-brand/30 flex items-center gap-2 -rotate-3 text-white">
-                  <Target className="w-4 h-4" />
-                  <span className="text-xs font-bold uppercase tracking-wide">Badge Unlocked</span>
+                <div className="flex items-center gap-3 mt-6">
+                  <div className="bg-transparent px-4 py-2 rounded-full border border-surface-line flex items-center justify-center">
+                    <span className="text-[10px] sm:text-xs font-bold text-brand tracking-widest uppercase">+240 XP</span>
+                  </div>
+                  <div className="bg-transparent px-4 py-2 rounded-full border border-surface-line flex items-center justify-center">
+                    <span className="text-[10px] sm:text-xs font-bold text-ink tracking-widest uppercase">Badge Unlocked</span>
+                  </div>
                 </div>
               </div>
             </div>
             
             <div className="mt-6 mb-4 text-center pointer-events-none shrink-0">
               <span className="text-[10px] font-mono font-bold tracking-[0.2em] text-brand uppercase">{SLIDES[0].eyebrow}</span>
-              <h2 className="font-display font-black text-3xl sm:text-4xl mt-2 tracking-tight leading-none text-ink">{SLIDES[0].title}</h2>
-              <p className="mt-3 text-sm font-medium text-ink-soft leading-relaxed max-w-[280px] mx-auto">{SLIDES[0].subcopy}</p>
+              <h2 className="font-display font-black text-4xl sm:text-[42px] mt-3 tracking-tight leading-none text-ink">{SLIDES[0].title}</h2>
             </div>
           </div>
 
