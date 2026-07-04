@@ -76,7 +76,7 @@ export default function LandingPage() {
               className="flex flex-col sm:flex-row gap-3 mt-8"
             >
               <Link
-                href="/auth/signup"
+                href="/onboarding"
                 className="inline-flex items-center justify-center gap-2 px-7 py-4 rounded-2xl bg-gradient-to-br from-brand to-brand-600 text-white font-display font-bold text-lg shadow-xl shadow-brand/30 hover:brightness-105 transition"
               >
                 <Camera className="w-5 h-5" />
