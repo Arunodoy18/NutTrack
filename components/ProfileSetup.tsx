@@ -31,7 +31,7 @@ const STEPS = [
 const ACTIVITY_LEVELS = ["Sedentary", "Lightly active", "Moderately active", "Very active", "Athlete"];
 const BODY_FAT_OPTIONS = ["Low (<15%)", "Average (15–24%)", "High (25–31%)", "Very high (32%+)"];
 const GOALS = ["Lose weight", "Maintain", "Build muscle", "Improve health"];
-const DIETARY_PREFS = ["No preference", "Vegetarian", "Vegan", "Keto", "High protein", "Low carb"];
+const DIETARY_PREFS = ["No preference", "Non-vegetarian", "Vegetarian", "Vegan", "Keto", "High protein", "Low carb"];
 const MEDICAL_CONDITIONS = ["None", "Diabetes", "Hypertension", "PCOS", "Thyroid", "High cholesterol"];
 const TRAINING_FREQ = ["0–1 / week", "2–3 / week", "4–5 / week", "6+ / week"];
 
