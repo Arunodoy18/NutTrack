@@ -129,6 +129,7 @@ export default async function InsightsPage({
     leanMuscleMass: fullProfile.leanMuscleMass,
     metabolicHealth: fullProfile.metabolicHealth,
     macros: fullProfile.macros,
+    micros: fullProfile.micros,
     currentGoalLabel: goalLabel,
   };
 

@@ -14,6 +14,7 @@ interface AnalyticsProfile {
   leanMuscleMass: number;
   metabolicHealth: string;
   macros: { calories: number; proteinG: number; fatG: number; carbsG: number; fiberG: number };
+  micros: { sodium: number; iron: number; calcium: number; vitaminC: number };
   currentGoalLabel: string;
 }
 
@@ -120,7 +121,7 @@ export default function InsightsClient({
   avgValue = Math.round(avgValue / 7);
 
   /* ─── Shorthand for server-computed analytics ─── */
-  const { bmi, bmr, tdee, bodyFatPercent, ffm, leanMuscleMass, metabolicHealth, macros } = analyticsProfile;
+  const { bmi, bmr, tdee, bodyFatPercent, ffm, leanMuscleMass, metabolicHealth, macros, micros } = analyticsProfile;
 
   return (
     <>
@@ -384,8 +385,10 @@ export default function InsightsClient({
                 </div>
                 <div className="h-px bg-surface-line" />
                 <div>
-                  <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-2">Personalized Macro Targets</div>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-2">Personalized Daily Targets</div>
+                  
+                  {/* Macros Row */}
+                  <div className="grid grid-cols-4 gap-2 mb-2">
                     <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
                       <div className="text-lg font-black text-ink">{macros.proteinG}</div>
                       <div className="text-[8px] font-bold text-ink-soft uppercase">Protein</div>
@@ -401,6 +404,26 @@ export default function InsightsClient({
                     <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
                       <div className="text-lg font-black text-ink">{macros.fiberG}</div>
                       <div className="text-[8px] font-bold text-ink-soft uppercase">Fiber</div>
+                    </div>
+                  </div>
+
+                  {/* Micros Row */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
+                      <div className="text-[13px] font-black text-ink leading-tight">&lt;{micros.sodium}</div>
+                      <div className="text-[8px] font-bold text-ink-soft uppercase mt-0.5">Sodium<br/><span className="text-[7px] text-ink-faint">mg</span></div>
+                    </div>
+                    <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
+                      <div className="text-[13px] font-black text-ink leading-tight">{micros.iron}</div>
+                      <div className="text-[8px] font-bold text-ink-soft uppercase mt-0.5">Iron<br/><span className="text-[7px] text-ink-faint">mg</span></div>
+                    </div>
+                    <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
+                      <div className="text-[13px] font-black text-ink leading-tight">{micros.calcium}</div>
+                      <div className="text-[8px] font-bold text-ink-soft uppercase mt-0.5">Calcium<br/><span className="text-[7px] text-ink-faint">mg</span></div>
+                    </div>
+                    <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
+                      <div className="text-[13px] font-black text-ink leading-tight">{micros.vitaminC}</div>
+                      <div className="text-[8px] font-bold text-ink-soft uppercase mt-0.5">Vit C<br/><span className="text-[7px] text-ink-faint">mg</span></div>
                     </div>
                   </div>
                 </div>
