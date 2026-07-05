@@ -165,7 +165,7 @@ export default function InsightsClient({
 
       {/* ─── YOUR TRENDS SECTION ─── */}
       {section === 'trends' && (
-        <>
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
           {/* Segmented Control */}
           <div className="flex bg-white rounded-full p-1 border border-surface-line shadow-sm mb-8">
             {['Calories', 'Protein', 'Fat', 'Carbs', 'Fiber'].map(tab => (
@@ -257,12 +257,12 @@ export default function InsightsClient({
               </p>
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* ─── ANALYTICS PRO SECTION ─── */}
       {section === 'analytics' && (
-        <div className="space-y-4">
+        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
           {/* BMI + BMR cards */}
           <div className="flex gap-3">
             <div className="flex-1 bg-white rounded-[24px] p-5 shadow-sm border border-surface-line">
@@ -324,7 +324,7 @@ export default function InsightsClient({
                   key={g.label}
                   onClick={() => handleGoalChange(g.label)}
                   disabled={savingGoal}
-                  className={`rounded-[20px] p-4 text-left border transition-all ${
+                  className={`rounded-[20px] p-4 text-left border transition-all active:scale-[0.98] ${
                     selectedGoal === g.label
                       ? 'border-brand bg-brand/5'
                       : 'border-surface-line bg-white hover:border-ink-soft/30'
@@ -362,7 +362,7 @@ export default function InsightsClient({
                 </p>
               </>
             ) : (
-              <div className="space-y-4 text-left">
+              <div className="space-y-4 text-left animate-in fade-in slide-in-from-top-4 duration-300">
                 <div>
                   <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-brand uppercase mb-1">Fat-Free Mass</div>
                   <div className="text-3xl font-black text-ink">{ffm} <span className="text-base font-bold text-ink-soft">kg</span></div>
