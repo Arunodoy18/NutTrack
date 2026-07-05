@@ -20,6 +20,17 @@ export default function ProfileHeaderClient({
   const [showAvatar, setShowAvatar] = useState(false);
   const [avatarMode, setAvatarMode] = useState<'initial' | 'photo'>('initial');
   const [avatarBg, setAvatarBg] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setSelectedImage(url);
+    }
+  };
 
   const gradients = [
     "from-brand to-[#e63e00]", // 0: Orange
@@ -45,9 +56,9 @@ export default function ProfileHeaderClient({
             onClick={() => setShowAvatar(true)}
             className="relative group focus:outline-none"
           >
-            {image && avatarMode !== 'initial' ? (
+            {((image || selectedImage) && avatarMode !== 'initial') ? (
               <img 
-                src={image} 
+                src={selectedImage || image!} 
                 alt={name}
                 className="w-20 h-20 rounded-[28px] object-cover shadow-lg shadow-brand/20 transition-transform group-hover:scale-105"
               />
@@ -209,14 +220,30 @@ export default function ProfileHeaderClient({
               </div>
             ) : (
               <div className="flex flex-col items-center">
-                <div className="w-full border-2 border-dashed border-surface-line bg-white rounded-[24px] p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-brand/50 hover:bg-brand/5 transition-colors">
-                  <div className="w-12 h-12 bg-brand/10 rounded-full flex items-center justify-center">
-                    <Upload className="w-5 h-5 text-brand" />
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-bold text-ink mb-1">Tap to upload a photo</div>
-                    <div className="text-xs font-medium text-ink-soft">JPG, PNG or GIF (max. 2MB)</div>
-                  </div>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  accept="image/png, image/jpeg, image/gif"
+                  onChange={handleFileChange}
+                />
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full h-48 border-2 border-dashed border-surface-line bg-white rounded-[24px] overflow-hidden flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-brand/50 hover:bg-brand/5 transition-colors relative"
+                >
+                  {selectedImage ? (
+                    <img src={selectedImage} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <>
+                      <div className="w-12 h-12 bg-brand/10 rounded-full flex items-center justify-center">
+                        <Upload className="w-5 h-5 text-brand" />
+                      </div>
+                      <div className="text-center">
+                        <div className="text-sm font-bold text-ink mb-1">Tap to upload a photo</div>
+                        <div className="text-xs font-medium text-ink-soft">JPG, PNG or GIF (max. 2MB)</div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
