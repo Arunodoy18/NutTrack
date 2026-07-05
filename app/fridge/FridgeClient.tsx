@@ -14,6 +14,14 @@ interface Recipe {
   protein: number;
   fat: number;
   fiber: number;
+  sodium: number;
+  iron: number;
+  calcium: number;
+  tags: string[];
+  veg: boolean;
+  vegan: boolean;
+  sodiumHigh: boolean;
+  matchStatus: 'perfect' | 'warn' | 'dim';
   steps: string[];
   ingredients_used: string[];
 }
@@ -28,6 +36,22 @@ export default function FridgeClient() {
   const [result, setResult] = useState<{ ingredients: string[], recipes: Recipe[] } | null>(null);
   const [expandedRecipeIdx, setExpandedRecipeIdx] = useState<number | null>(null);
   const [addingGrocery, setAddingGrocery] = useState<number | null>(null);
+  const [fCoachIdx, setFCoachIdx] = useState(0);
+
+  const coachMessages = [
+    "Your protein is low today. I've flagged a few high-protein options for you.",
+    "Remember to watch your sodium levels!",
+    "Looking for a quick snack? Check the vegetarian bowl."
+  ];
+
+  React.useEffect(() => {
+    if (step === 2) {
+      const interval = setInterval(() => {
+        setFCoachIdx((prev) => (prev + 1) % coachMessages.length);
+      }, 4200);
+      return () => clearInterval(interval);
+    }
+  }, [step, coachMessages.length]);
 
   const handleAddGrocery = async (idx: number, ingredients: string[]) => {
     if (!ingredients || ingredients.length === 0) return;
@@ -266,11 +290,57 @@ export default function FridgeClient() {
                   {/* Recipes Grid */}
                   <div>
                     <h3 className="text-lg font-black text-ink mb-4 px-1">Generated Recipes</h3>
+                    
+                    {/* Live Coach Nudge */}
+                    <div className="mb-6 bg-white border border-surface-line rounded-[24px] p-5 shadow-sm flex gap-4 items-center">
+                      <div className="w-10 h-10 bg-[#fff1ec] rounded-full flex flex-shrink-0 items-center justify-center relative">
+                        <Sparkles className="w-5 h-5 text-brand" />
+                        <div className="absolute top-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white animate-pulse" />
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <div className="text-[9px] font-black tracking-widest text-emerald-600 uppercase mb-1">Live Coach</div>
+                        <AnimatePresence mode="wait">
+                          <motion.div
+                            key={fCoachIdx}
+                            initial={{ opacity: 0, y: 5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            transition={{ duration: 0.3 }}
+                            className="text-sm font-medium text-ink-soft leading-tight"
+                          >
+                            {coachMessages[fCoachIdx]}
+                          </motion.div>
+                        </AnimatePresence>
+                      </div>
+                    </div>
+
                     <div className="grid grid-cols-1 gap-6">
                       {result.recipes.map((recipe, idx) => (
-                        <div key={idx} className="bg-white border border-surface-line rounded-3xl overflow-hidden transition-all flex flex-col group shadow-sm">
+                        <div key={idx} className={`bg-white border ${recipe.matchStatus === 'warn' ? 'border-amber-300 shadow-amber-500/10' : 'border-surface-line'} rounded-3xl overflow-hidden transition-all flex flex-col group shadow-sm ${recipe.matchStatus === 'dim' ? 'opacity-60 grayscale-[0.2]' : ''}`}>
+                          
+                          {/* Recipe Flags */}
+                          {recipe.matchStatus === 'warn' && (
+                            <div className="bg-amber-100 px-4 py-2 flex items-center justify-center gap-2">
+                              <AlertTriangle className="w-4 h-4 text-amber-600" />
+                              <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Medical Warning: High Sodium</span>
+                            </div>
+                          )}
+                          {recipe.matchStatus === 'dim' && (
+                            <div className="bg-surface-line px-4 py-2 flex items-center justify-center gap-2">
+                              <span className="text-[10px] font-bold text-ink-soft uppercase tracking-widest">Diet Mismatch</span>
+                            </div>
+                          )}
+
                           {/* Recipe Header */}
-                          <div className="p-6 border-b border-surface-line space-y-3">
+                          <div className="p-6 border-b border-surface-line space-y-3 relative">
+                            {/* Tags */}
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                              {recipe.tags.map((tag, i) => (
+                                <span key={i} className="px-2 py-0.5 bg-brand-50 text-brand rounded text-[9px] font-black uppercase tracking-wider">{tag}</span>
+                              ))}
+                              {recipe.vegan && <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[9px] font-black uppercase tracking-wider">Vegan</span>}
+                            </div>
+                            
                             <h4 className="text-base font-bold text-ink leading-tight">{recipe.name}</h4>
                             <p className="text-xs text-ink-soft">{recipe.description}</p>
                             
@@ -314,6 +384,25 @@ export default function FridgeClient() {
                                   className="overflow-hidden border-t border-surface-line"
                                 >
                                   <div className="p-5 space-y-4 bg-surface-muted">
+                                    {/* Full Breakdown Micros Grid */}
+                                    <div>
+                                      <h5 className="text-[10px] font-black text-ink-faint uppercase tracking-widest mb-3">Full Breakdown</h5>
+                                      <div className="grid grid-cols-3 gap-2 mb-4">
+                                        <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
+                                          <div className={`text-sm font-black leading-tight ${recipe.sodiumHigh ? 'text-amber-500' : 'text-ink'}`}>{recipe.sodium}mg</div>
+                                          <div className="text-[8px] font-bold text-ink-soft uppercase mt-0.5">Sodium</div>
+                                        </div>
+                                        <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
+                                          <div className="text-sm font-black text-ink leading-tight">{recipe.iron}mg</div>
+                                          <div className="text-[8px] font-bold text-ink-soft uppercase mt-0.5">Iron</div>
+                                        </div>
+                                        <div className="bg-white rounded-xl p-3 border border-surface-line text-center">
+                                          <div className="text-sm font-black text-ink leading-tight">{recipe.calcium}mg</div>
+                                          <div className="text-[8px] font-bold text-ink-soft uppercase mt-0.5">Calcium</div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    
                                     {recipe.steps.map((stepStr, sIdx) => (
                                       <div key={sIdx} className="flex gap-3 bg-white p-4 rounded-2xl shadow-sm border border-surface-line">
                                         <div className="w-6 h-6 rounded-full bg-brand-100 text-brand flex items-center justify-center text-[10px] font-bold flex-shrink-0">

@@ -756,6 +756,7 @@ RULES:
 - If the image shows no identifiable ingredients, return { "error": "no_ingredients" }
 - Recipes must be practical — 30 minutes or less unless stated.
 - Always return valid JSON only. No markdown, no preamble.
+- For UI demo purposes, ensure one recipe has matchStatus "perfect", one has "warn" (with sodiumHigh: true), and one has "dim" (e.g. vegan: false for a vegan user).
 
 OUTPUT FORMAT:
 {
@@ -763,16 +764,19 @@ OUTPUT FORMAT:
   "recipes": [
     {
       "name": "Spinach & Feta Omelette",
-      "prep_time_min": 10,
-      "servings": 1,
-      "difficulty": "easy",
-      "macros_per_serving": {
-        "calories": 340,
-        "protein_g": 24,
-        "fat_g": 22,
-        "carbs_g": 4,
-        "fiber_g": 1
-      },
+      "description": "A quick and healthy high-protein breakfast.",
+      "calories": 340,
+      "protein": 24,
+      "fat": 22,
+      "fiber": 1,
+      "sodium": 450,
+      "iron": 3,
+      "calcium": 250,
+      "tags": ["High Protein", "Quick"],
+      "veg": true,
+      "vegan": false,
+      "sodiumHigh": false,
+      "matchStatus": "perfect",
       "ingredients_used": ["3 eggs", "50g spinach", "30g feta", "1 tsp olive oil", "1 garlic clove"],
       "steps": [
         "Whisk eggs with salt and pepper.",
