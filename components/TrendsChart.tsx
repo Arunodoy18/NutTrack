@@ -161,7 +161,7 @@ export default function TrendsChart({ initialRange = 30 }: TrendsChartProps) {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="absolute top-full left-0 mt-2 w-48 bg-white border border-surface-line rounded-2xl shadow-xl overflow-hidden"
+                className="absolute z-50 top-full left-0 mt-2 w-48 bg-white border border-surface-line rounded-2xl shadow-xl overflow-hidden"
               >
                 <button 
                   onClick={() => { setRange(7); setOpenDropdown(null); }}
@@ -199,7 +199,7 @@ export default function TrendsChart({ initialRange = 30 }: TrendsChartProps) {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full right-0 mt-2 w-40 bg-white border border-surface-line rounded-2xl shadow-xl p-2 flex flex-col gap-1"
+                  className="absolute z-50 top-full right-0 mt-2 w-40 bg-white border border-surface-line rounded-2xl shadow-xl p-2 flex flex-col gap-1"
                 >
                   {Object.entries(TREND_METRICS).filter(([_, m]) => m.category === 'Macros').map(([key, m]) => (
                     <button
@@ -230,7 +230,7 @@ export default function TrendsChart({ initialRange = 30 }: TrendsChartProps) {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="absolute top-full right-0 mt-2 w-40 bg-white border border-surface-line rounded-2xl shadow-xl p-2 flex flex-col gap-1"
+                  className="absolute z-50 top-full right-0 mt-2 w-40 bg-white border border-surface-line rounded-2xl shadow-xl p-2 flex flex-col gap-1"
                 >
                   {Object.entries(TREND_METRICS).filter(([_, m]) => m.category === 'Micros').map(([key, m]) => (
                     <button
