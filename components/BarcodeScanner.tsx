@@ -21,7 +21,6 @@ export default function BarcodeScanner({ onScanSuccess, onScanError }: BarcodeSc
       },
       (decodedText) => {
         if (isMounted) {
-          scanner.stop().catch(() => {});
           onScanSuccess(decodedText);
         }
       },
@@ -35,9 +34,15 @@ export default function BarcodeScanner({ onScanSuccess, onScanError }: BarcodeSc
     return () => {
       isMounted = false;
       try {
-        scanner.stop().then(() => scanner.clear()).catch(() => scanner.clear());
+        // html5-qrcode throws if stop is called while not scanning, or if called twice.
+        // We use a safe wrapper to stop and clear.
+        scanner.stop().then(() => {
+          scanner.clear();
+        }).catch(() => {
+          try { scanner.clear(); } catch(e) {}
+        });
       } catch (e) {
-        scanner.clear();
+        try { scanner.clear(); } catch(e2) {}
       }
     };
   }, [onScanSuccess, onScanError]);
