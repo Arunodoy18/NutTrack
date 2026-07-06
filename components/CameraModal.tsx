@@ -6,7 +6,15 @@ import { Camera, Upload, X, Mic, MicOff, Barcode, Maximize, User, RefreshCw, Ale
 import ComingSoon from "@/components/ComingSoon";
 import dynamic from "next/dynamic";
 
-const BarcodeScanner = dynamic(() => import('./BarcodeScanner'), { ssr: false });
+const BarcodeScanner = dynamic(() => import('./BarcodeScanner'), { 
+  ssr: false,
+  loading: () => (
+    <div className="flex flex-col items-center justify-center w-full h-full text-white/50">
+      <RefreshCw className="w-8 h-8 mb-4 animate-spin" />
+      <p className="text-xs font-medium tracking-wide">Connecting to camera hardware...</p>
+    </div>
+  )
+});
 import { useSpeech } from "@/components/useSpeech";
 import { 
   analyzeMealImageAction, 
@@ -54,6 +62,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
   const [analysisError, setAnalysisError] = useState<string | null>(null);
   const [activeAnalysis, setActiveAnalysis] = useState<any>(null);
   const [scanningMsgIdx, setScanningMsgIdx] = useState(0);
+  const [analyzeMsg, setAnalyzeMsg] = useState("");
 
   const [customMealName, setCustomMealName] = useState("");
   const [isSavingMeal, setIsSavingMeal] = useState(false);
@@ -111,14 +120,19 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // INSTANT UI UPDATE: Use a blob URL so the user immediately sees the image.
       const url = URL.createObjectURL(file);
       setSelectedImage(url);
       
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBase64Image(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // DEFER HEAVY WORK: Base64 encoding blocks the main UI thread.
+      // Moving it to a setTimeout lets React render the image first, eliminating the lag.
+      setTimeout(() => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setBase64Image(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }, 50);
     }
   };
 
