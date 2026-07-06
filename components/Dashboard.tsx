@@ -86,6 +86,7 @@ export interface DashboardProps {
   onRefreshClick?: () => void;
   activeStreak?: number;
   totalMealsCount?: number;
+  weeklyData?: any[];
 }
 
 export default function Dashboard({
@@ -98,6 +99,7 @@ export default function Dashboard({
   onRefreshClick,
   activeStreak = 1,
   totalMealsCount = 0,
+  weeklyData = [],
 }: DashboardProps) {
 
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
@@ -289,16 +291,8 @@ export default function Dashboard({
     Fiber: dailyGoals.fiber,
   }[activeMetric];
 
-  // Map 7-day reports
-  const weeklyData = [
-    { name: 'Mon', Calories: 1850, Protein: 75, Fats: 58, Fiber: 24 },
-    { name: 'Tue', Calories: 2100, Protein: 88, Fats: 68, Fiber: 28 },
-    { name: 'Wed', Calories: 1720, Protein: 65, Fats: 50, Fiber: 20 },
-    { name: 'Thu', Calories: 1950, Protein: 82, Fats: 62, Fiber: 32 },
-    { name: 'Fri', Calories: 2200, Protein: 95, Fats: 72, Fiber: 31 },
-    { name: 'Sat', Calories: 1650, Protein: 70, Fats: 55, Fiber: 22 },
-    { name: 'Sun', Calories: todayTotals.calories || 1800, Protein: todayTotals.protein || 80, Fats: todayTotals.fat || 65, Fiber: todayTotals.fiber || 26 }
-  ];
+  // Map 7-day reports  // Fallback to empty array if no weekly data provided
+  const chartData = weeklyData && weeklyData.length > 0 ? weeklyData : [];
 
   // Math percentages
   const calPercent = Math.min(100, Math.round((todayTotals.calories / dailyGoals.calories) * 100)) || 0;
@@ -590,7 +584,7 @@ export default function Dashboard({
           {/* Responsive Chart Container */}
           <div className="h-56 w-full">
             <WeeklyChart 
-              weeklyData={weeklyData} 
+              weeklyData={chartData} 
               activeMetric={activeMetric} 
               targetValue={targetValue} 
               metricUnit={metricUnit} 

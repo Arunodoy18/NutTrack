@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Settings, Camera, X, Upload, Palette } from 'lucide-react';
+import { Settings, Camera, X, Upload, Palette, FileText, Shield } from 'lucide-react';
+import Link from 'next/link';
 
 export default function ProfileHeaderClient({
   name,
@@ -154,6 +155,22 @@ export default function ProfileHeaderClient({
                 </span>
                 <span className="text-xs font-bold text-brand">Edit</span>
               </button>
+
+              {/* Legal Links */}
+              <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-surface-line">
+                <Link href="/privacy" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-surface-muted transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-bold text-ink">Privacy Policy</span>
+                </Link>
+                <Link href="/terms" className="flex items-center gap-3 p-3 rounded-2xl hover:bg-surface-muted transition-colors">
+                  <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <span className="text-sm font-bold text-ink">Terms of Service</span>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
