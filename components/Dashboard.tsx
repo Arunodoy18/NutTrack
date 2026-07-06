@@ -106,18 +106,65 @@ export default function Dashboard({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Carbs' | 'Fiber'>('Calories');
 
-  // === OPTIMISTIC UI STATE ===
-  // Local copies of server data that update INSTANTLY on meal save
-  const [liveTotals, setLiveTotals] = useState(serverTotals);
-  const [liveMeals, setLiveMeals] = useState<MealLogData[]>(initialMeals);
-  const [liveWeeklyData, setLiveWeeklyData] = useState<any[]>(serverWeeklyData);
-  const [liveMealCount, setLiveMealCount] = useState(totalMealsCount);
+  // === NATIVE-APP CACHING LAYER ===
+  // On first render, hydrate from localStorage (instant — no server wait)
+  // Server data silently replaces cache when it arrives
+  const CACHE_KEY = `db_dash_${userId}`;
 
-  // Sync local state when server props change (e.g. after background router.refresh())
-  React.useEffect(() => { setLiveTotals(serverTotals); }, [serverTotals.calories, serverTotals.protein, serverTotals.fat, serverTotals.carbs, serverTotals.fiber]);
-  React.useEffect(() => { setLiveMeals(initialMeals); }, [initialMeals]);
-  React.useEffect(() => { setLiveWeeklyData(serverWeeklyData); }, [serverWeeklyData]);
-  React.useEffect(() => { setLiveMealCount(totalMealsCount); }, [totalMealsCount]);
+  const getCache = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      // Only use cache from today (stale data from yesterday is misleading)
+      if (parsed._date === new Date().toDateString()) return parsed;
+      return null;
+    } catch { return null; }
+  };
+
+  const cache = getCache();
+
+  const [liveTotals, setLiveTotals] = useState(cache?.totals || serverTotals);
+  const [liveMeals, setLiveMeals] = useState<MealLogData[]>(cache?.meals || initialMeals);
+  const [liveWeeklyData, setLiveWeeklyData] = useState<any[]>(cache?.weekly || serverWeeklyData);
+  const [liveMealCount, setLiveMealCount] = useState(cache?.mealCount || totalMealsCount);
+
+  // When server props arrive, update live state AND persist to cache
+  React.useEffect(() => {
+    setLiveTotals(serverTotals);
+    setLiveMeals(initialMeals);
+    setLiveWeeklyData(serverWeeklyData);
+    setLiveMealCount(totalMealsCount);
+
+    // Persist to localStorage for instant load next time
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          _date: new Date().toDateString(),
+          totals: serverTotals,
+          meals: initialMeals,
+          weekly: serverWeeklyData,
+          mealCount: totalMealsCount,
+        }));
+      } catch {}
+    }
+  }, [serverTotals.calories, serverTotals.protein, serverTotals.fat, serverTotals.carbs, serverTotals.fiber, initialMeals, serverWeeklyData, totalMealsCount]);
+
+  // Also persist after optimistic updates (so even mid-session cache is fresh)
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          _date: new Date().toDateString(),
+          totals: liveTotals,
+          meals: liveMeals,
+          weekly: liveWeeklyData,
+          mealCount: liveMealCount,
+        }));
+      } catch {}
+    }
+  }, [liveTotals, liveMeals, liveWeeklyData, liveMealCount]);
 
   // Alias for compatibility with existing template references
   const todayTotals = liveTotals;
