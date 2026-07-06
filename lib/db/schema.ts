@@ -100,6 +100,9 @@ export const meals = pgTable("meals", {
   totalIron: integer("total_iron").notNull().default(0),
   totalCalcium: integer("total_calcium").notNull().default(0),
   totalVitaminC: integer("total_vitamin_c").notNull().default(0),
+  totalPotassium: integer("total_potassium").notNull().default(0),
+  totalVitaminE: integer("total_vitamin_e").notNull().default(0),
+  totalVitaminB12: integer("total_vitamin_b12").notNull().default(0),
   summary: text("summary"),
   imagePath: text("image_path"),
 });
@@ -119,6 +122,9 @@ export const mealItems = pgTable("meal_items", {
   iron: integer("iron").notNull().default(0),
   calcium: integer("calcium").notNull().default(0),
   vitaminC: integer("vitamin_c").notNull().default(0),
+  potassium: integer("potassium").notNull().default(0),
+  vitaminE: integer("vitamin_e").notNull().default(0),
+  vitaminB12: integer("vitamin_b12").notNull().default(0),
   isManual: boolean("is_manual").notNull().default(false),
   estimatedQuantity: text("estimated_quantity").default("100g"),
 });
@@ -137,6 +143,9 @@ export const dailyGoals = pgTable("daily_goals", {
   iron: integer("iron").notNull().default(18),
   calcium: integer("calcium").notNull().default(1000),
   vitaminC: integer("vitamin_c").notNull().default(90),
+  potassium: integer("potassium").notNull().default(4700),
+  vitaminE: integer("vitamin_e").notNull().default(15),
+  vitaminB12: integer("vitamin_b12").notNull().default(2), // 2.4mcg is standard, rounded to 2 or 3. Let's use 2 as default int, or 3. Let's use 2.
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

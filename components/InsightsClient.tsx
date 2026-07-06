@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Flame, TrendingUp, Zap, Lock, Loader2 } from 'lucide-react';
+import TrendsChart from './TrendsChart';
 
 /* ─── types ─── */
 interface AnalyticsProfile {
@@ -71,54 +72,7 @@ export default function InsightsClient({
     }
   };
 
-  /* ─── trends calculations ─── */
-  let targetValue = currentGoals.calories;
-  let unit = 'kcal';
-  let avgValue = 0;
-  let bestDay = { day: '-', value: 0 };
-  let onTargetDays = 0;
-  let maxChartValue = 1; 
-
-  dailyTotals.forEach(d => {
-    let val = 0;
-    if (activeTab === 'Calories') val = d.calories;
-    else if (activeTab === 'Protein') val = d.protein;
-    else if (activeTab === 'Fat') val = d.fat;
-    else if (activeTab === 'Carbs') val = d.carbs || 0;
-    else if (activeTab === 'Fiber') val = d.fiber;
-
-    avgValue += val;
-    if (val > bestDay.value) {
-      bestDay = { day: d.day, value: val };
-    }
-
-    if (activeTab === 'Calories') {
-      targetValue = currentGoals.calories;
-      unit = 'kcal';
-      if (val >= targetValue * 0.8 && val <= targetValue * 1.2) onTargetDays++;
-    } else if (activeTab === 'Protein') {
-      targetValue = currentGoals.protein;
-      unit = 'g';
-      if (val >= targetValue * 0.9) onTargetDays++;
-    } else if (activeTab === 'Fat') {
-      targetValue = currentGoals.fat;
-      unit = 'g';
-      if (val >= targetValue * 0.9) onTargetDays++;
-    } else if (activeTab === 'Carbs') {
-      targetValue = currentGoals.carbs || 250;
-      unit = 'g';
-      if (val >= targetValue * 0.9) onTargetDays++;
-    } else if (activeTab === 'Fiber') {
-      targetValue = currentGoals.fiber;
-      unit = 'g';
-      if (val >= targetValue * 0.9) onTargetDays++;
-    }
-
-    if (val > maxChartValue) maxChartValue = val;
-  });
-
-  if (targetValue > maxChartValue) maxChartValue = targetValue;
-  avgValue = Math.round(avgValue / 7);
+  // Removed old trend calculations as TrendsChart handles it now.
 
   /* ─── Shorthand for server-computed analytics ─── */
   const { bmi, bmr, tdee, bodyFatPercent, ffm, leanMuscleMass, metabolicHealth, macros, micros } = analyticsProfile;
@@ -166,84 +120,10 @@ export default function InsightsClient({
       {/* ─── YOUR TRENDS SECTION ─── */}
       {section === 'trends' && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-          {/* Segmented Control */}
-          <div className="flex bg-white rounded-full p-1 border border-surface-line shadow-sm mb-8">
-            {['Calories', 'Protein', 'Fat', 'Carbs', 'Fiber'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`flex-1 text-center text-xs font-bold py-2.5 rounded-full transition-all ${
-                  activeTab === tab 
-                  ? 'bg-surface-muted text-ink shadow-sm border border-surface-line/50' 
-                  : 'text-ink-soft hover:text-ink hover:bg-surface/50'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          {/* Main Chart Card */}
-          <div className="bg-white rounded-[32px] p-6 shadow-sm border border-surface-line mb-4 relative">
-            <div className="flex justify-between items-start mb-8">
-              <div>
-                <div className="text-4xl font-black text-ink leading-none">{avgValue}</div>
-                <div className="text-[9px] font-bold tracking-widest text-ink-soft uppercase mt-1">Daily Avg {unit}</div>
-              </div>
-              <div className="text-xs font-bold text-ink-soft flex items-center gap-1.5">
-                <span className="w-3 h-0.5 bg-[#f08a5d] rounded-full"></span>
-                <span className="w-3 h-0.5 bg-[#f08a5d] rounded-full -ml-0.5"></span>
-                Target {targetValue}
-              </div>
-            </div>
-
-            {/* Chart */}
-            <div className="h-48 w-full relative flex items-end justify-between px-2 pt-4">
-              <div 
-                className="absolute left-0 right-0 border-t border-dashed border-[#f08a5d]/60 z-0 transition-all duration-300"
-                style={{ bottom: `${(targetValue / maxChartValue) * 100}%` }}
-              ></div>
-              
-              {dailyTotals.map((d, i) => {
-                let val = 0;
-                if (activeTab === 'Calories') val = d.calories;
-                else if (activeTab === 'Protein') val = d.protein;
-                else if (activeTab === 'Fat') val = d.fat;
-                else if (activeTab === 'Carbs') val = d.carbs || 0;
-                else if (activeTab === 'Fiber') val = d.fiber;
-
-                const heightPct = Math.max(5, (val / maxChartValue) * 100);
-                const isToday = i === 6;
-
-                return (
-                  <div key={i} className="relative z-10 w-10 h-full flex flex-col items-center justify-end gap-2 group cursor-pointer">
-                    {val > 0 && (
-                      <span className="text-[8px] font-bold text-ink-soft mb-1 transition-opacity opacity-0 group-hover:opacity-100 absolute -top-4">{val}</span>
-                    )}
-                    <div 
-                      className={`w-8 rounded-t-lg transition-all duration-300 ease-out ${isToday ? 'bg-brand shadow-[0_4px_12px_rgba(252,76,2,0.3)]' : 'bg-[#d1d5db] group-hover:bg-[#a1a5ab]'}`} 
-                      style={{ height: `${heightPct}%` }}
-                    ></div>
-                    <span className={`text-[10px] font-bold mt-1 ${isToday ? 'text-brand' : 'text-ink-soft'}`}>{d.day}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Two Mini Cards */}
-          <div className="flex gap-4 mb-4">
-            <div className="flex-1 bg-white rounded-[24px] p-5 shadow-sm border border-surface-line transition-all hover:-translate-y-1 hover:shadow-md">
-              <div className="text-[9px] font-bold tracking-widest text-ink-soft uppercase mb-2">Best Day</div>
-              <div className="text-xl font-black text-ink mb-0.5">{bestDay.day}</div>
-              <div className="text-xs font-medium text-ink-soft">{bestDay.value} {unit}</div>
-            </div>
-            <div className="flex-1 bg-white rounded-[24px] p-5 shadow-sm border border-surface-line transition-all hover:-translate-y-1 hover:shadow-md">
-              <div className="text-[9px] font-bold tracking-widest text-ink-soft uppercase mb-2">On-Target Days</div>
-              <div className="text-xl font-black text-emerald-500 mb-0.5 tracking-tight">{onTargetDays}<span className="text-emerald-500/50">/7</span></div>
-              <div className="text-xs font-medium text-ink-soft">consistency</div>
-            </div>
-          </div>
+          <TrendsChart initialRange={30} />
+          
+          {/* Spacer before Streak Card */}
+          <div className="h-6"></div>
 
           {/* Streak Card */}
           <div className="bg-[#fff1ec] rounded-[24px] p-5 border border-[#ffdfd4] flex items-center gap-4 shadow-sm relative overflow-hidden mb-10 transition-all hover:-translate-y-1 hover:shadow-md cursor-default">

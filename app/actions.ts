@@ -59,6 +59,9 @@ export async function saveDailyGoalsAction(
     iron?: number;
     calcium?: number;
     vitaminC?: number;
+    potassium?: number;
+    vitaminE?: number;
+    vitaminB12?: number;
   }
 ) {
   try {
@@ -76,6 +79,9 @@ export async function saveDailyGoalsAction(
     const safeIron = Math.min(Math.max(0, targetValues.iron ?? 18), 100);
     const safeCalcium = Math.min(Math.max(0, targetValues.calcium ?? 1000), 5000);
     const safeVitC = Math.min(Math.max(0, targetValues.vitaminC ?? 90), 2000);
+    const safePotassium = Math.min(Math.max(0, targetValues.potassium ?? 4700), 15000);
+    const safeVitE = Math.min(Math.max(0, targetValues.vitaminE ?? 15), 1000);
+    const safeVitB12 = Math.min(Math.max(0, targetValues.vitaminB12 ?? 2), 1000);
 
     await db.insert(dailyGoals).values({
       userId: userId,
@@ -87,6 +93,9 @@ export async function saveDailyGoalsAction(
       iron: safeIron,
       calcium: safeCalcium,
       vitaminC: safeVitC,
+      potassium: safePotassium,
+      vitaminE: safeVitE,
+      vitaminB12: safeVitB12,
     });
     revalidatePath("/dashboard");
     return { success: true };
@@ -109,6 +118,9 @@ export async function saveMealAction(
     totalIron?: number;
     totalCalcium?: number;
     totalVitaminC?: number;
+    totalPotassium?: number;
+    totalVitaminE?: number;
+    totalVitaminB12?: number;
     imageUrl?: string;
     items: {
       name: string;
@@ -121,6 +133,9 @@ export async function saveMealAction(
       iron?: number;
       calcium?: number;
       vitaminC?: number;
+      potassium?: number;
+      vitaminE?: number;
+      vitaminB12?: number;
       estimatedQuantity: string;
     }[];
   }
@@ -141,6 +156,9 @@ export async function saveMealAction(
     const safeTotalIron = Math.min(Math.max(0, mealData.totalIron || 0), 100);
     const safeTotalCalc = Math.min(Math.max(0, mealData.totalCalcium || 0), 5000);
     const safeTotalVitC = Math.min(Math.max(0, mealData.totalVitaminC || 0), 2000);
+    const safeTotalPotassium = Math.min(Math.max(0, mealData.totalPotassium || 0), 15000);
+    const safeTotalVitE = Math.min(Math.max(0, mealData.totalVitaminE || 0), 1000);
+    const safeTotalVitB12 = Math.min(Math.max(0, mealData.totalVitaminB12 || 0), 1000);
 
     const [insertedMeal] = await db.insert(meals).values({
       userId: userId,
@@ -154,6 +172,9 @@ export async function saveMealAction(
       totalIron: safeTotalIron,
       totalCalcium: safeTotalCalc,
       totalVitaminC: safeTotalVitC,
+      totalPotassium: safeTotalPotassium,
+      totalVitaminE: safeTotalVitE,
+      totalVitaminB12: safeTotalVitB12,
       imagePath: mealData.imageUrl,
       timestamp: new Date(),
     }).returning();
@@ -170,6 +191,9 @@ export async function saveMealAction(
       const safeItemIron = Math.min(Math.max(0, item.iron || 0), 100);
       const safeItemCalc = Math.min(Math.max(0, item.calcium || 0), 5000);
       const safeItemVitC = Math.min(Math.max(0, item.vitaminC || 0), 2000);
+      const safeItemPotassium = Math.min(Math.max(0, item.potassium || 0), 5000);
+      const safeItemVitE = Math.min(Math.max(0, item.vitaminE || 0), 1000);
+      const safeItemVitB12 = Math.min(Math.max(0, item.vitaminB12 || 0), 1000);
 
       await db.insert(mealItems).values({
         mealId: insertedMeal.id,
@@ -183,6 +207,9 @@ export async function saveMealAction(
         iron: safeItemIron,
         calcium: safeItemCalc,
         vitaminC: safeItemVitC,
+        potassium: safeItemPotassium,
+        vitaminE: safeItemVitE,
+        vitaminB12: safeItemVitB12,
         estimatedQuantity: (item.estimatedQuantity || "1 serving").substring(0, 50),
       });
     }
@@ -355,7 +382,10 @@ OUTPUT FORMAT (strict JSON):
     "sodium_mg": 110,
     "iron_mg": 1.5,
     "calcium_mg": 22,
-    "vit_c_mg": 0
+    "vit_c_mg": 0,
+    "potassium_mg": 350,
+    "vit_e_mg": 1.2,
+    "vit_b12_mcg": 0.5
   },
   "notes": "Short summary of the meal."
 }`;
@@ -419,11 +449,14 @@ OUTPUT FORMAT (strict JSON):
       iron: Math.round(food.iron_mg || 0),
       calcium: Math.round(food.calcium_mg || 0),
       vitaminC: Math.round(food.vit_c_mg || 0),
+      potassium: Math.round(food.potassium_mg || 0),
+      vitaminE: Math.round(food.vit_e_mg || 0),
+      vitaminB12: Math.round(food.vit_b12_mcg || 0),
       estimatedQuantity: `${food.weight_g || 100}g`,
       isManual: false
     }));
 
-    const totals = parsed.totals || { calories: 0, protein_g: 0, fat_g: 0, carbs_g: 0, fiber_g: 0, sodium_mg: 0, iron_mg: 0, calcium_mg: 0, vit_c_mg: 0 };
+    const totals = parsed.totals || { calories: 0, protein_g: 0, fat_g: 0, carbs_g: 0, fiber_g: 0, sodium_mg: 0, iron_mg: 0, calcium_mg: 0, vit_c_mg: 0, potassium_mg: 0, vit_e_mg: 0, vit_b12_mcg: 0 };
 
     return {
       success: true,
@@ -438,6 +471,9 @@ OUTPUT FORMAT (strict JSON):
         totalIron: Math.round(totals.iron_mg || items.reduce((acc: number, i: any) => acc + i.iron, 0)),
         totalCalcium: Math.round(totals.calcium_mg || items.reduce((acc: number, i: any) => acc + i.calcium, 0)),
         totalVitaminC: Math.round(totals.vit_c_mg || items.reduce((acc: number, i: any) => acc + i.vitaminC, 0)),
+        totalPotassium: Math.round(totals.potassium_mg || items.reduce((acc: number, i: any) => acc + i.potassium, 0)),
+        totalVitaminE: Math.round(totals.vit_e_mg || items.reduce((acc: number, i: any) => acc + i.vitaminE, 0)),
+        totalVitaminB12: Math.round(totals.vit_b12_mcg || items.reduce((acc: number, i: any) => acc + i.vitaminB12, 0)),
         summary: parsed.notes || `AI Scanner identified ${items.length} food items.`,
         items
       }
@@ -466,7 +502,7 @@ RULES:
 - If a quantity is ambiguous, use the most conservative common serving size and flag it.
 - Handle compound foods: "butter chicken with naan" = log both items separately.
 - If input contains no recognizable food, return { "error": "not_food", "message": "good try buddy , try better" }
-- Extract the following micronutrients: sodium (mg), iron (mg), calcium (mg), and vitaminC (mg).
+- Extract the following micronutrients: sodium (mg), iron (mg), calcium (mg), vitaminC (mg), potassium (mg), vitaminE (mg), and vitaminB12 (mcg).
 - Return valid JSON only.
 
 Text: "${text}"
@@ -477,11 +513,11 @@ OUTPUT FORMAT:
 {
   "meal_name": "Scrambled eggs with toast",
   "items": [
-    { "name": "Scrambled eggs", "quantity": "2 large eggs", "weight_g": 100, "calories": 182, "protein_g": 12, "fat_g": 14, "carbs_g": 1.4, "fiber_g": 0, "sodium_mg": 280, "iron_mg": 1.8, "calcium_mg": 56, "vitaminC_mg": 0 },
-    { "name": "Whole wheat toast", "quantity": "1 slice", "weight_g": 28, "calories": 69, "protein_g": 3.6, "fat_g": 1, "carbs_g": 12, "fiber_g": 1.9, "sodium_mg": 132, "iron_mg": 0.7, "calcium_mg": 20, "vitaminC_mg": 0 },
-    { "name": "Butter", "quantity": "1 tsp", "weight_g": 5, "calories": 36, "protein_g": 0, "fat_g": 4, "carbs_g": 0, "fiber_g": 0, "sodium_mg": 32, "iron_mg": 0, "calcium_mg": 1, "vitaminC_mg": 0 }
+    { "name": "Scrambled eggs", "quantity": "2 large eggs", "weight_g": 100, "calories": 182, "protein_g": 12, "fat_g": 14, "carbs_g": 1.4, "fiber_g": 0, "sodium_mg": 280, "iron_mg": 1.8, "calcium_mg": 56, "vitaminC_mg": 0, "potassium_mg": 138, "vitaminE_mg": 1.1, "vitaminB12_mcg": 0.9 },
+    { "name": "Whole wheat toast", "quantity": "1 slice", "weight_g": 28, "calories": 69, "protein_g": 3.6, "fat_g": 1, "carbs_g": 12, "fiber_g": 1.9, "sodium_mg": 132, "iron_mg": 0.7, "calcium_mg": 20, "vitaminC_mg": 0, "potassium_mg": 71, "vitaminE_mg": 0.2, "vitaminB12_mcg": 0 },
+    { "name": "Butter", "quantity": "1 tsp", "weight_g": 5, "calories": 36, "protein_g": 0, "fat_g": 4, "carbs_g": 0, "fiber_g": 0, "sodium_mg": 32, "iron_mg": 0, "calcium_mg": 1, "vitaminC_mg": 0, "potassium_mg": 1, "vitaminE_mg": 0.1, "vitaminB12_mcg": 0.01 }
   ],
-  "totals": { "calories": 287, "protein_g": 15.6, "fat_g": 19, "carbs_g": 13.4, "fiber_g": 1.9, "sodium_mg": 444, "iron_mg": 2.5, "calcium_mg": 77, "vitaminC_mg": 0 },
+  "totals": { "calories": 287, "protein_g": 15.6, "fat_g": 19, "carbs_g": 13.4, "fiber_g": 1.9, "sodium_mg": 444, "iron_mg": 2.5, "calcium_mg": 77, "vitaminC_mg": 0, "potassium_mg": 210, "vitaminE_mg": 1.4, "vitaminB12_mcg": 0.91 },
   "assumptions": ["Used 2 large eggs as stated", "1 tsp butter assumed for toast"]
 }`;
 
@@ -528,11 +564,14 @@ OUTPUT FORMAT:
       iron: Math.round(food.iron_mg || 0),
       calcium: Math.round(food.calcium_mg || 0),
       vitaminC: Math.round(food.vitaminC_mg || 0),
+      potassium: Math.round(food.potassium_mg || 0),
+      vitaminE: Math.round(food.vitaminE_mg || 0),
+      vitaminB12: Math.round(food.vitaminB12_mcg || 0),
       estimatedQuantity: food.quantity ? `${food.quantity} (${food.weight_g || 100}g)` : `${food.weight_g || 100}g`,
       isManual: false
     }));
 
-    const totals = parsed.totals || { calories: 0, protein_g: 0, fat_g: 0, carbs_g: 0, fiber_g: 0, sodium_mg: 0, iron_mg: 0, calcium_mg: 0, vitaminC_mg: 0 };
+    const totals = parsed.totals || { calories: 0, protein_g: 0, fat_g: 0, carbs_g: 0, fiber_g: 0, sodium_mg: 0, iron_mg: 0, calcium_mg: 0, vitaminC_mg: 0, potassium_mg: 0, vitaminE_mg: 0, vitaminB12_mcg: 0 };
 
     return {
       success: true,
@@ -547,6 +586,9 @@ OUTPUT FORMAT:
         totalIron: Math.round(totals.iron_mg || items.reduce((acc: number, i: any) => acc + i.iron, 0)),
         totalCalcium: Math.round(totals.calcium_mg || items.reduce((acc: number, i: any) => acc + i.calcium, 0)),
         totalVitaminC: Math.round(totals.vitaminC_mg || items.reduce((acc: number, i: any) => acc + i.vitaminC, 0)),
+        totalPotassium: Math.round(totals.potassium_mg || items.reduce((acc: number, i: any) => acc + i.potassium, 0)),
+        totalVitaminE: Math.round(totals.vitaminE_mg || items.reduce((acc: number, i: any) => acc + i.vitaminE, 0)),
+        totalVitaminB12: Math.round(totals.vitaminB12_mcg || items.reduce((acc: number, i: any) => acc + i.vitaminB12, 0)),
         summary: parsed.assumptions?.length ? parsed.assumptions.join(" ") : `AI parsed voice input and identified ${items.length} food items.`,
         items
       }

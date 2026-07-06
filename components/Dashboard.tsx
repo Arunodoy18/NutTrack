@@ -652,40 +652,7 @@ export default function Dashboard({
         </div>
 
         {/* Weekly Macro Performance Chart (Recharts) */}
-        <div className="bg-white rounded-[32px] border border-surface-line p-6 shadow-sm relative">
-          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h3 className="font-display text-lg font-bold text-ink">Weekly Performance</h3>
-              <p className="text-xs text-ink-soft mt-0.5">Visualize your daily macro levels relative to target benchmarks.</p>
-            </div>
-            <div className="flex rounded-xl bg-surface-muted p-1 border border-surface-line w-full sm:w-auto overflow-x-auto custom-scrollbar">
-              {(['Calories', 'Protein', 'Fats', 'Carbs', 'Fiber'] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setActiveMetric(m)}
-                  className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap flex-1 sm:flex-none ${
-                    activeMetric === m
-                      ? 'bg-white text-ink shadow-sm border border-surface-line/50'
-                      : 'text-ink-soft hover:text-ink-soft'
-                  }`}
-                >
-                  {m}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Responsive Chart Container */}
-          <div className="h-56 w-full">
-            <WeeklyChart 
-              weeklyData={chartData} 
-              activeMetric={activeMetric} 
-              targetValue={targetValue} 
-              metricUnit={metricUnit} 
-              metricColor={metricColor} 
-            />
-          </div>
-        </div>
+        <TrendsChart initialRange={7} />
       </div>
 
       {/* Right Column: Historical / Today Meal Log Stream */}
