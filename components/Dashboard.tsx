@@ -76,6 +76,13 @@ export interface DashboardProps {
     fat: number;
     carbs: number;
     fiber: number;
+    sodium?: number;
+    potassium?: number;
+    iron?: number;
+    calcium?: number;
+    vitaminC?: number;
+    vitaminE?: number;
+    vitaminB12?: number;
   };
   todayTotals: {
     calories: number;
@@ -83,6 +90,13 @@ export interface DashboardProps {
     fat: number;
     carbs: number;
     fiber: number;
+    sodium?: number;
+    potassium?: number;
+    iron?: number;
+    calcium?: number;
+    vitaminC?: number;
+    vitaminE?: number;
+    vitaminB12?: number;
   };
   todayMeals: MealLogData[];
   onAddMealClick?: () => void;
@@ -95,8 +109,8 @@ export interface DashboardProps {
 export default function Dashboard({
   userId = "guest-user-uuid",
   isPremiumUser = false,
-  dailyGoals = { calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30 },
-  todayTotals: serverTotals = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 },
+  dailyGoals = { calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30, sodium: 2300, potassium: 4700, iron: 18, calcium: 1000, vitaminC: 90, vitaminE: 15, vitaminB12: 2 },
+  todayTotals: serverTotals = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0, potassium: 0, iron: 0, calcium: 0, vitaminC: 0, vitaminE: 0, vitaminB12: 0 },
   todayMeals: initialMeals = [],
   onAddMealClick,
   onRefreshClick,
@@ -619,7 +633,6 @@ export default function Dashboard({
         </div>
       </div>
 
-      </div>
       </div>
       </div>
 

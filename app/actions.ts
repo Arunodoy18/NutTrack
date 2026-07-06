@@ -1101,8 +1101,18 @@ export async function getDashboardDataAction(userId: string) {
         fat: acc.fat + meal.totalFat,
         carbs: acc.carbs + (meal.totalCarbs || 0),
         fiber: acc.fiber + meal.totalFiber,
+        sodium: acc.sodium + (meal.totalSodium || 0),
+        potassium: acc.potassium + (meal.totalPotassium || 0),
+        iron: acc.iron + (meal.totalIron || 0),
+        calcium: acc.calcium + (meal.totalCalcium || 0),
+        vitaminC: acc.vitaminC + (meal.totalVitaminC || 0),
+        vitaminE: acc.vitaminE + (meal.totalVitaminE || 0),
+        vitaminB12: acc.vitaminB12 + (meal.totalVitaminB12 || 0),
       };
-    }, { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 });
+    }, { 
+      calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0,
+      sodium: 0, potassium: 0, iron: 0, calcium: 0, vitaminC: 0, vitaminE: 0, vitaminB12: 0 
+    });
 
     // Weekly Chart
     const weeklyDataMap = new Map();
@@ -1140,6 +1150,13 @@ export async function getDashboardDataAction(userId: string) {
           fat: currentGoals.fat,
           carbs: currentGoals.carbs || 0,
           fiber: currentGoals.fiber || 0,
+          sodium: currentGoals.sodium || 2300,
+          potassium: currentGoals.potassium || 4700,
+          iron: currentGoals.iron || 18,
+          calcium: currentGoals.calcium || 1000,
+          vitaminC: currentGoals.vitaminC || 90,
+          vitaminE: currentGoals.vitaminE || 15,
+          vitaminB12: currentGoals.vitaminB12 || 2,
         },
         todayTotals,
         todayMeals: mappedTodayMeals,
