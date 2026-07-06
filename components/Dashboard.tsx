@@ -551,21 +551,19 @@ export default function Dashboard({
       </div>
 
       {/* Right Column: Historical / Today Meal Log Stream */}
-      <div className="lg:col-span-4 space-y-6">
-        <div className="bg-white rounded-[32px] border border-surface-line p-6 shadow-sm h-full flex flex-col justify-start min-h-[400px]">
-
-        {/* Today's Meals */}
+      <div className="lg:col-span-4 space-y-4">
+        {/* Today's Meals Header */}
         <div 
-          className="flex justify-between items-center mb-5 cursor-pointer hover:opacity-80 transition-opacity" 
+          className="flex justify-between items-center px-1 cursor-pointer hover:opacity-80 transition-opacity" 
           onClick={() => setIsAllMealsModalOpen(true)}
         >
-          <h2 className="text-xl font-black text-ink flex items-center gap-1">Today's meals <ChevronRight className="w-5 h-5 text-ink-soft" /></h2>
-          <span className="text-xs font-bold text-ink-soft bg-white border border-surface-line px-3 py-1 rounded-full shadow-sm">
+          <h2 className="text-xl font-black text-ink flex items-center gap-1">Today's meals <ChevronRight className="w-4 h-4 text-ink-soft mt-0.5" /></h2>
+          <span className="text-xs font-bold text-ink-soft bg-surface-line/50 px-3 py-1 rounded-full">
             {liveMeals.length} logged
           </span>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {liveMeals.length > 0 ? (
             liveMeals.map((meal: any) => {
               const { grade, color, textColor } = gradeMeal(meal);
@@ -573,9 +571,9 @@ export default function Dashboard({
               <div 
                 key={meal.id} 
                 onClick={() => setSelectedMealForDetails(meal)}
-                className="bg-white rounded-[24px] p-4 flex items-center gap-4 shadow-sm border border-surface-line hover:shadow-md transition-shadow cursor-pointer"
+                className="bg-white rounded-3xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               >
-                <div className="w-16 h-16 bg-surface-muted rounded-2xl flex items-center justify-center shrink-0 border border-surface-line overflow-hidden relative">
+                <div className="w-16 h-16 bg-surface-muted rounded-2xl flex items-center justify-center shrink-0 overflow-hidden relative">
                   <Image 
                     src={meal.imageUrl || "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop"} 
                     alt={meal.summary}
@@ -590,25 +588,26 @@ export default function Dashboard({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
+                    <div className="flex items-center">
+                      <span className="text-[9px] font-bold text-brand bg-brand-50 px-1.5 py-0.5 rounded-sm uppercase tracking-widest mr-2">{meal.mealSession || 'LUNCH'}</span>
+                      <span className="text-ink-soft text-xs">{mounted ? new Date(meal.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-right">
+                      <div className="font-black text-lg text-ink leading-none">{meal.totalCalories}</div>
+                      <div className="text-[9px] font-bold text-ink-faint uppercase tracking-widest mt-1">Kcal</div>
+                      <ChevronRight className="w-4 h-4 text-ink-soft ml-1" />
+                    </div>
+                  </div>
+                  <div className="mt-1.5">
                     <h3 className="font-bold text-ink text-base truncate">{meal.summary || "Meal Log"}</h3>
-                    <span className="text-ink-soft text-xs whitespace-nowrap ml-2">
-                      {mounted ? new Date(meal.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}
-                    </span>
+                    <div className="text-emerald-500 font-bold text-xs mt-0.5">{meal.totalProtein}g protein</div>
                   </div>
-                  <div className="flex items-center gap-2 mt-1 text-xs font-medium">
-                    <span className="text-[9px] font-bold text-ink-soft uppercase tracking-widest bg-surface-muted px-1.5 py-0.5 rounded-sm">{meal.mealSession || 'Snack'}</span>
-                    <span className="text-emerald-500 font-bold ml-1">{meal.totalProtein}g protein</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="font-black text-lg text-ink leading-none">{meal.totalCalories}</div>
-                  <div className="text-[9px] font-bold text-ink-faint uppercase tracking-widest mt-1">Kcal</div>
                 </div>
               </div>
             )})
           ) : (
-            <div className="text-center py-10 bg-surface-muted rounded-[24px] border border-surface-line border-dashed">
-              <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-surface-line text-ink-faint mx-auto mb-3 shadow-sm">
+            <div className="text-center py-10 bg-white rounded-3xl shadow-sm">
+              <div className="w-12 h-12 rounded-full bg-surface-muted flex items-center justify-center text-ink-faint mx-auto mb-3">
                 <Activity className="w-6 h-6" />
               </div>
               <p className="text-ink-soft font-bold text-sm">No meals logged yet today.</p>

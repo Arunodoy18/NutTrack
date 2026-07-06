@@ -53,9 +53,9 @@ export default function DailyCarousel({ todayTotals, dailyGoals }: DailyCarousel
   };
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="w-full flex flex-col items-stretch">
       {/* Carousel Container */}
-      <div className="w-full bg-surface-muted rounded-[32px] p-6 shadow-sm border border-surface-line overflow-hidden relative min-h-[160px]">
+      <div className="w-full bg-white rounded-3xl p-6 shadow-sm min-h-[160px] relative overflow-hidden">
         <AnimatePresence initial={false} custom={page === 1 ? 1 : -1} mode="popLayout">
           {page === 0 ? (
             <motion.div
@@ -78,7 +78,7 @@ export default function DailyCarousel({ todayTotals, dailyGoals }: DailyCarousel
                   <PieChart>
                     <Pie
                       data={totalMacros > 0 ? pieData : [{ name: 'Empty', value: 1, color: '#e5e7eb' }]}
-                      innerRadius={30}
+                      innerRadius={32}
                       outerRadius={50}
                       stroke="none"
                       dataKey="value"
@@ -210,11 +210,13 @@ export default function DailyCarousel({ todayTotals, dailyGoals }: DailyCarousel
         </AnimatePresence>
       </div>
 
-      {/* Pagination Dots */}
-      <div className="flex items-center gap-2 mt-4 cursor-pointer" onClick={() => setPage(page === 0 ? 1 : 0)}>
-        <div className={`w-1.5 h-1.5 rounded-full transition-all ${page === 0 ? 'bg-brand scale-125' : 'bg-surface-line'}`} />
-        <div className={`w-1.5 h-1.5 rounded-full transition-all ${page === 1 ? 'bg-brand scale-125' : 'bg-surface-line'}`} />
-        <span className="text-[9px] font-bold text-ink-soft uppercase tracking-widest ml-1">Swipe for {page === 0 ? 'Micros' : 'Macros'} &rarr;</span>
+      {/* Pagination / Swipe Hint */}
+      <div className="flex items-center justify-center gap-2 mt-4 pb-2">
+        <div className={`w-1.5 h-1.5 rounded-full ${page === 0 ? 'bg-brand' : 'bg-surface-line'}`} />
+        <div className={`w-1.5 h-1.5 rounded-full ${page === 1 ? 'bg-brand' : 'bg-surface-line'}`} />
+        <span className="text-[9px] font-bold text-ink-faint tracking-widest uppercase ml-2">
+          {page === 0 ? 'SWIPE FOR MICROS ->' : '<- SWIPE FOR MACROS'}
+        </span>
       </div>
     </div>
   );
