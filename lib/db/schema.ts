@@ -103,6 +103,7 @@ export const meals = pgTable("meals", {
   totalPotassium: integer("total_potassium").notNull().default(0),
   totalVitaminE: integer("total_vitamin_e").notNull().default(0),
   totalVitaminB12: integer("total_vitamin_b12").notNull().default(0),
+  mealSession: text("meal_session").default("Snack"),
   summary: text("summary"),
   imagePath: text("image_path"),
 });

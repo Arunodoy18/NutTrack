@@ -109,6 +109,7 @@ export async function saveMealAction(
   userId: string,
   mealData: {
     summary: string;
+    mealSession?: string;
     totalCalories: number;
     totalProtein: number;
     totalFat: number;
@@ -163,6 +164,7 @@ export async function saveMealAction(
     const [insertedMeal] = await db.insert(meals).values({
       userId: userId,
       summary: mealData.summary || "Meal",
+      mealSession: mealData.mealSession || "Snack",
       totalCalories: safeTotalCals,
       totalProtein: safeTotalProt,
       totalFat: safeTotalFat,
@@ -357,6 +359,7 @@ RULES:
 OUTPUT FORMAT (strict JSON):
 {
   "meal_name": "Short descriptive name of the whole meal",
+  "meal_session": "Breakfast", // Must be one of: Breakfast, Lunch, Dinner, Snack (infer from food type or default to Snack)
   "confidence": 0.87,
   "items": [
     {
@@ -462,6 +465,7 @@ OUTPUT FORMAT (strict JSON):
       success: true,
       analysis: {
         name: parsed.meal_name || "AI Dissected Meal",
+        mealSession: parsed.meal_session || "Snack",
         totalCalories: Math.round(totals.calories || items.reduce((acc: number, i: any) => acc + i.calories, 0)),
         totalProtein: Math.round(totals.protein_g || items.reduce((acc: number, i: any) => acc + i.protein, 0)),
         totalFat: Math.round(totals.fat_g || items.reduce((acc: number, i: any) => acc + i.fat, 0)),
@@ -503,6 +507,7 @@ RULES:
 - Handle compound foods: "butter chicken with naan" = log both items separately.
 - If input contains no recognizable food, return { "error": "not_food", "message": "good try buddy , try better" }
 - Extract the following micronutrients: sodium (mg), iron (mg), calcium (mg), vitaminC (mg), potassium (mg), vitaminE (mg), and vitaminB12 (mcg).
+- Infer meal session (Breakfast, Lunch, Dinner, Snack) from the text (e.g. "morning", "dinner", "evening") or food type, or default to Snack.
 - Return valid JSON only.
 
 Text: "${text}"
@@ -512,6 +517,7 @@ INPUT EXAMPLE: "I had two scrambled eggs and a slice of whole wheat toast with b
 OUTPUT FORMAT:
 {
   "meal_name": "Scrambled eggs with toast",
+  "meal_session": "Breakfast",
   "items": [
     { "name": "Scrambled eggs", "quantity": "2 large eggs", "weight_g": 100, "calories": 182, "protein_g": 12, "fat_g": 14, "carbs_g": 1.4, "fiber_g": 0, "sodium_mg": 280, "iron_mg": 1.8, "calcium_mg": 56, "vitaminC_mg": 0, "potassium_mg": 138, "vitaminE_mg": 1.1, "vitaminB12_mcg": 0.9 },
     { "name": "Whole wheat toast", "quantity": "1 slice", "weight_g": 28, "calories": 69, "protein_g": 3.6, "fat_g": 1, "carbs_g": 12, "fiber_g": 1.9, "sodium_mg": 132, "iron_mg": 0.7, "calcium_mg": 20, "vitaminC_mg": 0, "potassium_mg": 71, "vitaminE_mg": 0.2, "vitaminB12_mcg": 0 },
@@ -577,6 +583,7 @@ OUTPUT FORMAT:
       success: true,
       analysis: {
         name: parsed.meal_name || "Voice Logged Meal",
+        mealSession: parsed.meal_session || "Snack",
         totalCalories: Math.round(totals.calories || items.reduce((acc: number, i: any) => acc + i.calories, 0)),
         totalProtein: Math.round(totals.protein_g || items.reduce((acc: number, i: any) => acc + i.protein, 0)),
         totalFat: Math.round(totals.fat_g || items.reduce((acc: number, i: any) => acc + i.fat, 0)),

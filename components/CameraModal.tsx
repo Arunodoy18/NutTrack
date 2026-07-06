@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Webcam from 'react-webcam';
 import { Camera, Upload, X, Mic, MicOff, Barcode, Maximize, User, RefreshCw, AlertTriangle, Check, Sparkles } from 'lucide-react';
 import ComingSoon from "@/components/ComingSoon";
 import dynamic from "next/dynamic";
@@ -57,6 +58,15 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
   const [uploadStep, setUploadStep] = useState<number>(0); 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
+  const webcamRef = useRef<Webcam>(null);
+
+  const captureWebcam = useCallback(() => {
+    const imageSrc = webcamRef.current?.getScreenshot();
+    if (imageSrc) {
+      setSelectedImage(imageSrc);
+      setBase64Image(imageSrc);
+    }
+  }, [webcamRef]);
   
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -317,9 +327,15 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
 
                   {/* Viewport Content based on activeMode */}
                   {activeModalMode === 'camera' && (
-                    <div className="flex flex-col items-center justify-center text-white/60">
-                      <Camera className="w-12 h-12 mb-4 opacity-50" />
-                      <p className="text-sm font-medium tracking-wide">Ready to Scan</p>
+                    <div className="w-full h-full relative z-30 bg-black">
+                      <Webcam
+                        audio={false}
+                        ref={webcamRef}
+                        screenshotFormat="image/jpeg"
+                        videoConstraints={{ facingMode: "environment" }}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 pointer-events-none border-[4px] border-black/10 rounded-[28px]"></div>
                     </div>
                   )}
 
@@ -390,14 +406,10 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                 <div className="w-full max-w-sm pt-4">
                   {activeModalMode === 'camera' && (
                     <div className="relative w-full">
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        capture="environment"
-                        onChange={handleFileChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
-                      />
-                      <button className="w-full py-4 bg-brand rounded-full text-white font-black text-lg shadow-xl shadow-brand/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 border-4 border-brand-100">
+                      <button 
+                        onClick={captureWebcam}
+                        className="w-full py-4 bg-brand rounded-full text-white font-black text-lg shadow-xl shadow-brand/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 border-4 border-brand-100"
+                      >
                         <Camera className="w-6 h-6" />
                         CAPTURE
                       </button>

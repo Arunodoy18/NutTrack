@@ -34,6 +34,9 @@ import {
   User
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import HumanHero from './HumanHero';
+import DailyCarousel from './DailyCarousel';
+import { gradeMeal } from '@/lib/grading';
 
 const WeeklyChart = dynamic(() => import('@/components/WeeklyChart'), { ssr: false });
 import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, analyzeMealImageAction, analyzeMealTextAction } from "@/app/actions";
@@ -266,6 +269,7 @@ export default function Dashboard({
   // Time hydration and Meal Details Modal
   const [mounted, setMounted] = useState(false);
   const [selectedMealForDetails, setSelectedMealForDetails] = useState<any | null>(null);
+  const [isAllMealsModalOpen, setIsAllMealsModalOpen] = useState(false);
 
   React.useEffect(() => {
     setMounted(true);
@@ -433,209 +437,67 @@ export default function Dashboard({
           {/* Left Column: Concentric Progress Card, Coach, & Chart */}
           <div className="lg:col-span-8 space-y-6">
             
-            {/* Top Header Section with massive circular progress */}
+            {/* Top Header Section with HumanHero */}
             <div className="pt-10 pb-8 px-6 bg-white rounded-[40px] shadow-xl border border-surface-line relative z-10 flex flex-col items-center overflow-hidden">
-              
-              {/* Edit Goals Button */}
               <button 
                 onClick={() => setIsModalOpen(true)}
                 className="absolute top-6 right-6 w-10 h-10 bg-surface-muted rounded-full flex items-center justify-center text-ink-soft hover:bg-surface-line transition-colors z-20 shadow-sm"
               >
                 <Edit2 className="w-4 h-4" />
               </button>
-
-              {/* Highlight background elements */}
               <div className="absolute top-0 right-0 w-64 h-64 bg-brand-50 rounded-full blur-3xl -z-10 pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
-        
-        {/* Massive Circular Progress */}
-        <div className="relative w-64 h-64 flex items-center justify-center">
-          {/* Realistic SVG Ring */}
-          <svg className="absolute inset-0 w-full h-full transform -rotate-90 drop-shadow-xl" style={{ filter: "drop-shadow(0px 10px 15px rgba(252, 76, 2, 0.2))" }}>
-            <defs>
-              <linearGradient id="calGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#ff7b47" />
-                <stop offset="100%" stopColor="#FC4C02" />
-              </linearGradient>
-            </defs>
-            <circle
-              cx="128"
-              cy="128"
-              r={radius}
-              stroke="#F3F4F6"
-              strokeWidth="20"
-              fill="transparent"
-            />
-            <circle
-              cx="128"
-              cy="128"
-              r={radius}
-              stroke="url(#calGradient)"
-              strokeWidth="20"
-              fill="transparent"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              className="transition-all duration-1000 ease-out"
-            />
-          </svg>
-          
-          <div className="text-center z-10 flex flex-col items-center pt-1">
-            <span className="text-4xl font-black leading-none tracking-tight text-ink">
-              {todayTotals.calories}
-            </span>
-            <span className="text-xs font-medium text-ink-soft mt-1">
-              / {dailyGoals.calories} kcal
-            </span>
-            <span className="text-[10px] font-bold text-ink-faint mt-1.5 uppercase tracking-widest bg-surface-muted px-2 py-0.5 rounded-full">
-              {calsLeft} kcal left
-            </span>
-          </div>
-        </div>
-
-        {/* 4 Circular Macro Cards (Protein, Fat, Carbs, Fiber) */}
-        <div className="flex w-full justify-between items-start mt-8 px-5">
-          
-          {/* Protein Circle */}
-          <div className="flex flex-col items-center gap-1.5 shrink-0">
-            <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
-              <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                <defs>
-                  <linearGradient id="prot-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#34d399" />
-                    <stop offset="100%" stopColor="#059669" />
-                  </linearGradient>
-                </defs>
-                <circle cx="40" cy="40" r="32" stroke="transparent" strokeWidth="8" fill="transparent" />
-                <circle
-                  cx="40" cy="40" r="32"
-                  stroke="url(#prot-grad)" strokeWidth="8" fill="transparent" strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 32}
-                  strokeDashoffset={(2 * Math.PI * 32) * (1 - (protPercent / 100))}
-                  className="transition-all duration-1000 ease-out drop-shadow-[0_2px_4px_rgba(16,185,129,0.3)]"
-                />
-              </svg>
-              <div className="text-center z-10 flex flex-col items-center mt-0.5">
-                <span className="text-xs font-black text-ink">{todayTotals.protein}g</span>
-                <span className="text-[9px] font-bold text-ink-soft -mt-0.5">{protPercent}%</span>
+              
+              <HumanHero fillPct={calPercent} />
+              
+              <div className="text-center z-10 flex flex-col items-center pt-8">
+                <span className="text-[10px] font-bold text-brand uppercase tracking-widest">Calories</span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-5xl font-black tracking-tight text-ink">
+                    {todayTotals.calories}
+                  </span>
+                  <span className="text-sm font-medium text-ink-soft">
+                    / {dailyGoals.calories} kcal
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-ink-soft mt-3 uppercase tracking-widest bg-surface-muted px-3 py-1 rounded-full border border-surface-line">
+                  {calsLeft} kcal left &middot; {calPercent}% fueled
+                </span>
               </div>
             </div>
-            <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Protein</span>
-          </div>
 
-          {/* Fat Circle */}
-          <div className="flex flex-col items-center gap-1.5 shrink-0">
-            <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
-              <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                <defs>
-                  <linearGradient id="fat-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#fbbf24" />
-                    <stop offset="100%" stopColor="#d97706" />
-                  </linearGradient>
-                </defs>
-                <circle cx="40" cy="40" r="32" stroke="transparent" strokeWidth="8" fill="transparent" />
-                <circle
-                  cx="40" cy="40" r="32"
-                  stroke="url(#fat-grad)" strokeWidth="8" fill="transparent" strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 32}
-                  strokeDashoffset={(2 * Math.PI * 32) * (1 - (fatPercent / 100))}
-                  className="transition-all duration-1000 ease-out drop-shadow-[0_2px_4px_rgba(245,158,11,0.3)]"
-                />
-              </svg>
-              <div className="text-center z-10 flex flex-col items-center mt-0.5">
-                <span className="text-xs font-black text-ink">{todayTotals.fat}g</span>
-                <span className="text-[9px] font-bold text-ink-soft -mt-0.5">{fatPercent}%</span>
-              </div>
-            </div>
-            <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Fat</span>
-          </div>
+            {/* Swipeable Daily Card (Macros & Micros) */}
+            <DailyCarousel todayTotals={todayTotals} dailyGoals={dailyGoals} />
 
-          {/* Carbs Circle */}
-          <div className="flex flex-col items-center gap-1.5 shrink-0">
-            <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
-              <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                <defs>
-                  <linearGradient id="carb-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#8b5cf6" />
-                    <stop offset="100%" stopColor="#6d28d9" />
-                  </linearGradient>
-                </defs>
-                <circle cx="40" cy="40" r="32" stroke="transparent" strokeWidth="8" fill="transparent" />
-                <circle
-                  cx="40" cy="40" r="32"
-                  stroke="url(#carb-grad)" strokeWidth="8" fill="transparent" strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 32}
-                  strokeDashoffset={(2 * Math.PI * 32) * (1 - (carbPercent / 100))}
-                  className="transition-all duration-1000 ease-out drop-shadow-[0_2px_4px_rgba(139,92,246,0.3)]"
-                />
-              </svg>
-              <div className="text-center z-10 flex flex-col items-center mt-0.5">
-                <span className="text-xs font-black text-ink">{todayTotals.carbs}g</span>
-                <span className="text-[9px] font-bold text-ink-soft -mt-0.5">{carbPercent}%</span>
+            {/* Summary Callout Banner */}
+            {todayTotals.calories === 0 ? (
+              <div className="w-full p-5 rounded-2xl bg-brand-50 border border-brand-500/30 flex flex-col sm:flex-row gap-4 items-center justify-between group">
+                <div className="flex gap-3 items-center">
+                  <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
+                    <Sparkles className="w-5 h-5 text-brand" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-ink">Ready to start tracking?</p>
+                    <p className="text-xs text-ink-soft mt-0.5">Log your first meal using the AI scanner or voice.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={onAddMealClick || (() => { setIsUploadModalOpen(true); setActiveModalMode('camera'); })}
+                  className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center gap-2 whitespace-nowrap animate-pulse"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Log Meal
+                </button>
               </div>
-            </div>
-            <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Carbs</span>
-          </div>
-
-          {/* Fiber Circle */}
-          <div className="flex flex-col items-center gap-1.5 shrink-0">
-            <div className="relative w-16 h-16 flex items-center justify-center rounded-full bg-surface shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)] border border-surface-line">
-              <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                <defs>
-                  <linearGradient id="fib-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#60a5fa" />
-                    <stop offset="100%" stopColor="#2563eb" />
-                  </linearGradient>
-                </defs>
-                <circle cx="40" cy="40" r="32" stroke="transparent" strokeWidth="8" fill="transparent" />
-                <circle
-                  cx="40" cy="40" r="32"
-                  stroke="url(#fib-grad)" strokeWidth="8" fill="transparent" strokeLinecap="round"
-                  strokeDasharray={2 * Math.PI * 32}
-                  strokeDashoffset={(2 * Math.PI * 32) * (1 - (fibPercent / 100))}
-                  className="transition-all duration-1000 ease-out drop-shadow-[0_2px_4px_rgba(59,130,246,0.3)]"
-                />
-              </svg>
-              <div className="text-center z-10 flex flex-col items-center mt-0.5">
-                <span className="text-xs font-black text-ink">{todayTotals.fiber}g</span>
-                <span className="text-[9px] font-bold text-ink-soft -mt-0.5">{fibPercent}%</span>
+            ) : (
+              <div className="w-full p-4 rounded-2xl bg-brand-50 border border-brand-500/20 flex gap-3 items-center">
+                <Sparkles className="w-5 h-5 text-brand shrink-0" />
+                <p className="text-xs text-ink-soft leading-normal">
+                  {isOverCal 
+                    ? "You have surpassed your daily target calories of energy intake."
+                    : `Great job! You have reached ${calPercent}% of your active calorie tracking goal.`}
+                </p>
               </div>
-            </div>
-            <span className="text-[10px] font-bold text-ink-soft tracking-widest uppercase">Fiber</span>
-          </div>
-
-        </div>
-
-        {/* Summary Callout Banner */}
-        {todayTotals.calories === 0 ? (
-          <div className="mt-8 w-full p-5 rounded-2xl bg-brand-50 border border-brand-500/30 flex flex-col sm:flex-row gap-4 items-center justify-between group">
-            <div className="flex gap-3 items-center">
-              <div className="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                <Sparkles className="w-5 h-5 text-brand" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-ink">Ready to start tracking?</p>
-                <p className="text-xs text-ink-soft mt-0.5">Log your first meal using the AI scanner or voice.</p>
-              </div>
-            </div>
-            <button 
-              onClick={onAddMealClick || (() => { setIsUploadModalOpen(true); setActiveModalMode('camera'); })}
-              className="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-600/20 transition-all flex items-center gap-2 whitespace-nowrap animate-pulse"
-            >
-              <Plus className="w-3.5 h-3.5" /> Log Meal
-            </button>
-          </div>
-        ) : (
-          <div className="mt-8 w-full p-4 rounded-2xl bg-brand-50 border border-brand-500/20 flex gap-3 items-center">
-            <Sparkles className="w-5 h-5 text-brand shrink-0" />
-            <p className="text-xs text-ink-soft leading-normal">
-              {isOverCal 
-                ? "You have surpassed your daily target calories of energy intake."
-                : `Great job! You have reached ${calPercent}% of your active calorie tracking goal.`}
-            </p>
-          </div>
-        )}
-        </div>
+            )}
         
       {/* Buddy Coach Card */}
       <div className="bg-[#fff1ec] rounded-[24px] p-5 border border-[#ffdfd4] flex gap-4 shadow-sm relative overflow-hidden">
@@ -652,7 +514,40 @@ export default function Dashboard({
         </div>
 
         {/* Weekly Macro Performance Chart (Recharts) */}
-        <TrendsChart initialRange={7} />
+        <div className="bg-white rounded-[32px] border border-surface-line p-6 shadow-sm relative">
+          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h3 className="font-display text-lg font-bold text-ink">Weekly Performance</h3>
+              <p className="text-xs text-ink-soft mt-0.5">Visualize your daily macro levels relative to target benchmarks.</p>
+            </div>
+            <div className="flex rounded-xl bg-surface-muted p-1 border border-surface-line w-full sm:w-auto overflow-x-auto custom-scrollbar">
+              {(['Calories', 'Protein', 'Fats', 'Carbs', 'Fiber'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setActiveMetric(m)}
+                  className={`px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all whitespace-nowrap flex-1 sm:flex-none ${
+                    activeMetric === m
+                      ? 'bg-white text-ink shadow-sm border border-surface-line/50'
+                      : 'text-ink-soft hover:text-ink-soft'
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Responsive Chart Container */}
+          <div className="h-56 w-full">
+            <WeeklyChart 
+              weeklyData={chartData} 
+              activeMetric={activeMetric} 
+              targetValue={targetValue} 
+              metricUnit={metricUnit} 
+              metricColor={metricColor} 
+            />
+          </div>
+        </div>
       </div>
 
       {/* Right Column: Historical / Today Meal Log Stream */}
@@ -660,8 +555,11 @@ export default function Dashboard({
         <div className="bg-white rounded-[32px] border border-surface-line p-6 shadow-sm h-full flex flex-col justify-start min-h-[400px]">
 
         {/* Today's Meals */}
-        <div className="flex justify-between items-center mb-5">
-          <h2 className="text-xl font-black text-ink">Today's meals</h2>
+        <div 
+          className="flex justify-between items-center mb-5 cursor-pointer hover:opacity-80 transition-opacity" 
+          onClick={() => setIsAllMealsModalOpen(true)}
+        >
+          <h2 className="text-xl font-black text-ink flex items-center gap-1">Today's meals <ChevronRight className="w-5 h-5 text-ink-soft" /></h2>
           <span className="text-xs font-bold text-ink-soft bg-white border border-surface-line px-3 py-1 rounded-full shadow-sm">
             {liveMeals.length} logged
           </span>
@@ -669,7 +567,9 @@ export default function Dashboard({
 
         <div className="space-y-4">
           {liveMeals.length > 0 ? (
-            liveMeals.map((meal: any) => (
+            liveMeals.map((meal: any) => {
+              const { grade, color, textColor } = gradeMeal(meal);
+              return (
               <div 
                 key={meal.id} 
                 onClick={() => setSelectedMealForDetails(meal)}
@@ -683,6 +583,10 @@ export default function Dashboard({
                     className="object-cover"
                     unoptimized
                   />
+                  {/* Grade Badge */}
+                  <div className={`absolute bottom-1 right-1 w-5 h-5 rounded-md ${color} flex items-center justify-center shadow-md`}>
+                    <span className={`text-[10px] font-black ${textColor}`}>{grade}</span>
+                  </div>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
@@ -692,7 +596,8 @@ export default function Dashboard({
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mt-1 text-xs font-medium">
-                    <span className="text-emerald-500 font-bold">{meal.totalProtein}g protein</span>
+                    <span className="text-[9px] font-bold text-ink-soft uppercase tracking-widest bg-surface-muted px-1.5 py-0.5 rounded-sm">{meal.mealSession || 'Snack'}</span>
+                    <span className="text-emerald-500 font-bold ml-1">{meal.totalProtein}g protein</span>
                   </div>
                 </div>
                 <div className="text-right">
@@ -700,7 +605,7 @@ export default function Dashboard({
                   <div className="text-[9px] font-bold text-ink-faint uppercase tracking-widest mt-1">Kcal</div>
                 </div>
               </div>
-            ))
+            )})
           ) : (
             <div className="text-center py-10 bg-surface-muted rounded-[24px] border border-surface-line border-dashed">
               <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-surface-line text-ink-faint mx-auto mb-3 shadow-sm">
@@ -1125,6 +1030,85 @@ export default function Dashboard({
               <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </button>
           </motion.div>
+        </div>
+      )}
+
+      {/* All Meals Modal */}
+      {isAllMealsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg overflow-hidden bg-surface border border-surface-line rounded-[28px] shadow-2xl my-8">
+            <div className="sticky top-0 z-10 flex items-center justify-between p-6 bg-surface/90 backdrop-blur-md border-b border-surface-line">
+              <h3 className="font-display text-xl font-bold text-ink">All Meals</h3>
+              <button 
+                onClick={() => setIsAllMealsModalOpen(false)}
+                className="p-2 text-ink-soft hover:text-ink rounded-full hover:bg-surface-muted transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-8 max-h-[70vh] overflow-y-auto">
+              {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map(session => {
+                const sessionMeals = liveMeals.filter((m: any) => (m.mealSession || 'Snack') === session);
+                if (sessionMeals.length === 0) return null;
+                
+                const sessionCalories = sessionMeals.reduce((acc: number, m: any) => acc + m.totalCalories, 0);
+
+                return (
+                  <div key={session} className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-surface-line pb-2">
+                      <h4 className="font-bold text-ink text-lg">{session}</h4>
+                      <span className="text-sm font-bold text-ink-soft">{sessionCalories} kcal</span>
+                    </div>
+                    <div className="space-y-3">
+                      {sessionMeals.map((meal: any) => {
+                        const { grade, color, textColor } = gradeMeal(meal);
+                        return (
+                          <div 
+                            key={meal.id}
+                            onClick={() => {
+                              setSelectedMealForDetails(meal);
+                            }}
+                            className="bg-surface-muted rounded-2xl p-3 flex items-center gap-3 border border-surface-line cursor-pointer hover:shadow-md transition-shadow"
+                          >
+                            <div className="w-12 h-12 bg-white rounded-xl overflow-hidden relative shrink-0">
+                              <Image 
+                                src={meal.imageUrl || "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop"} 
+                                alt={meal.summary}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
+                              <div className={`absolute bottom-0.5 right-0.5 w-4 h-4 rounded-sm ${color} flex items-center justify-center`}>
+                                <span className={`text-[8px] font-black ${textColor}`}>{grade}</span>
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h5 className="font-bold text-ink text-sm truncate">{meal.summary}</h5>
+                              <div className="flex gap-2 text-[10px] text-ink-soft font-medium mt-1">
+                                <span>{meal.totalProtein}g protein</span>
+                                <span>&middot;</span>
+                                <span>{meal.totalCarbs}g carbs</span>
+                                <span>&middot;</span>
+                                <span>{meal.totalFat}g fat</span>
+                              </div>
+                            </div>
+                            <div className="font-black text-ink">{meal.totalCalories}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {liveMeals.length === 0 && (
+                <div className="text-center py-8 text-ink-soft">
+                  <p>No meals logged yet.</p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
