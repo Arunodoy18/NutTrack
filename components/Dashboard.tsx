@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import BottomNav from './BottomNav';
 import ComingSoon from '@/components/ComingSoon';
-import CameraModal from '@/components/CameraModal';
+import CameraModal, { SavedMealData } from '@/components/CameraModal';
 import { useRouter } from 'next/navigation';
 import { generateBuddyCoachTip } from '@/lib/nutritionEngine';
 import { 
@@ -93,18 +93,34 @@ export default function Dashboard({
   userId = "guest-user-uuid",
   isPremiumUser = false,
   dailyGoals = { calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30 },
-  todayTotals = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 },
+  todayTotals: serverTotals = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 },
   todayMeals: initialMeals = [],
   onAddMealClick,
   onRefreshClick,
   activeStreak = 1,
   totalMealsCount = 0,
-  weeklyData = [],
+  weeklyData: serverWeeklyData = [],
 }: DashboardProps) {
 
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Carbs' | 'Fiber'>('Calories');
+
+  // === OPTIMISTIC UI STATE ===
+  // Local copies of server data that update INSTANTLY on meal save
+  const [liveTotals, setLiveTotals] = useState(serverTotals);
+  const [liveMeals, setLiveMeals] = useState<MealLogData[]>(initialMeals);
+  const [liveWeeklyData, setLiveWeeklyData] = useState<any[]>(serverWeeklyData);
+  const [liveMealCount, setLiveMealCount] = useState(totalMealsCount);
+
+  // Sync local state when server props change (e.g. after background router.refresh())
+  React.useEffect(() => { setLiveTotals(serverTotals); }, [serverTotals.calories, serverTotals.protein, serverTotals.fat, serverTotals.carbs, serverTotals.fiber]);
+  React.useEffect(() => { setLiveMeals(initialMeals); }, [initialMeals]);
+  React.useEffect(() => { setLiveWeeklyData(serverWeeklyData); }, [serverWeeklyData]);
+  React.useEffect(() => { setLiveMealCount(totalMealsCount); }, [totalMealsCount]);
+
+  // Alias for compatibility with existing template references
+  const todayTotals = liveTotals;
 
   // AI-generated Nutrition Insight & Toast flags
   const [aiTip, setAiTip] = useState<string>("");
@@ -292,7 +308,7 @@ export default function Dashboard({
   }[activeMetric];
 
   // Map 7-day reports  // Fallback to empty array if no weekly data provided
-  const chartData = weeklyData && weeklyData.length > 0 ? weeklyData : [];
+  const chartData = liveWeeklyData && liveWeeklyData.length > 0 ? liveWeeklyData : [];
 
   // Math percentages
   const calPercent = Math.min(100, Math.round((todayTotals.calories / dailyGoals.calories) * 100)) || 0;
@@ -602,13 +618,13 @@ export default function Dashboard({
         <div className="flex justify-between items-center mb-5">
           <h2 className="text-xl font-black text-ink">Today's meals</h2>
           <span className="text-xs font-bold text-ink-soft bg-white border border-surface-line px-3 py-1 rounded-full shadow-sm">
-            {initialMeals.length} logged
+            {liveMeals.length} logged
           </span>
         </div>
 
         <div className="space-y-4">
-          {initialMeals.length > 0 ? (
-            initialMeals.map((meal: any) => (
+          {liveMeals.length > 0 ? (
+            liveMeals.map((meal: any) => (
               <div 
                 key={meal.id} 
                 onClick={() => setSelectedMealForDetails(meal)}
@@ -848,7 +864,65 @@ export default function Dashboard({
         onClose={() => { setIsUploadModalOpen(false); setActiveModalMode('camera'); }} 
         userId={userId} 
         isPremiumUser={isPremium} 
-        onMealSaved={() => router.refresh()} 
+        onMealSaved={(mealData: SavedMealData) => {
+          // === INSTANT OPTIMISTIC UPDATE ===
+          // 1. Inject the new meal at the top of the meal log
+          const newMeal: MealLogData = {
+            id: mealData.id,
+            timestamp: mealData.timestamp,
+            summary: mealData.summary,
+            imageUrl: mealData.imageUrl,
+            totalCalories: mealData.totalCalories,
+            totalProtein: mealData.totalProtein,
+            totalFat: mealData.totalFat,
+            totalCarbs: mealData.totalCarbs,
+            totalFiber: mealData.totalFiber,
+            items: mealData.items.map((item, idx) => ({
+              id: `opt-item-${idx}`,
+              name: item.name,
+              calories: item.calories,
+              protein: item.protein,
+              fat: item.fat,
+              carbs: item.carbs,
+              fiber: item.fiber,
+              estimatedQuantity: item.estimatedQuantity,
+            })),
+          };
+          setLiveMeals(prev => [newMeal, ...prev]);
+
+          // 2. Update today's totals instantly
+          setLiveTotals(prev => ({
+            calories: prev.calories + mealData.totalCalories,
+            protein: prev.protein + mealData.totalProtein,
+            fat: prev.fat + mealData.totalFat,
+            carbs: prev.carbs + mealData.totalCarbs,
+            fiber: prev.fiber + mealData.totalFiber,
+          }));
+
+          // 3. Update the weekly chart for today
+          setLiveWeeklyData(prev => {
+            if (!prev || prev.length === 0) return prev;
+            const updated = [...prev];
+            const todayEntry = updated[updated.length - 1]; // last entry is today
+            if (todayEntry) {
+              updated[updated.length - 1] = {
+                ...todayEntry,
+                Calories: (todayEntry.Calories || 0) + mealData.totalCalories,
+                Protein: (todayEntry.Protein || 0) + mealData.totalProtein,
+                Fats: (todayEntry.Fats || 0) + mealData.totalFat,
+                Carbs: (todayEntry.Carbs || 0) + mealData.totalCarbs,
+                Fiber: (todayEntry.Fiber || 0) + mealData.totalFiber,
+              };
+            }
+            return updated;
+          });
+
+          // 4. Update total meal count
+          setLiveMealCount(prev => prev + 1);
+
+          // 5. Background refresh to sync server state (invisible to user)
+          router.refresh();
+        }} 
       />
 
       {/* Premium Paywall Modal */}

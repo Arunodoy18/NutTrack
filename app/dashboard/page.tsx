@@ -98,26 +98,45 @@ export default async function DashboardPage() {
     }
   }
 
-  // 2. Fetch all meals logged TODAY
+  // 2. Precompute date boundaries BEFORE launching queries
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0);
-
   const endOfDay = new Date();
   endOfDay.setHours(23, 59, 59, 999);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-  const rawTodayMeals = await db.query.meals.findMany({
-    where: and(
-      eq(meals.userId, userId),
-      gte(meals.timestamp, startOfDay),
-      lte(meals.timestamp, endOfDay)
-    ),
-    with: {
-      items: true
-    },
-    orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
-  });
+  // 3. Fire ALL independent queries in parallel (massive speed boost)
+  const [rawTodayMeals, allUserMealTimestamps, recentMealsForChart] = await Promise.all([
+    // Today's meals with items
+    db.query.meals.findMany({
+      where: and(
+        eq(meals.userId, userId),
+        gte(meals.timestamp, startOfDay),
+        lte(meals.timestamp, endOfDay)
+      ),
+      with: { items: true },
+      orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
+    }),
+    // Streak timestamps (lightweight - only timestamp column)
+    db.query.meals.findMany({
+      where: eq(meals.userId, userId),
+      columns: { timestamp: true },
+      orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
+    }),
+    // 7-day chart data (lightweight - only aggregate columns)
+    db.query.meals.findMany({
+      where: and(
+        eq(meals.userId, userId),
+        gte(meals.timestamp, sevenDaysAgo)
+      ),
+      columns: { timestamp: true, totalCalories: true, totalProtein: true, totalFat: true, totalCarbs: true, totalFiber: true }
+    }),
+  ]);
 
-  // 3. Map database relations to client Dashboard components props
+  // 4. Map database relations to client Dashboard component props
   const mappedTodayMeals: MealLogData[] = rawTodayMeals.map((meal) => {
     const mealItemsList: FoodItemData[] = (meal.items || []).map((item) => ({
       id: item.id,
@@ -152,7 +171,7 @@ export default async function DashboardPage() {
     } as any;
   });
 
-  // 4. Calculate aggregated daily running totals
+  // 5. Calculate aggregated daily running totals
   const todayTotals = mappedTodayMeals.reduce((acc, meal: any) => {
     return {
       calories: acc.calories + meal.totalCalories,
@@ -167,21 +186,11 @@ export default async function DashboardPage() {
     };
   }, { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0, iron: 0, calcium: 0, vitaminC: 0 });
 
-  // 5. Calculate global user streak based on all historic logged meals
-  // Efficient query: Only fetch the timestamp column to avoid loading massive arrays into memory
-  const allUserMealTimestamps = await db.query.meals.findMany({
-    where: eq(meals.userId, userId),
-    columns: { timestamp: true },
-    orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
-  });
+  // 6. Calculate streak from pre-fetched timestamps
   const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp));
 
-  // 6. Calculate 7-day weekly data for analytics charts
+  // 7. Build 7-day weekly data for analytics charts
   const weeklyDataMap = new Map();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  // Initialize last 7 days with 0s
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
@@ -190,24 +199,10 @@ export default async function DashboardPage() {
     weeklyDataMap.set(dateStr, { name: dayName, Calories: 0, Protein: 0, Fats: 0, Carbs: 0, Fiber: 0 });
   }
 
-  // Fetch only recent meals to build the chart, omitting heavy nested relations
-  const sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  
-  const recentMealsForChart = await db.query.meals.findMany({
-    where: and(
-      eq(meals.userId, userId),
-      gte(meals.timestamp, sevenDaysAgo)
-    ),
-    columns: { timestamp: true, totalCalories: true, totalProtein: true, totalFat: true, totalCarbs: true, totalFiber: true }
-  });
-
-  // Populate actuals
   recentMealsForChart.forEach(meal => {
     const mDate = new Date(meal.timestamp);
     mDate.setHours(0, 0, 0, 0);
     const mDateStr = mDate.toDateString();
-    
     if (weeklyDataMap.has(mDateStr)) {
       const dayData = weeklyDataMap.get(mDateStr);
       dayData.Calories += meal.totalCalories;

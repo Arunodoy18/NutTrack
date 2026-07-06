@@ -23,12 +23,25 @@ const SCAN_MESSAGES = [
   "Finalizing macros..."
 ];
 
+export interface SavedMealData {
+  id: string;
+  timestamp: string;
+  summary: string;
+  imageUrl?: string;
+  totalCalories: number;
+  totalProtein: number;
+  totalFat: number;
+  totalCarbs: number;
+  totalFiber: number;
+  items: { name: string; calories: number; protein: number; fat: number; carbs: number; fiber: number; estimatedQuantity: string }[];
+}
+
 interface CameraModalProps {
   isOpen: boolean;
   onClose: () => void;
   userId?: string;
   isPremiumUser?: boolean;
-  onMealSaved?: () => void;
+  onMealSaved?: (mealData: SavedMealData) => void;
 }
 
 export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, onMealSaved }: CameraModalProps) {
@@ -187,9 +200,30 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
       });
 
       if (result.success) {
+        // Build optimistic meal data for instant UI update
+        const savedMeal: SavedMealData = {
+          id: `optimistic-${Date.now()}`,
+          timestamp: new Date().toISOString(),
+          summary: customMealName || activeAnalysis.name || "Meal",
+          imageUrl: selectedImage || undefined,
+          totalCalories: activeAnalysis.totalCalories || 0,
+          totalProtein: activeAnalysis.totalProtein || 0,
+          totalFat: activeAnalysis.totalFat || 0,
+          totalCarbs: activeAnalysis.totalCarbs || 0,
+          totalFiber: activeAnalysis.totalFiber || 0,
+          items: (activeAnalysis.items || []).map((item: any) => ({
+            name: item.name,
+            calories: item.calories || 0,
+            protein: item.protein || 0,
+            fat: item.fat || 0,
+            carbs: item.carbs || 0,
+            fiber: item.fiber || 0,
+            estimatedQuantity: item.estimatedQuantity || "1 serving",
+          })),
+        };
         onClose();
         if (onMealSaved) {
-          onMealSaved();
+          onMealSaved(savedMeal);
         }
         
         // Reset states
