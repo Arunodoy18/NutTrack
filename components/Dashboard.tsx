@@ -107,8 +107,6 @@ export default function Dashboard({
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Carbs' | 'Fiber'>('Calories');
 
   // === NATIVE-APP CACHING LAYER ===
-  // On first render, hydrate from localStorage (instant — no server wait)
-  // Server data silently replaces cache when it arrives
   const CACHE_KEY = `db_dash_${userId}`;
 
   const getCache = () => {
@@ -117,7 +115,6 @@ export default function Dashboard({
       const raw = localStorage.getItem(CACHE_KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      // Only use cache from today (stale data from yesterday is misleading)
       if (parsed._date === new Date().toDateString()) return parsed;
       return null;
     } catch { return null; }
@@ -129,31 +126,58 @@ export default function Dashboard({
   const [liveMeals, setLiveMeals] = useState<MealLogData[]>(cache?.meals || initialMeals);
   const [liveWeeklyData, setLiveWeeklyData] = useState<any[]>(cache?.weekly || serverWeeklyData);
   const [liveMealCount, setLiveMealCount] = useState(cache?.mealCount || totalMealsCount);
+  const [liveGoals, setLiveGoals] = useState(cache?.goals || dailyGoals);
+  const [liveIsPremium, setLiveIsPremium] = useState(cache?.isPremium || isPremiumUser);
+  const [liveActiveStreak, setLiveActiveStreak] = useState(cache?.activeStreak || activeStreak);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  // When server props arrive, update live state AND persist to cache
+  // === BACKGROUND SYNC (APP SHELL) ===
   React.useEffect(() => {
-    setLiveTotals(serverTotals);
-    setLiveMeals(initialMeals);
-    setLiveWeeklyData(serverWeeklyData);
-    setLiveMealCount(totalMealsCount);
-
-    // Persist to localStorage for instant load next time
-    if (typeof window !== 'undefined') {
+    let mounted = true;
+    async function syncData() {
+      setIsSyncing(true);
       try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          _date: new Date().toDateString(),
-          totals: serverTotals,
-          meals: initialMeals,
-          weekly: serverWeeklyData,
-          mealCount: totalMealsCount,
-        }));
-      } catch {}
+        const { getDashboardDataAction } = await import('@/app/actions');
+        const { calculateActiveStreak } = await import('@/lib/streak');
+        const result = await getDashboardDataAction(userId);
+        if (mounted && result.success && result.data) {
+          const fetchedStreak = calculateActiveStreak(result.data.allUserMealTimestamps);
+          setLiveTotals(result.data.todayTotals);
+          setLiveMeals(result.data.todayMeals);
+          setLiveWeeklyData(result.data.weeklyData);
+          setLiveMealCount(result.data.allUserMealTimestamps.length);
+          setLiveGoals(result.data.currentGoals);
+          setLiveIsPremium(result.data.isPremium);
+          setLiveActiveStreak(fetchedStreak);
+          
+          // Persist fresh data to cache
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            _date: new Date().toDateString(),
+            totals: result.data.todayTotals,
+            meals: result.data.todayMeals,
+            weekly: result.data.weeklyData,
+            mealCount: result.data.allUserMealTimestamps.length,
+            goals: result.data.currentGoals,
+            isPremium: result.data.isPremium,
+            activeStreak: fetchedStreak,
+          }));
+        }
+      } catch (err) {
+        console.error("Background sync failed:", err);
+      } finally {
+        if (mounted) setIsSyncing(false);
+      }
     }
-  }, [serverTotals.calories, serverTotals.protein, serverTotals.fat, serverTotals.carbs, serverTotals.fiber, initialMeals, serverWeeklyData, totalMealsCount]);
+    
+    // Sync immediately on mount
+    syncData();
 
-  // Also persist after optimistic updates (so even mid-session cache is fresh)
+    return () => { mounted = false; };
+  }, [userId]);
+
+  // Persist optimistic updates (when user adds a meal)
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && !isSyncing) {
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           _date: new Date().toDateString(),
@@ -161,13 +185,20 @@ export default function Dashboard({
           meals: liveMeals,
           weekly: liveWeeklyData,
           mealCount: liveMealCount,
+          goals: liveGoals,
+          isPremium: liveIsPremium,
+          activeStreak: liveActiveStreak,
         }));
       } catch {}
     }
-  }, [liveTotals, liveMeals, liveWeeklyData, liveMealCount]);
+  }, [liveTotals, liveMeals, liveWeeklyData, liveMealCount, liveGoals, liveIsPremium, liveActiveStreak, isSyncing]);
 
   // Alias for compatibility with existing template references
   const todayTotals = liveTotals;
+  // Overwrite props with live state
+  dailyGoals = liveGoals;
+  isPremiumUser = liveIsPremium;
+  activeStreak = liveActiveStreak;
 
   // AI-generated Nutrition Insight & Toast flags
   const [aiTip, setAiTip] = useState<string>("");

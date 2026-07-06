@@ -918,3 +918,189 @@ export async function lookupBarcodeAction(barcode: string) {
   }
 }
 
+// ==========================================
+// APP SHELL DATA FETCHING
+// ==========================================
+
+export async function getDashboardDataAction(userId: string) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user?.id !== userId) return { success: false, error: "Unauthorized" };
+
+    const currentUser = await db.query.users.findFirst({
+      where: eq(users.id, userId)
+    });
+
+    if (!currentUser) return { success: false, error: "User not found" };
+
+    // Premium Check
+    let isPremium = currentUser.isPremium || false;
+    let isTrialActive = false;
+    if (currentUser.createdAt) {
+      const accountAgeDays = (Date.now() - new Date(currentUser.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+      if (accountAgeDays <= 30) {
+        isPremium = true;
+        isTrialActive = true;
+      }
+    }
+    if (isPremium && !isTrialActive && currentUser.premiumSince) {
+      const premiumDate = new Date(currentUser.premiumSince);
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+      if (premiumDate < ninetyDaysAgo) isPremium = false;
+    }
+
+    // Goals Check
+    let currentGoals = await db.query.dailyGoals.findFirst({
+      where: eq(dailyGoals.userId, userId),
+      orderBy: (goals, { desc }) => [desc(goals.createdAt)]
+    });
+
+    if (!currentGoals) {
+      // Return defaults if none exist
+      currentGoals = {
+        id: "fallback",
+        userId: userId,
+        calories: 2000,
+        protein: 80,
+        fat: 65,
+        carbs: 250,
+        fiber: 30,
+        sodium: 2300,
+        iron: 18,
+        calcium: 1000,
+        vitaminC: 90,
+        createdAt: new Date()
+      };
+    }
+
+    // Date precomputations
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    // Parallel DB fetch
+    const [rawTodayMeals, allUserMealTimestamps, recentMealsForChart] = await Promise.all([
+      db.query.meals.findMany({
+        where: and(
+          eq(meals.userId, userId),
+          gte(meals.timestamp, startOfDay),
+          lte(meals.timestamp, endOfDay)
+        ),
+        with: { items: true },
+        orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
+      }),
+      db.query.meals.findMany({
+        where: eq(meals.userId, userId),
+        columns: { timestamp: true },
+        orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
+      }),
+      db.query.meals.findMany({
+        where: and(
+          eq(meals.userId, userId),
+          gte(meals.timestamp, sevenDaysAgo)
+        ),
+        columns: { timestamp: true, totalCalories: true, totalProtein: true, totalFat: true, totalCarbs: true, totalFiber: true }
+      }),
+    ]);
+
+    // Map today meals
+    const mappedTodayMeals = rawTodayMeals.map((meal) => {
+      const mealItemsList = (meal.items || []).map((item) => ({
+        id: item.id,
+        name: item.name,
+        calories: item.calories,
+        protein: item.protein,
+        fat: item.fat,
+        carbs: item.carbs || 0,
+        fiber: item.fiber,
+        sodium: item.sodium || 0,
+        iron: item.iron || 0,
+        calcium: item.calcium || 0,
+        vitaminC: item.vitaminC || 0,
+        estimatedQuantity: item.estimatedQuantity || "100g"
+      }));
+
+      return {
+        id: meal.id,
+        timestamp: meal.timestamp.toISOString(),
+        summary: meal.summary || "No description provided",
+        imageUrl: meal.imagePath || undefined,
+        totalCalories: meal.totalCalories,
+        totalProtein: meal.totalProtein,
+        totalFat: meal.totalFat,
+        totalCarbs: meal.totalCarbs || 0,
+        totalFiber: meal.totalFiber,
+        totalSodium: meal.totalSodium || 0,
+        totalIron: meal.totalIron || 0,
+        totalCalcium: meal.totalCalcium || 0,
+        totalVitaminC: meal.totalVitaminC || 0,
+        items: mealItemsList
+      };
+    });
+
+    // Map Totals
+    const todayTotals = mappedTodayMeals.reduce((acc, meal: any) => {
+      return {
+        calories: acc.calories + meal.totalCalories,
+        protein: acc.protein + meal.totalProtein,
+        fat: acc.fat + meal.totalFat,
+        carbs: acc.carbs + (meal.totalCarbs || 0),
+        fiber: acc.fiber + meal.totalFiber,
+      };
+    }, { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0 });
+
+    // Weekly Chart
+    const weeklyDataMap = new Map();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(d.getDate() - i);
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      const dateStr = d.toDateString();
+      weeklyDataMap.set(dateStr, { name: dayName, Calories: 0, Protein: 0, Fats: 0, Carbs: 0, Fiber: 0 });
+    }
+
+    recentMealsForChart.forEach(meal => {
+      const mDate = new Date(meal.timestamp);
+      mDate.setHours(0, 0, 0, 0);
+      const mDateStr = mDate.toDateString();
+      if (weeklyDataMap.has(mDateStr)) {
+        const dayData = weeklyDataMap.get(mDateStr);
+        dayData.Calories += meal.totalCalories;
+        dayData.Protein += meal.totalProtein;
+        dayData.Fats += meal.totalFat;
+        dayData.Carbs += meal.totalCarbs || 0;
+        dayData.Fiber += meal.totalFiber;
+      }
+    });
+
+    const weeklyData = Array.from(weeklyDataMap.values());
+
+    return {
+      success: true,
+      data: {
+        isPremium,
+        currentGoals: {
+          calories: currentGoals.calories,
+          protein: currentGoals.protein,
+          fat: currentGoals.fat,
+          carbs: currentGoals.carbs || 0,
+          fiber: currentGoals.fiber || 0,
+        },
+        todayTotals,
+        todayMeals: mappedTodayMeals,
+        allUserMealTimestamps: allUserMealTimestamps.map(m => m.timestamp.toISOString()),
+        weeklyData
+      }
+    };
+
+  } catch (err: any) {
+    console.error("Dashboard fetch error:", err);
+    return { success: false, error: err.message };
+  }
+}
