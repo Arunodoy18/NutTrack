@@ -23,14 +23,11 @@ export async function GET(request: Request) {
       orderBy: (goals, { desc }) => [desc(goals.createdAt)]
     });
 
-    if (!currentGoals) {
-      // Fallbacks if somehow no goals set
-      currentGoals = {
-        calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30,
-        sodium: 2300, iron: 18, calcium: 1000, vitaminC: 90,
-        potassium: 4700, vitaminE: 15, vitaminB12: 2
-      } as any;
-    }
+    const goalsToUse = currentGoals || {
+      calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30,
+      sodium: 2300, iron: 18, calcium: 1000, vitaminC: 90,
+      potassium: 4700, vitaminE: 15, vitaminB12: 2
+    };
 
     // 2. Fetch meals for the last `validRange` days
     const today = new Date();
@@ -94,18 +91,18 @@ export async function GET(request: Request) {
       success: true,
       range: validRange,
       goals: {
-        calories: currentGoals.calories,
-        protein: currentGoals.protein,
-        fat: currentGoals.fat,
-        carbs: currentGoals.carbs,
-        fiber: currentGoals.fiber,
-        sodium: currentGoals.sodium,
-        potassium: currentGoals.potassium,
-        iron: currentGoals.iron,
-        vitaminC: currentGoals.vitaminC,
-        vitaminE: currentGoals.vitaminE,
-        vitaminB12: currentGoals.vitaminB12,
-        calcium: currentGoals.calcium,
+        calories: goalsToUse.calories,
+        protein: goalsToUse.protein,
+        fat: goalsToUse.fat,
+        carbs: goalsToUse.carbs,
+        fiber: goalsToUse.fiber,
+        sodium: goalsToUse.sodium,
+        potassium: goalsToUse.potassium,
+        iron: goalsToUse.iron,
+        vitaminC: goalsToUse.vitaminC,
+        vitaminE: goalsToUse.vitaminE,
+        vitaminB12: goalsToUse.vitaminB12,
+        calcium: goalsToUse.calcium,
       },
       data: dailyTotals
     });
