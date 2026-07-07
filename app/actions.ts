@@ -20,11 +20,13 @@ const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_R
 
 const AI_MODEL = "gpt-4o";
 
-async function checkAiAccess() {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user) throw new Error("Unauthorized");
-  
-  const userId = session.user.id;
+async function checkAiAccess(overrideUserId?: string) {
+  let userId = overrideUserId;
+  if (!userId) {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user) throw new Error("Unauthorized");
+    userId = session.user.id;
+  }
   
   const userRecord = await db.query.users.findFirst({
     where: eq(users.id, userId)
@@ -62,12 +64,15 @@ export async function saveDailyGoalsAction(
     potassium?: number;
     vitaminE?: number;
     vitaminB12?: number;
-  }
+  },
+  bypassSessionCheck: boolean = false
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user || session.user.id !== userId) {
-      throw new Error("Unauthorized: Invalid session or user ID mismatch");
+    if (!bypassSessionCheck) {
+      const session = await getServerSession(authOptions);
+      if (!session || !session.user || session.user.id !== userId) {
+        throw new Error("Unauthorized: Invalid session or user ID mismatch");
+      }
     }
 
     // Sanitize and bound inputs
@@ -139,12 +144,15 @@ export async function saveMealAction(
       vitaminB12?: number;
       estimatedQuantity: string;
     }[];
-  }
+  },
+  bypassSessionCheck: boolean = false
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user || session.user.id !== userId) {
-      throw new Error("Unauthorized: Invalid session or user ID mismatch");
+    if (!bypassSessionCheck) {
+      const session = await getServerSession(authOptions);
+      if (!session || !session.user || session.user.id !== userId) {
+        throw new Error("Unauthorized: Invalid session or user ID mismatch");
+      }
     }
 
     // Sanitize and bound totals
@@ -324,9 +332,9 @@ function getFallbackInsight(
   return "Excellent macronutrient distribution so far! Keep up the pristine balance by drinking ample water and aiming for another high-fiber dinner to sustain steady glycemic levels.";
 }
 
-export async function analyzeMealImageAction(base64Image: string) {
+export async function analyzeMealImageAction(base64Image: string, overrideUserId?: string) {
   try {
-    await checkAiAccess();
+    await checkAiAccess(overrideUserId);
 
     if (base64Image) {
       const sizeInMB = (base64Image.length * 3) / 4 / 1024 / 1024;
@@ -488,9 +496,9 @@ OUTPUT FORMAT (strict JSON):
   }
 }
 
-export async function analyzeMealTextAction(text: string) {
+export async function analyzeMealTextAction(text: string, overrideUserId?: string) {
   try {
-    await checkAiAccess();
+    await checkAiAccess(overrideUserId);
 
     const apiKey = process.env.OPENAI_API_KEY;
 
@@ -770,9 +778,9 @@ export async function deleteGroceryItemAction(itemId: string) {
   }
 }
 
-export async function analyzeFridgeImageAction(base64Image: string) {
+export async function analyzeFridgeImageAction(base64Image: string, overrideUserId?: string) {
   try {
-    await checkAiAccess();
+    await checkAiAccess(overrideUserId);
 
     if (base64Image) {
       const sizeInMB = (base64Image.length * 3) / 4 / 1024 / 1024;
@@ -971,10 +979,12 @@ export async function lookupBarcodeAction(barcode: string) {
 // APP SHELL DATA FETCHING
 // ==========================================
 
-export async function getDashboardDataAction(userId: string) {
+export async function getDashboardDataAction(userId: string, bypassSessionCheck: boolean = false) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.id !== userId) return { success: false, error: "Unauthorized" };
+    if (!bypassSessionCheck) {
+      const session = await getServerSession(authOptions);
+      if (!session || session.user?.id !== userId) return { success: false, error: "Unauthorized" };
+    }
 
     const currentUser = await db.query.users.findFirst({
       where: eq(users.id, userId)
