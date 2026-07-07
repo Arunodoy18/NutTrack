@@ -37,7 +37,7 @@ export async function POST(req: Request) {
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
         razorpaySignature: razorpay_signature,
-        amount: 29900,
+        amount: 19900,
         status: "paid",
       });
 

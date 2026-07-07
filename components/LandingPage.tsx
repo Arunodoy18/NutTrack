@@ -159,9 +159,9 @@ export default function LandingPage() {
             </span>
             <div className="flex items-baseline justify-center gap-2 mt-3">
               <span className="font-display font-extrabold text-6xl tracking-tight">₹199</span>
-              <span className="text-ink-soft font-semibold">/ 6 months</span>
+              <span className="text-ink-soft font-semibold">/ 3 months</span>
             </div>
-            <p className="text-ink-soft mt-2">Access to premium features for 6 months.</p>
+            <p className="text-ink-soft mt-2">Access to premium features for 3 months.</p>
             <ul className="mt-7 space-y-3 text-left max-w-xs mx-auto">
               {["Unlimited AI scans", "Cloud sync across devices", "Detailed macro breakdowns", "Priority support"].map(
                 (f) => (

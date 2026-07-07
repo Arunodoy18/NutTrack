@@ -200,8 +200,8 @@ export default async function ProfilePage() {
               </div>
             ) : (
               <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black tracking-tight">₹199</span>
-                <span className="text-xs font-bold text-white/80">/ 6 months</span>
+                <span className="text-3xl font-black text-white">₹199</span>
+                <span className="text-xs font-bold text-white/80">/ 3 months</span>
               </div>
             )}
             {!isPremium && !isTrialActive ? (
