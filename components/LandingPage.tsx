@@ -155,7 +155,7 @@ export default function LandingPage() {
         <section className="mt-28 max-w-xl mx-auto">
           <div className="rounded-[32px] border border-brand-100 bg-gradient-to-b from-brand-50 to-white p-8 sm:p-10 text-center">
             <span className="text-[11px] font-mono font-semibold uppercase tracking-[0.16em] text-brand">
-              Lifetime Premium
+              3-Month Premium
             </span>
             <div className="flex items-baseline justify-center gap-2 mt-3">
               <span className="font-display font-extrabold text-6xl tracking-tight">₹199</span>
@@ -176,7 +176,7 @@ export default function LandingPage() {
               href="/auth/signup"
               className="mt-8 w-full inline-flex items-center justify-center gap-2 py-4 rounded-2xl bg-ink text-white font-display font-bold text-lg hover:bg-black transition"
             >
-              Get lifetime access <ChevronRight className="w-5 h-5" />
+              Get premium access <ChevronRight className="w-5 h-5" />
             </Link>
           </div>
         </section>
@@ -184,7 +184,11 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-surface-line py-10 text-center text-ink-faint text-sm">
-        © {new Date().getFullYear()} dietBuddy · Grow your health. Instantly.
+        <div className="mb-4 space-x-6">
+          <Link href="/privacy" className="hover:text-ink transition-colors">Privacy Policy</Link>
+          <Link href="/terms" className="hover:text-ink transition-colors">Terms of Service</Link>
+        </div>
+        <p>© {new Date().getFullYear()} dietBuddy · Grow your health. Instantly.</p>
       </footer>
     </div>
   );

@@ -964,7 +964,7 @@ export default function Dashboard({
                     amount: orderData.order.amount,
                     currency: orderData.order.currency,
                     name: "dietBuddy",
-                    description: "Lifetime Premium Upgrade",
+                    description: "Premium Upgrade",
                     order_id: orderData.order.id,
                     handler: async function (response: any) {
                       // 4. Verify Payment on Backend
