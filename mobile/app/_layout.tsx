@@ -1,6 +1,20 @@
 import { Slot, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { useEffect } from 'react';
+import * as Sentry from '@sentry/react-native';
+import PostHog from 'posthog-react-native';
+import { PostHogProvider } from 'posthog-react-native';
+
+// Initialize Sentry
+Sentry.init({
+  dsn: 'YOUR_SENTRY_DSN',
+  debug: false, // If `true`, Sentry will try to print out useful debugging information if something goes wrong with sending the event. Set it to `false` in production
+});
+
+// Initialize PostHog
+export const posthog = new PostHog('YOUR_POSTHOG_API_KEY', {
+  host: 'https://us.i.posthog.com',
+});
 
 function RootLayoutNav() {
   const { user, isLoading } = useAuth();
@@ -24,10 +38,14 @@ function RootLayoutNav() {
   return <Slot />;
 }
 
-export default function RootLayout() {
+function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <PostHogProvider client={posthog}>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </PostHogProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);

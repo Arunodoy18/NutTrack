@@ -43,7 +43,17 @@
           "photosPermission": "The app needs access to your photos to let you log meals and scan your fridge.",
           "cameraPermission": "The app needs access to your camera to let you take photos of your meals and fridge."
         }
-      ]
+      ],
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "project": "YOUR_SENTRY_PROJECT",
+          "organization": "YOUR_SENTRY_ORG"
+        }
+      ],
+      "@sentry/react-native",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
