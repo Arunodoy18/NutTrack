@@ -1,17 +1,20 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "DietBuddy",
+    "slug": "dietbuddy",
     "version": "1.0.0",
+    "jsEngine": "hermes",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "dietbuddy",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.nuttrack.app",
       "icon": "./assets/expo.icon"
     },
     "android": {
       "package": "com.nuttrack.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -32,6 +35,13 @@
           "backgroundColor": "#208AEF",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos to let you log meals and scan your fridge.",
+          "cameraPermission": "The app needs access to your camera to let you take photos of your meals and fridge."
         }
       ]
     ],
