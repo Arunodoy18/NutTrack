@@ -7,7 +7,7 @@ import { PostHogProvider } from 'posthog-react-native';
 
 // Initialize Sentry
 Sentry.init({
-  dsn: 'YOUR_SENTRY_DSN',
+  dsn: 'https://53c1a6a71694738169d658f084e839e6@o4511699290423296.ingest.us.sentry.io/4511699308249093',
   debug: false, // If `true`, Sentry will try to print out useful debugging information if something goes wrong with sending the event. Set it to `false` in production
 });
 
