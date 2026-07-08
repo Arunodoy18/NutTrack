@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import * as Sentry from '@sentry/react-native';
 import PostHog from 'posthog-react-native';
 import { PostHogProvider } from 'posthog-react-native';
+import Purchases, { LOG_LEVEL } from 'react-native-purchases';
+import { Platform } from 'react-native';
 
 // Initialize Sentry
 Sentry.init({
@@ -22,6 +24,14 @@ function RootLayoutNav() {
   const router = useRouter();
 
   useEffect(() => {
+    // Initialize RevenueCat
+    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    
+    // We use a placeholder key here. The user will replace this with their actual Public API Key from the RevenueCat dashboard.
+    if (Platform.OS === 'android') {
+      Purchases.configure({ apiKey: 'YOUR_REVENUECAT_KEY' });
+    }
+
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
@@ -34,6 +44,15 @@ function RootLayoutNav() {
       router.replace('/(tabs)/dashboard');
     }
   }, [user, isLoading, segments]);
+
+  useEffect(() => {
+    if (user && user.id) {
+      // Log the user into RevenueCat so their purchases sync with their DietBuddy account ID
+      Purchases.logIn(user.id.toString());
+    } else if (!user) {
+      Purchases.logOut();
+    }
+  }, [user]);
 
   return <Slot />;
 }

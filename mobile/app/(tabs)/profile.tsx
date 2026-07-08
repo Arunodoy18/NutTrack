@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { apiClient } from '../../src/lib/apiClient';
+import Purchases from 'react-native-purchases';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -24,6 +25,26 @@ export default function ProfileScreen() {
     fetchProfile();
   }, []);
 
+  const handleUpgrade = async () => {
+    try {
+      const offerings = await Purchases.getOfferings();
+      if (offerings.current !== null && offerings.current.availablePackages.length !== 0) {
+        // Purchase the first available package
+        const { customerInfo } = await Purchases.purchasePackage(offerings.current.availablePackages[0]);
+        if (typeof customerInfo.entitlements.active['Premium'] !== "undefined") {
+          Alert.alert("Success!", "You are now a Premium Member!");
+          setProfile({ ...profile, isPremium: true });
+        }
+      } else {
+        Alert.alert("Error", "No subscription packages found right now. Check back later!");
+      }
+    } catch (error: any) {
+      if (!error.userCancelled) {
+        Alert.alert("Error", error.message);
+      }
+    }
+  };
+
   const handleSignOut = async () => {
     Alert.alert(
       "Log Out",
@@ -44,7 +65,7 @@ export default function ProfileScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ flexGrow: 1 }}>
       <View style={styles.header}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{(profile?.name || user?.name || '?')[0].toUpperCase()}</Text>
@@ -63,10 +84,20 @@ export default function ProfileScreen() {
         )}
       </View>
 
+      {!profile?.isPremium && (
+        <View style={styles.upgradeCard}>
+          <Text style={styles.upgradeTitle}>Upgrade to Premium</Text>
+          <Text style={styles.upgradeDesc}>Get unlimited scans, AI dietary insights, and advanced tracking for just ₹199/3-months.</Text>
+          <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgrade}>
+            <Text style={styles.upgradeButtonText}>Subscribe Now</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
         <Text style={styles.logoutText}>Log Out</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -126,6 +157,45 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 12,
+  },
+  upgradeCard: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E6F4FE',
+  },
+  upgradeTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  upgradeDesc: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  upgradeButton: {
+    backgroundColor: '#F5A623',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    width: '100%',
+    alignItems: 'center',
+  },
+  upgradeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   logoutButton: {
     backgroundColor: '#FF3B30',
