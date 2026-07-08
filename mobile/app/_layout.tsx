@@ -12,7 +12,7 @@ Sentry.init({
 });
 
 // Initialize PostHog
-export const posthog = new PostHog('YOUR_POSTHOG_API_KEY', {
+export const posthog = new PostHog('phc_yYKrGRB3R2hJ2yrJi9GXcDAsaHKHunhtuRdN9cceUp8D', {
   host: 'https://us.i.posthog.com',
 });
 
