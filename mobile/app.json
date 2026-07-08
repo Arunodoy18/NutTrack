@@ -48,8 +48,8 @@
         "@sentry/react-native/expo",
         {
           "url": "https://sentry.io/",
-          "project": "YOUR_SENTRY_PROJECT",
-          "organization": "YOUR_SENTRY_ORG"
+          "project": "buildc3",
+          "organization": "buildc3"
         }
       ],
       "@sentry/react-native",
