@@ -5,12 +5,12 @@ import { PwaRegistry } from "@/components/PwaRegistry";
 import InstallPrompt from "@/components/InstallPrompt";
 
 export const metadata: Metadata = {
-  title: "dietBuddy - Calorie & Nutrition Estimator",
-  description: "AI-powered calorie and nutrition estimator from meal photos.",
+  title: "Nura - Intelligent Nutrition Tracking",
+  description: "Track your meals effortlessly with Nura AI",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    title: "dietBuddy",
+    title: "Nura",
     statusBarStyle: "default",
   },
 };

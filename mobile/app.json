@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "DietBuddy",
-    "slug": "dietbuddy",
+    "name": "Nura",
+    "slug": "nura",
     "version": "1.0.0",
     "jsEngine": "hermes",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "dietbuddy",
+    "scheme": "nura",
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.nuttrack.app",
