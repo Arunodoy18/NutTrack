@@ -40,7 +40,7 @@ export default function HumanHero({ fillPct }: HumanHeroProps) {
 
   return (
     <motion.div 
-      className="relative w-full max-w-[200px] aspect-[1/2] mx-auto flex items-center justify-center cursor-pointer"
+      className="relative w-full max-w-[280px] aspect-[4/5] mx-auto flex items-center justify-center cursor-pointer"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
       initial={{ opacity: 0, y: 20 }}
