@@ -65,35 +65,37 @@ export default function HumanHero({ fillPct }: HumanHeroProps) {
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       >
         {/* Grey Silhouette (Background) */}
-        <svg
-          viewBox="0 0 100 250"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="absolute inset-0 w-full h-full text-surface-line"
-        >
-          <path
-            d="M50 40a20 20 0 1 0 0-40 20 20 0 0 0 0 40zm22.5 10H27.5C17.85 50 10 57.85 10 67.5v80C10 153.02 14.48 157.5 20 157.5s10-4.48 10-10v-60h2.5v152.5c0 5.52 4.48 10 10 10s10-4.48 10-10V160h5v80c0 5.52 4.48 10 10 10s10-4.48 10-10V87.5h2.5v60c0 5.52 4.48 10 10 10s10-4.48 10-10v-80C90 57.85 82.15 50 72.5 50z"
-            fill="currentColor"
-          />
-        </svg>
+        <div
+          className="absolute inset-0 w-full h-full bg-[#E5E7EB]"
+          style={{
+            WebkitMaskImage: `url('/images/human-flex.png')`,
+            WebkitMaskSize: 'contain',
+            WebkitMaskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center',
+            maskImage: `url('/images/human-flex.png')`,
+            maskSize: 'contain',
+            maskRepeat: 'no-repeat',
+            maskPosition: 'center'
+          }}
+        />
 
         {/* Colored Silhouette (Foreground, masked) */}
-        <svg
-          viewBox="0 0 100 250"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
+        <div
           className="absolute inset-0 w-full h-full transition-all duration-[1500ms] ease-[cubic-bezier(0.34,1.56,0.64,1)]"
           style={{
+            backgroundColor: fillColor,
+            filter: `drop-shadow(0 0 12px ${glowColor})`,
             clipPath: `inset(${topInset}% 0 0 0)`,
-            color: fillColor,
-            filter: `drop-shadow(0 0 12px ${glowColor})`
+            WebkitMaskImage: `url('/images/human-flex.png')`,
+            WebkitMaskSize: 'contain',
+            WebkitMaskRepeat: 'no-repeat',
+            WebkitMaskPosition: 'center',
+            maskImage: `url('/images/human-flex.png')`,
+            maskSize: 'contain',
+            maskRepeat: 'no-repeat',
+            maskPosition: 'center'
           }}
-        >
-          <path
-            d="M50 40a20 20 0 1 0 0-40 20 20 0 0 0 0 40zm22.5 10H27.5C17.85 50 10 57.85 10 67.5v80C10 153.02 14.48 157.5 20 157.5s10-4.48 10-10v-60h2.5v152.5c0 5.52 4.48 10 10 10s10-4.48 10-10V160h5v80c0 5.52 4.48 10 10 10s10-4.48 10-10V87.5h2.5v60c0 5.52 4.48 10 10 10s10-4.48 10-10v-80C90 57.85 82.15 50 72.5 50z"
-            fill="currentColor"
-          />
-        </svg>
+        />
       </motion.div>
 
       {/* Percentage Badge */}
