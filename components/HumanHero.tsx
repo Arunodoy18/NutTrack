@@ -68,11 +68,11 @@ export default function HumanHero({ fillPct }: HumanHeroProps) {
         <div
           className="absolute inset-0 w-full h-full bg-[#E5E7EB]"
           style={{
-            WebkitMaskImage: `url('/images/human-flex.png')`,
+            WebkitMaskImage: `url('/images/human-flex-alpha.png')`,
             WebkitMaskSize: 'contain',
             WebkitMaskRepeat: 'no-repeat',
             WebkitMaskPosition: 'center',
-            maskImage: `url('/images/human-flex.png')`,
+            maskImage: `url('/images/human-flex-alpha.png')`,
             maskSize: 'contain',
             maskRepeat: 'no-repeat',
             maskPosition: 'center'
@@ -86,11 +86,11 @@ export default function HumanHero({ fillPct }: HumanHeroProps) {
             backgroundColor: fillColor,
             filter: `drop-shadow(0 0 12px ${glowColor})`,
             clipPath: `inset(${topInset}% 0 0 0)`,
-            WebkitMaskImage: `url('/images/human-flex.png')`,
+            WebkitMaskImage: `url('/images/human-flex-alpha.png')`,
             WebkitMaskSize: 'contain',
             WebkitMaskRepeat: 'no-repeat',
             WebkitMaskPosition: 'center',
-            maskImage: `url('/images/human-flex.png')`,
+            maskImage: `url('/images/human-flex-alpha.png')`,
             maskSize: 'contain',
             maskRepeat: 'no-repeat',
             maskPosition: 'center'
