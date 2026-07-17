@@ -1029,6 +1029,9 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
         iron: 18,
         calcium: 1000,
         vitaminC: 90,
+        potassium: 4700,
+        vitaminE: 15,
+        vitaminB12: 2,
         createdAt: new Date()
       };
     }
