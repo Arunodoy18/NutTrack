@@ -15,7 +15,11 @@
 .cxx
 local.properties
 .env
+.env.local
+.env*.local
 debug.keystore
+*.jks
+*.keystore
 
 # web build artifacts
 node_modules/
