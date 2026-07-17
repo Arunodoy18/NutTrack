@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit } from "@/lib/rateLimit";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gte, lte } from "drizzle-orm";
 import OpenAI from "openai";
 import { Redis } from "@upstash/redis";
 
@@ -1099,6 +1099,9 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
         totalIron: meal.totalIron || 0,
         totalCalcium: meal.totalCalcium || 0,
         totalVitaminC: meal.totalVitaminC || 0,
+        totalPotassium: meal.totalPotassium || 0,
+        totalVitaminE: meal.totalVitaminE || 0,
+        totalVitaminB12: meal.totalVitaminB12 || 0,
         items: mealItemsList
       };
     });
