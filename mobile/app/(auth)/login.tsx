@@ -33,7 +33,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome to dietBuddy</Text>
+      <Text style={styles.title}>Welcome to Nura</Text>
       
       <TextInput
         style={styles.input}
@@ -57,7 +57,7 @@ export default function LoginScreen() {
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
-        <Text style={styles.linkText}>Don't have an account? Sign up</Text>
+        <Text style={styles.linkText}>Don&apos;t have an account? Sign up</Text>
       </TouchableOpacity>
     </View>
   );

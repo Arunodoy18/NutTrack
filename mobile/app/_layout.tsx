@@ -2,8 +2,7 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
 import { useEffect } from 'react';
 import * as Sentry from '@sentry/react-native';
-import PostHog from 'posthog-react-native';
-import { PostHogProvider } from 'posthog-react-native';
+import PostHog, { PostHogProvider } from 'posthog-react-native';
 import Purchases, { LOG_LEVEL } from 'react-native-purchases';
 import { Platform } from 'react-native';
 
@@ -18,20 +17,30 @@ export const posthog = new PostHog('phc_yYKrGRB3R2hJ2yrJi9GXcDAsaHKHunhtuRdN9cce
   host: 'https://us.i.posthog.com',
 });
 
+// RevenueCat needs a real Public API Key from the RevenueCat dashboard before purchases
+// will work. Until EXPO_PUBLIC_REVENUECAT_ANDROID_KEY is set, we skip configuring the SDK
+// entirely rather than calling it with a placeholder key, which would fail for every user.
+const revenueCatKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
+export const isRevenueCatConfigured = Boolean(revenueCatKey);
+
 function RootLayoutNav() {
   const { user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    // Initialize RevenueCat
-    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
-    
-    // We use a placeholder key here. The user will replace this with their actual Public API Key from the RevenueCat dashboard.
-    if (Platform.OS === 'android') {
-      Purchases.configure({ apiKey: 'YOUR_REVENUECAT_KEY' });
+    if (!isRevenueCatConfigured) return;
+    try {
+      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+      if (Platform.OS === 'android') {
+        Purchases.configure({ apiKey: revenueCatKey! });
+      }
+    } catch (error) {
+      console.error('RevenueCat configure failed', error);
     }
+  }, []);
 
+  useEffect(() => {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
@@ -46,11 +55,16 @@ function RootLayoutNav() {
   }, [user, isLoading, segments]);
 
   useEffect(() => {
-    if (user && user.id) {
-      // Log the user into RevenueCat so their purchases sync with their DietBuddy account ID
-      Purchases.logIn(user.id.toString());
-    } else if (!user) {
-      Purchases.logOut();
+    if (!isRevenueCatConfigured) return;
+    try {
+      if (user && user.id) {
+        // Log the user into RevenueCat so their purchases sync with their DietBuddy account ID
+        Purchases.logIn(user.id.toString());
+      } else if (!user) {
+        Purchases.logOut();
+      }
+    } catch (error) {
+      console.error('RevenueCat logIn/logOut failed', error);
     }
   }, [user]);
 

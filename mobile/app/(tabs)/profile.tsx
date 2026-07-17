@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, Scr
 import { useAuth } from '../../src/context/AuthContext';
 import { apiClient } from '../../src/lib/apiClient';
 import Purchases from 'react-native-purchases';
+import { isRevenueCatConfigured } from '../_layout';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -26,6 +27,10 @@ export default function ProfileScreen() {
   }, []);
 
   const handleUpgrade = async () => {
+    if (!isRevenueCatConfigured) {
+      Alert.alert('Coming soon', 'Premium subscriptions aren\'t available yet. Check back soon!');
+      return;
+    }
     try {
       const offerings = await Purchases.getOfferings();
       if (offerings.current !== null && offerings.current.availablePackages.length !== 0) {

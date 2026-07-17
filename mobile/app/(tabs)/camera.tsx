@@ -54,7 +54,7 @@ export default function CameraScreen() {
       });
 
       if (response.data.success) {
-        setResult(response.data.data);
+        setResult(response.data.analysis);
       } else {
         Alert.alert('Analysis Failed', response.data.error || 'Unknown error');
       }
@@ -72,13 +72,20 @@ export default function CameraScreen() {
     try {
       const mealData = {
         summary: result.summary,
+        mealSession: result.mealSession,
         totalCalories: result.totalCalories,
         totalProtein: result.totalProtein,
         totalFat: result.totalFat,
         totalCarbs: result.totalCarbs,
         totalFiber: result.totalFiber,
+        totalSodium: result.totalSodium,
+        totalIron: result.totalIron,
+        totalCalcium: result.totalCalcium,
+        totalVitaminC: result.totalVitaminC,
+        totalPotassium: result.totalPotassium,
+        totalVitaminE: result.totalVitaminE,
+        totalVitaminB12: result.totalVitaminB12,
         items: result.items,
-        imagePath: image // We pass base64 directly for mobile currently
       };
 
       const response = await apiClient.post('/api/mobile/meals/save', mealData);

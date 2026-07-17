@@ -54,7 +54,7 @@ export default function DashboardScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Today's Summary</Text>
+        <Text style={styles.cardTitle}>Today&apos;s Summary</Text>
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
             <Text style={styles.statLabel}>Calories</Text>
@@ -81,7 +81,7 @@ export default function DashboardScreen() {
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Today's Meals</Text>
+      <Text style={styles.sectionTitle}>Today&apos;s Meals</Text>
       {todayMeals.length === 0 ? (
         <Text style={styles.emptyText}>No meals logged today yet.</Text>
       ) : (

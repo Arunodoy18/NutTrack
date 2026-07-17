@@ -113,7 +113,7 @@ export default function FridgeScreen() {
               
               <View style={styles.itemsList}>
                 <Text style={styles.itemsTitle}>Ingredients Found:</Text>
-                {result.ingredients.map((item: string, idx: number) => (
+                {(result.ingredients_found || []).map((item: string, idx: number) => (
                   <View key={idx} style={styles.itemRow}>
                     <Text style={styles.itemName}>• {item}</Text>
                   </View>
@@ -122,11 +122,11 @@ export default function FridgeScreen() {
 
               <View style={styles.recipeList}>
                 <Text style={styles.itemsTitle}>Recipe Ideas:</Text>
-                {result.recipes.map((recipe: any, idx: number) => (
+                {(result.recipes || []).map((recipe: any, idx: number) => (
                   <View key={idx} style={styles.recipeCard}>
                     <Text style={styles.recipeName}>{recipe.name}</Text>
                     <Text style={styles.recipeDesc}>{recipe.description}</Text>
-                    <Text style={styles.recipeCals}>{recipe.estimatedCalories} kcal - {recipe.estimatedProtein}g protein</Text>
+                    <Text style={styles.recipeCals}>{recipe.calories} kcal - {recipe.protein}g protein</Text>
                   </View>
                 ))}
               </View>

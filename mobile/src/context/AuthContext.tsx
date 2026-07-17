@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
 
+import { setUnauthorizedHandler } from '@/lib/apiClient';
+
 interface User {
   id: string;
   email: string;
@@ -65,6 +67,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Failed to sign out', error);
     }
   };
+
+  useEffect(() => {
+    setUnauthorizedHandler(() => signOut());
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, signIn, signOut }}>
