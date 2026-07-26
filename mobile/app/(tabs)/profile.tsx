@@ -61,6 +61,41 @@ export default function ProfileScreen() {
     );
   };
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "This permanently deletes your account and all your logged meals, goals, and history. This can't be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Are you absolutely sure?",
+              "Type nothing, just confirm - there's no undo for this.",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Yes, delete everything",
+                  style: "destructive",
+                  onPress: async () => {
+                    try {
+                      await apiClient.delete('/api/mobile/account');
+                      await signOut();
+                    } catch (error: any) {
+                      Alert.alert('Error', error.response?.data?.error || 'Failed to delete account. Please try again.');
+                    }
+                  },
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -101,6 +136,10 @@ export default function ProfileScreen() {
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
         <Text style={styles.logoutText}>Log Out</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
+        <Text style={styles.deleteText}>Delete Account</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -214,5 +253,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  deleteButton: {
+    alignItems: 'center',
+    marginBottom: 20,
+    padding: 10,
+  },
+  deleteText: {
+    color: '#999',
+    fontSize: 14,
   },
 });

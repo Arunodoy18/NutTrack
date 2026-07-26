@@ -11,6 +11,7 @@ import { calculateActiveStreak } from "@/lib/streak";
 import Link from 'next/link';
 import ComingSoon from '@/components/ComingSoon';
 import LogoutButton from '@/components/LogoutButton';
+import DeleteAccountButton from '@/components/DeleteAccountButton';
 import ProfileHeaderClient from '@/components/ProfileHeaderClient';
 import { computeFullProfile, mapProfileGoalToLabel } from "@/lib/nutritionEngine";
 
@@ -235,6 +236,9 @@ export default async function ProfilePage() {
 
         {/* Logout Button */}
         <LogoutButton />
+
+        {/* Delete Account */}
+        <DeleteAccountButton userId={userId} />
 
       </div>
 

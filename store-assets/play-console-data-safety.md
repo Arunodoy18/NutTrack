@@ -28,7 +28,7 @@ Copy these into Play Console's Data Safety and Content Rating forms.
 
 ### Security practices to declare
 - Data is encrypted in transit: **Yes** (HTTPS/TLS to dietbuddy.buildc3.tech and all third parties).
-- Users can request data deletion: check this is actually true before answering **Yes** — right now there is no self-serve "delete my account/data" flow anywhere in the app or backend. Either build one (even a "email us to delete" support flow counts) or answer "No" honestly. Answering "Yes" without a real mechanism is a policy violation if Google or a user checks.
+- Users can request data deletion: **Yes** — self-serve delete is now built (mobile: Profile tab → Delete Account; web: dietbuddy.buildc3.tech/profile → Delete Account). It hard-deletes the user row, which cascades to every related table (meals, goals, sessions, payments, etc.) via `onDelete: cascade`. For the "data deletion request URL" field in Play Console, use `https://dietbuddy.buildc3.tech/privacy` (explains it) — a logged-out user is directed to log in first, which is an accepted pattern for this field.
 - Committed to Play's Families Policy: **No** (this app is not designed for children; keep the target audience as 18+ / general, not aimed at kids).
 
 ### Why this matters

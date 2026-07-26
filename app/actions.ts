@@ -110,6 +110,28 @@ export async function saveDailyGoalsAction(
   }
 }
 
+// Required by Google Play's User Data policy: apps that allow account
+// creation must also let users delete their account and data. All of the
+// user's tables (meals, mealItems, dailyGoals, accounts, sessions, payments,
+// groceryList) reference users.id with onDelete: "cascade", so deleting the
+// user row is enough to remove everything.
+export async function deleteAccountAction(userId: string, bypassSessionCheck: boolean = false) {
+  try {
+    if (!bypassSessionCheck) {
+      const session = await getServerSession(authOptions);
+      if (!session?.user?.id || session.user.id !== userId) {
+        return { success: false, error: "Unauthorized" };
+      }
+    }
+
+    await db.delete(users).where(eq(users.id, userId));
+    return { success: true };
+  } catch (err) {
+    console.error("Failed to delete account:", err);
+    return { success: false, error: String(err) };
+  }
+}
+
 export async function saveMealAction(
   userId: string,
   mealData: {
