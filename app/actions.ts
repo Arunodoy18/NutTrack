@@ -14,6 +14,15 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "dummy",
 });
 
+// Groq has no vision-capable models (confirmed against their model docs), so
+// it can only take over the text-only AI paths - not meal/fridge photo
+// analysis, which stay on OpenAI. Groq's API is OpenAI-compatible, so this is
+// just the same SDK pointed at a different base URL.
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY || "dummy",
+  baseURL: "https://api.groq.com/openai/v1",
+});
+
 const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
   ? Redis.fromEnv()
   : null;
@@ -21,7 +30,9 @@ const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_R
 // gpt-4o was retired from the API on 2026-02-17. gpt-5.6-terra balances cost
 // against vision accuracy - this app's whole pitch is precise macros from a
 // photo, so the cheapest tier (luna) trades away exactly what matters here.
+// Vision-only: meal/fridge photo analysis. Text-only AI paths use GROQ_MODEL.
 const AI_MODEL = "gpt-5.6-terra";
+const GROQ_MODEL = "openai/gpt-oss-120b";
 
 async function checkAiAccess(overrideUserId?: string) {
   let userId = overrideUserId;
@@ -263,9 +274,9 @@ export async function generateNutritionInsightAction(
   dailyGoals: { calories: number; protein: number; fat: number; fiber: number }
 ) {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
 
-    if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") {
+    if (!apiKey || apiKey === "YOUR_GROQ_API_KEY") {
       return { success: true, insight: getFallbackInsight(todayTotals, dailyGoals) };
     }
 
@@ -307,11 +318,11 @@ ${JSON.stringify(inputData, null, 2)}
 
 OUTPUT (plain text, 2-3 sentences):`;
 
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
+    const completion = await groq.chat.completions.create({
+      model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }]
     });
-    
+
     const text = completion.choices[0].message.content;
     if (text) {
       const insightText = text.trim();
@@ -525,10 +536,9 @@ export async function analyzeMealTextAction(text: string, overrideUserId?: strin
   try {
     await checkAiAccess(overrideUserId);
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
 
-
-    if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") throw new Error("OPENAI_API_KEY is missing");
+    if (!apiKey || apiKey === "YOUR_GROQ_API_KEY") throw new Error("GROQ_API_KEY is missing");
 
     const prompt = `You are a precise food logging parser for dietBuddy.
 
@@ -560,13 +570,13 @@ OUTPUT FORMAT:
   "assumptions": ["Used 2 large eggs as stated", "1 tsp butter assumed for toast"]
 }`;
 
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
+    const completion = await groq.chat.completions.create({
+      model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }]
     });
 
     let rawText = completion.choices[0].message.content || "";
-    
+
     // Clean JSON string using regex to handle conversational filler
     let cleaned = rawText.trim();
     const jsonBlockMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -746,10 +756,8 @@ RULES:
 3. Factor in their Daily Macro Goals when suggesting foods.
 4. If they ask a non-food related question, politely pivot back to nutrition.`;
 
-    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
+    const completion = await groq.chat.completions.create({
+      model: GROQ_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         ...history,
