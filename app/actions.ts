@@ -18,7 +18,10 @@ const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_R
   ? Redis.fromEnv()
   : null;
 
-const AI_MODEL = "gpt-4o";
+// gpt-4o was retired from the API on 2026-02-17. gpt-5.6-terra balances cost
+// against vision accuracy - this app's whole pitch is precise macros from a
+// photo, so the cheapest tier (luna) trades away exactly what matters here.
+const AI_MODEL = "gpt-5.6-terra";
 
 async function checkAiAccess(overrideUserId?: string) {
   let userId = overrideUserId;
@@ -305,7 +308,7 @@ ${JSON.stringify(inputData, null, 2)}
 OUTPUT (plain text, 2-3 sentences):`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: AI_MODEL,
       messages: [{ role: "user", content: prompt }]
     });
     
@@ -426,7 +429,7 @@ OUTPUT FORMAT (strict JSON):
     const imageUri = base64Image.startsWith("data:image") ? base64Image : `data:image/jpeg;base64,${base64Image}`;
 
         const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: AI_MODEL,
       messages: [
         {
           role: "user",
@@ -746,7 +749,7 @@ RULES:
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: AI_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         ...history,
