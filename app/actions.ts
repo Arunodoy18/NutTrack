@@ -8,31 +8,27 @@ import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit } from "@/lib/rateLimit";
 import { eq, and, gte, lte } from "drizzle-orm";
 import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 import { Redis } from "@upstash/redis";
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "dummy",
-});
-
-// Groq has no vision-capable models (confirmed against their model docs), so
-// it can only take over the text-only AI paths - not meal/fridge photo
-// analysis, which stay on OpenAI. Groq's API is OpenAI-compatible, so this is
-// just the same SDK pointed at a different base URL.
+// Groq's API is OpenAI-compatible, so this is the same SDK pointed at a
+// different base URL. Handles the text-only AI paths.
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY || "dummy",
   baseURL: "https://api.groq.com/openai/v1",
 });
 
+// Meal/fridge photo analysis runs on Gemini's free tier - Groq has no vision
+// models at all, and this avoids OpenAI's paid API entirely. Free tier means
+// Google may review/train on submitted photos (see privacy policy update).
+const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "dummy" });
+
 const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
   ? Redis.fromEnv()
   : null;
 
-// gpt-4o was retired from the API on 2026-02-17. gpt-5.6-terra balances cost
-// against vision accuracy - this app's whole pitch is precise macros from a
-// photo, so the cheapest tier (luna) trades away exactly what matters here.
-// Vision-only: meal/fridge photo analysis. Text-only AI paths use GROQ_MODEL.
-const AI_MODEL = "gpt-5.6-terra";
 const GROQ_MODEL = "openai/gpt-oss-120b";
+const GEMINI_VISION_MODEL = "gemini-2.5-flash";
 
 async function checkAiAccess(overrideUserId?: string) {
   let userId = overrideUserId;
@@ -381,11 +377,10 @@ export async function analyzeMealImageAction(base64Image: string, overrideUserId
       }
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
 
-
-    if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") {
-      throw new Error("OPENAI_API_KEY is not configured on the server. Please check your .env configuration.");
+    if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY") {
+      throw new Error("GEMINI_API_KEY is not configured on the server. Please check your .env configuration.");
     }
 
     const prompt = `You are a precision nutrition AI embedded in dietBuddy, a calorie tracking app.
@@ -437,25 +432,27 @@ OUTPUT FORMAT (strict JSON):
   "notes": "Short summary of the meal."
 }`;
 
-    const imageUri = base64Image.startsWith("data:image") ? base64Image : `data:image/jpeg;base64,${base64Image}`;
+    // Gemini's inlineData wants raw base64 + a separate mimeType, not a data: URI.
+    const imageDataMatch = base64Image.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
+    const rawBase64 = imageDataMatch ? imageDataMatch[2] : base64Image;
+    const imageMimeType = imageDataMatch ? imageDataMatch[1] : "image/jpeg";
 
-        const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [
+    const response = await gemini.models.generateContent({
+      model: GEMINI_VISION_MODEL,
+      contents: [
         {
           role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: imageUri } }
+          parts: [
+            { text: prompt },
+            { inlineData: { data: rawBase64, mimeType: imageMimeType } }
           ]
         }
       ]
     });
 
-    const data = { choices: completion.choices };
-    const rawText = data.choices?.[0]?.message?.content;
+    const rawText = response.text;
     if (!rawText) {
-      throw new Error("Failed to get response from OpenAI API");
+      throw new Error("Failed to get response from Gemini API");
     }
 
     // Clean JSON string using regex to handle conversational filler
@@ -824,11 +821,10 @@ export async function analyzeFridgeImageAction(base64Image: string, overrideUser
       }
     }
 
-    const apiKey = process.env.OPENAI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
 
-
-    if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") {
-      throw new Error("OPENAI_API_KEY is missing. Please configure your .env file.");
+    if (!apiKey || apiKey === "YOUR_GEMINI_API_KEY") {
+      throw new Error("GEMINI_API_KEY is missing. Please configure your .env file.");
     }
 
     const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
@@ -879,21 +875,21 @@ OUTPUT FORMAT:
   ]
 }`;
 
-    const completion = await openai.chat.completions.create({
-      model: AI_MODEL,
-      messages: [
+    const response = await gemini.models.generateContent({
+      model: GEMINI_VISION_MODEL,
+      contents: [
         {
           role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: `data:image/jpeg;base64,${cleanBase64}` } }
+          parts: [
+            { text: prompt },
+            { inlineData: { data: cleanBase64, mimeType: "image/jpeg" } }
           ]
         }
       ]
     });
 
-    const rawText = completion.choices[0].message.content;
-    
+    const rawText = response.text;
+
     if (!rawText) throw new Error("Failed to get response from AI");
 
     // Clean JSON string using regex to handle conversational filler

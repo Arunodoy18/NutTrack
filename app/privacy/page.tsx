@@ -31,8 +31,8 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-bold mb-3">3. Third-Party Services (OpenAI)</h2>
-            <p>To power our advanced features like "Fridge Raider", photos you upload are transmitted securely to OpenAI via API for analysis. OpenAI does not use your images to train their foundational models via our API integration. Please do not upload photos containing personally identifiable information.</p>
+            <h2 className="text-xl font-bold mb-3">3. Third-Party Services (Google Gemini, Groq)</h2>
+            <p>Photos you upload for meal scanning or "Fridge Raider" are transmitted securely to Google's Gemini API for analysis. We use Gemini's free API tier, which means Google may access, review, and use submitted photos to improve their products and train their models - this differs from a paid API tier, where that would not be the case. Please do not upload photos containing personally identifiable information. Text-based features (typed meal logging, nutrition insights, and the AI chat advisor) are processed by Groq, which does not use submitted text to train its models.</p>
           </section>
 
           <section>
