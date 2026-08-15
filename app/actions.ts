@@ -28,7 +28,12 @@ const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_R
   : null;
 
 const GROQ_MODEL = "openai/gpt-oss-120b";
-const GEMINI_VISION_MODEL = "gemini-2.5-flash";
+// gemini-2.5-flash returns 404 "no longer available to new users" on this
+// account. gemini-3.7-flash works but hit a transient 503 "high demand"
+// under testing (very new model, 08-2026). gemini-3.6-flash was reliable
+// across repeated tests and still reads images correctly - safer choice
+// for a launched app than the newest-but-flakier release.
+const GEMINI_VISION_MODEL = "gemini-3.6-flash";
 
 async function checkAiAccess(overrideUserId?: string) {
   let userId = overrideUserId;
