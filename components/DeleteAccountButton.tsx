@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { signOut } from "next-auth/react";
 import { Trash2 } from "lucide-react";
 import { deleteAccountAction } from "@/app/actions";
+import { clearLocalUserData } from "@/lib/clientStorage";
 
 export default function DeleteAccountButton({ userId }: { userId: string }) {
   const [confirming, setConfirming] = useState(false);
@@ -13,6 +14,7 @@ export default function DeleteAccountButton({ userId }: { userId: string }) {
     setDeleting(true);
     const result = await deleteAccountAction(userId);
     if (result.success) {
+      clearLocalUserData();
       signOut({ callbackUrl: "/auth/login" });
     } else {
       setDeleting(false);

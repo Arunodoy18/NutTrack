@@ -26,5 +26,10 @@ export default async function DashboardPage() {
     columns: { age: true },
   });
 
-  return <Dashboard userId={userId} userAge={profile?.age ?? undefined} />;
+  // The signed-in cookie can outlive the account (deleted elsewhere): sign out cleanly.
+  if (!profile) {
+    redirect("/auth/signed-out");
+  }
+
+  return <Dashboard userId={userId} userAge={profile.age ?? undefined} />;
 }

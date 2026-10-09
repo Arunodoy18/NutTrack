@@ -21,7 +21,11 @@ export default async function SetupPage() {
     where: eq(users.id, session.user.id),
   });
 
-  if (currentUser?.profileComplete) {
+  if (!currentUser) {
+    redirect("/auth/signed-out");
+  }
+
+  if (currentUser.profileComplete) {
     redirect("/dashboard");
   }
 
