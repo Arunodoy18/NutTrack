@@ -3,9 +3,10 @@ import { createHash } from "crypto";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { meals } from "@/lib/db/schema";
+import { meals, users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { analyzeMealImageAction, saveMealAction } from "@/app/actions";
+import { canAccessProfile } from "@/lib/access";
 import { MEAL_SESSIONS, type SyncResponse } from "@/lib/offlineTypes";
 
 // AI photo analysis can take a while.
@@ -30,7 +31,7 @@ const num = (v: unknown, max: number) => {
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return json({ status: "unauthorized", error: "Please sign in." }, 401);
-  const userId = session.user.id;
+  const accountId = session.user.id;
 
   let op: any;
   try {
@@ -43,8 +44,18 @@ export async function POST(req: NextRequest) {
   if (typeof op.id !== "string" || !/^[A-Za-z0-9_-]{8,64}$/.test(op.id)) {
     return json({ status: "invalid", error: "Bad operation id." }, 400);
   }
-  // Queue belongs to whoever created it — never let another account absorb it.
-  if (op.userId !== userId) return json({ status: "wrong_user", error: "Queued by another account." }, 409);
+  // The item names the family member it is for. The signed-in account must own that profile —
+  // never let another account absorb someone else's queue.
+  const userId: string = String(op.userId ?? "");
+  if (!userId || !(await canAccessProfile(accountId, userId))) {
+    // Gone entirely (profile or account deleted) → park it as a visible failure; otherwise it's someone else's.
+    const stillThere = userId
+      ? await db.query.users.findFirst({ where: eq(users.id, userId), columns: { id: true } })
+      : null;
+    return stillThere
+      ? json({ status: "wrong_user", error: "Queued by another account." }, 409)
+      : json({ status: "invalid", error: "That profile no longer exists." }, 410);
+  }
 
   const eatenAt = Number(op.eatenAt);
   const now = Date.now();
@@ -56,10 +67,6 @@ export async function POST(req: NextRequest) {
   }
   const timestamp = new Date(eatenAt);
   const id = mealIdFor(userId, op.id);
-
-  // Account may have been deleted since the op was queued.
-  const exists = await db.query.users.findFirst({ where: (u, { eq }) => eq(u.id, userId), columns: { id: true } });
-  if (!exists) return json({ status: "unauthorized", error: "Account no longer exists." }, 401);
 
   try {
     /* ── Manual meal ── */

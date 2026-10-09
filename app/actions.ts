@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit, checkChatRateLimit } from "@/lib/rateLimit";
+import { canAccessProfile, ownerOf, getActiveProfileId } from "@/lib/access";
 import { eq, and, gte, lte } from "drizzle-orm";
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
@@ -35,25 +36,43 @@ const GROQ_MODEL = "openai/gpt-oss-120b";
 // for a launched app than the newest-but-flakier release.
 const GEMINI_VISION_MODEL = "gemini-3.6-flash";
 
+/** Premium state for an ACCOUNT (family members share their parent's plan and free trial). */
+function computePremium(owner?: { isPremium: boolean | null; createdAt: Date | null; premiumSince: Date | null } | null) {
+  let isPremium = owner?.isPremium ?? false;
+  let isTrialActive = false;
+  if (owner?.createdAt) {
+    const ageDays = (Date.now() - new Date(owner.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (ageDays <= 30) {
+      isPremium = true;
+      isTrialActive = true;
+    }
+  }
+  if (isPremium && !isTrialActive && owner?.premiumSince) {
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    if (new Date(owner.premiumSince) < ninetyDaysAgo) isPremium = false;
+  }
+  return { isPremium, isTrialActive };
+}
+
 async function checkAiAccess(overrideUserId?: string) {
+  const session = await getServerSession(authOptions);
   let userId = overrideUserId;
   if (!userId) {
-    const session = await getServerSession(authOptions);
     if (!session || !session.user) throw new Error("Unauthorized");
-    userId = session.user.id;
+    userId = await getActiveProfileId(session.user.id);
+  } else if (session?.user?.id && !(await canAccessProfile(session.user.id, userId))) {
+    // A signed-in caller may only spend scans on their own family.
+    throw new Error("Unauthorized");
   }
-  
-  const userRecord = await db.query.users.findFirst({
-    where: eq(users.id, userId)
-  });
-  let isPremium = userRecord?.isPremium ?? false;
-  if (userRecord?.createdAt) {
-    const ageDays = (Date.now() - new Date(userRecord.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-    if (ageDays <= 30) isPremium = true;
-  }
-  
-  const { allowed } = await checkScanRateLimit(userId, isPremium);
-  
+
+  // Scans, trial and plan belong to the ACCOUNT, so adding family members can't multiply free scans.
+  const ownerId = await ownerOf(userId);
+  const ownerRecord = await db.query.users.findFirst({ where: eq(users.id, ownerId) });
+  const { isPremium } = computePremium(ownerRecord);
+
+  const { allowed } = await checkScanRateLimit(ownerId, isPremium);
+
   if (!allowed) {
     if (isPremium) {
       throw new Error("Premium rate limit exceeded (200 scans/day). Please try again later.");
@@ -61,7 +80,7 @@ async function checkAiAccess(overrideUserId?: string) {
       throw new Error("Rate limit exceeded (5 scans/hour). Please upgrade to premium for more scans.");
     }
   }
-  
+
   return true;
 }
 
@@ -85,7 +104,7 @@ export async function saveDailyGoalsAction(
   try {
     if (!bypassSessionCheck) {
       const session = await getServerSession(authOptions);
-      if (!session || !session.user || session.user.id !== userId) {
+      if (!session || !session.user || !(await canAccessProfile(session.user.id, userId))) {
         throw new Error("Unauthorized: Invalid session or user ID mismatch");
       }
     }
@@ -134,11 +153,12 @@ export async function deleteAccountAction(userId: string, bypassSessionCheck: bo
   try {
     if (!bypassSessionCheck) {
       const session = await getServerSession(authOptions);
-      if (!session?.user?.id || session.user.id !== userId) {
+      if (!session?.user?.id || !(await canAccessProfile(session.user.id, userId))) {
         return { success: false, error: "Unauthorized" };
       }
     }
 
+    // Deleting an account also deletes its family profiles (parent_id cascade).
     await db.delete(users).where(eq(users.id, userId));
     return { success: true };
   } catch (err) {
@@ -191,7 +211,7 @@ export async function saveMealAction(
   try {
     if (!bypassSessionCheck) {
       const session = await getServerSession(authOptions);
-      if (!session || !session.user || session.user.id !== userId) {
+      if (!session || !session.user || !(await canAccessProfile(session.user.id, userId))) {
         throw new Error("Unauthorized: Invalid session or user ID mismatch");
       }
     }
@@ -745,9 +765,10 @@ export async function updateDietaryPreferencesAction(preferences: string) {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
     
+    const activeId = await getActiveProfileId(session.user.id);
     await db.update(users)
-      .set({ dietaryPreferences: preferences })
-      .where(eq(users.id, session.user.id));
+      .set({ dietaryPreferences: String(preferences ?? "").slice(0, 500) })
+      .where(eq(users.id, activeId));
       
     return { success: true };
   } catch (error: any) {
@@ -761,7 +782,8 @@ export async function chatWithAIAdvisorAction(message: string, history: { role: 
     const session = await getServerSession(authOptions);
     if (!session || !session.user) return { success: false, error: "Unauthorized" };
 
-    const userId = session.user.id;
+    const accountId = session.user.id;
+    const userId = await getActiveProfileId(accountId); // answer for whoever is being tracked
 
     // Bound the input: cost control + prompt-injection surface.
     const cleanMessage = String(message ?? "").trim().slice(0, 1000);
@@ -771,7 +793,7 @@ export async function chatWithAIAdvisorAction(message: string, history: { role: 
       .slice(-10)
       .map((h) => ({ role: h.role, content: h.content.slice(0, 1000) }));
 
-    if (!(await checkChatRateLimit(userId))) {
+    if (!(await checkChatRateLimit(accountId))) {
       return { success: false, error: "You've asked a lot of questions this hour. Please try again a little later." };
     }
 
@@ -1069,7 +1091,7 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
   try {
     if (!bypassSessionCheck) {
       const session = await getServerSession(authOptions);
-      if (!session || session.user?.id !== userId) return { success: false, error: "Unauthorized" };
+      if (!session?.user?.id || !(await canAccessProfile(session.user.id, userId))) return { success: false, error: "Unauthorized" };
     }
 
     const currentUser = await db.query.users.findFirst({
@@ -1078,22 +1100,11 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
 
     if (!currentUser) return { success: false, error: "User not found" };
 
-    // Premium Check
-    let isPremium = currentUser.isPremium || false;
-    let isTrialActive = false;
-    if (currentUser.createdAt) {
-      const accountAgeDays = (Date.now() - new Date(currentUser.createdAt).getTime()) / (1000 * 60 * 60 * 24);
-      if (accountAgeDays <= 30) {
-        isPremium = true;
-        isTrialActive = true;
-      }
-    }
-    if (isPremium && !isTrialActive && currentUser.premiumSince) {
-      const premiumDate = new Date(currentUser.premiumSince);
-      const ninetyDaysAgo = new Date();
-      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
-      if (premiumDate < ninetyDaysAgo) isPremium = false;
-    }
+    // Premium Check (family members share the account holder's plan)
+    const ownerRecord = currentUser.parentId
+      ? await db.query.users.findFirst({ where: eq(users.id, currentUser.parentId) })
+      : currentUser;
+    const { isPremium } = computePremium(ownerRecord);
 
     // Goals Check
     let currentGoals = await db.query.dailyGoals.findFirst({

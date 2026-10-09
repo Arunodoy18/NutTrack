@@ -14,6 +14,8 @@ import LogoutButton from '@/components/LogoutButton';
 import DeleteAccountButton from '@/components/DeleteAccountButton';
 import ProfileHeaderClient from '@/components/ProfileHeaderClient';
 import { computeFullProfile, mapProfileGoalToLabel } from "@/lib/nutritionEngine";
+import { getActiveProfileId, listProfiles } from "@/lib/access";
+import FamilySection from "@/components/FamilySection";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +26,9 @@ export default async function ProfilePage() {
     redirect("/auth/login");
   }
   
-  const userId = session.user.id;
+  const accountId = session.user.id;
+  const userId = await getActiveProfileId(accountId); // who is being tracked
+  const profiles = await listProfiles(accountId);
   
   // Fetch user data
   const currentUser = await db.query.users.findFirst({
@@ -35,12 +39,16 @@ export default async function ProfilePage() {
   if (!currentUser?.profileComplete) {
     redirect("/setup");
   }
-  let isPremium = currentUser?.isPremium || false;
+  // Plan and free trial belong to the ACCOUNT, shared by the whole family.
+  const accountRow = currentUser?.parentId
+    ? await db.query.users.findFirst({ where: eq(users.id, currentUser.parentId) })
+    : currentUser;
+  let isPremium = accountRow?.isPremium || false;
   let isTrialActive = false;
   let trialDaysLeft = 0;
   
-  if (currentUser?.createdAt) {
-    const ageDays = (Date.now() - new Date(currentUser.createdAt).getTime()) / (1000 * 60 * 60 * 24);
+  if (accountRow?.createdAt) {
+    const ageDays = (Date.now() - new Date(accountRow.createdAt).getTime()) / (1000 * 60 * 60 * 24);
     if (ageDays <= 30) {
       isPremium = true;
       isTrialActive = true;
@@ -78,7 +86,8 @@ export default async function ProfilePage() {
   }
 
   const name = currentUser?.name || session.user.name || "User";
-  const email = currentUser?.email || session.user.email || "No email";
+  // Family members have no login of their own — show who manages them instead.
+  const email = currentUser?.parentId ? `Managed by ${accountRow?.name?.trim() || "you"}` : currentUser?.email || session.user.email || "No email";
   const initial = name.charAt(0).toUpperCase();
 
   // Compute analytics profile
@@ -234,11 +243,13 @@ export default async function ProfilePage() {
           ))}
         </div>
 
+        <FamilySection profiles={profiles} activeId={userId} />
+
         {/* Logout Button */}
         <LogoutButton />
 
         {/* Delete Account */}
-        <DeleteAccountButton userId={userId} />
+        <DeleteAccountButton userId={accountId} />
 
       </div>
 

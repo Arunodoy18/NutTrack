@@ -1,3 +1,4 @@
+import { getActiveProfileId } from "@/lib/access";
 import React from 'react';
 import { redirect } from 'next/navigation';
 import { getServerSession } from "next-auth/next";
@@ -18,7 +19,7 @@ export default async function FridgePage() {
 
   // Gate: force profile setup for incomplete profiles
   const currentUser = await db.query.users.findFirst({
-    where: eq(users.id, session.user.id)
+    where: eq(users.id, await getActiveProfileId(session.user.id))
   });
   if (!currentUser?.profileComplete) {
     redirect("/setup");

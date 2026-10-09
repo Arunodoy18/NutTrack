@@ -40,6 +40,8 @@ import { gradeMeal } from '@/lib/grading';
 import { useOfflineSync } from '@/lib/useOfflineSync';
 import OfflineStatusBar from '@/components/OfflineStatusBar';
 import type { OutboxOp } from '@/lib/offlineTypes';
+import ProfileSwitcher from '@/components/ProfileSwitcher';
+import type { ProfileSummary } from '@/lib/access';
 
 const WeeklyChart = dynamic(() => import('@/components/WeeklyChart'), { ssr: false });
 import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, analyzeMealImageAction, analyzeMealTextAction } from "@/app/actions";
@@ -72,6 +74,9 @@ export interface MealLogData {
 
 export interface DashboardProps {
   userId?: string;
+  /** Signed-in account; owns the offline queue. Equals userId unless tracking a family member. */
+  accountUserId?: string;
+  profiles?: ProfileSummary[];
   userAge?: number;
   isPremiumUser?: boolean;
   dailyGoals?: {
@@ -112,6 +117,8 @@ export interface DashboardProps {
 
 export default function Dashboard({
   userId = "guest-user-uuid",
+  accountUserId,
+  profiles = [],
   userAge,
   isPremiumUser = false,
   dailyGoals = { calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30, sodium: 2300, potassium: 4700, iron: 18, calcium: 1000, vitaminC: 90, vitaminE: 15, vitaminB12: 2 },
@@ -158,7 +165,7 @@ export default function Dashboard({
   const [syncTick, setSyncTick] = useState(0);
   const [recentlySynced, setRecentlySynced] = useState<OutboxOp[]>([]);
   const recentRef = React.useRef<OutboxOp[]>([]);
-  const offlineSync = useOfflineSync(userId, (synced) => {
+  const offlineSync = useOfflineSync(accountUserId ?? userId, (synced) => {
     // Called once per confirmed item: keep it visible until a refresh that includes it lands.
     const next = [...recentRef.current, ...synced];
     recentRef.current = next;
@@ -235,7 +242,8 @@ export default function Dashboard({
   // Alias for compatibility with existing template references
   // Pending + just-synced offline meals eaten today count toward totals and the list immediately.
   const isToday = (ms: number) => new Date(ms).toDateString() === new Date().toDateString();
-  const overlayOps = [...offlineSync.pending, ...recentlySynced].filter((o) => o.kind === 'meal_manual' && o.meal && isToday(o.eatenAt));
+  const forThisProfile = (o: OutboxOp) => o.userId === userId; // queue spans the family; show only who's on screen
+  const overlayOps = [...offlineSync.pending, ...recentlySynced].filter((o) => forThisProfile(o) && o.kind === 'meal_manual' && o.meal && isToday(o.eatenAt));
   const todayTotals = overlayOps.reduce(
     (acc, o) => ({
       ...acc,
@@ -248,7 +256,7 @@ export default function Dashboard({
     liveTotals
   );
   const pendingRows: any[] = [...offlineSync.pending, ...recentlySynced]
-    .filter((o) => isToday(o.eatenAt))
+    .filter((o) => forThisProfile(o) && isToday(o.eatenAt))
     .map((o) =>
       o.kind === 'meal_manual' && o.meal
         ? {
@@ -511,6 +519,11 @@ export default function Dashboard({
     <div className="min-h-screen bg-surface-muted text-ink font-sans pb-28">
       {/* Main Stats Panel Grid Wrapper */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12">
+        {profiles.length > 0 && (
+          <div className="mb-4 flex items-center justify-between">
+            <ProfileSwitcher profiles={profiles} activeId={userId} />
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
           
           {/* Left Column: Concentric Progress Card, Coach, & Chart */}
@@ -869,6 +882,7 @@ export default function Dashboard({
         isOpen={isUploadModalOpen} 
         onClose={() => { setIsUploadModalOpen(false); setActiveModalMode('camera'); }} 
         userId={userId} 
+        accountUserId={accountUserId}
         isPremiumUser={isPremium} 
         onMealSaved={(mealData: SavedMealData) => {
           // === INSTANT OPTIMISTIC UPDATE ===

@@ -1,3 +1,4 @@
+import { getActiveProfileId } from "@/lib/access";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const userId = session.user.id;
+    const userId = await getActiveProfileId(session.user.id);
 
     const { searchParams } = new URL(request.url);
     const range = parseInt(searchParams.get("range") || "30", 10);

@@ -1,22 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { users, dailyGoals } from "@/lib/db/schema";
+import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import {
-  computeFullProfile,
-  mapProfileGoalToLabel,
-  toDailyGoalValues,
-} from "@/lib/nutritionEngine";
+import { getActor } from "@/lib/access";
 import { validateProfileInput } from "@/lib/profileValidation";
+import { saveProfileAndGoals } from "@/lib/profileService";
 
+/** Saves the profile of whoever is currently being tracked (the account holder or a family member). */
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const userId = session.user.id;
+  const actor = await getActor();
+  if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: unknown;
   try {
@@ -26,51 +19,25 @@ export async function POST(req: NextRequest) {
   }
 
   const parsed = validateProfileInput(body);
-  if (!parsed.ok) {
-    return NextResponse.json({ error: parsed.error }, { status: 400 });
-  }
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
   const p = parsed.value;
 
-  // Under-13 profiles must be set up by a parent or guardian.
-  if (p.age < 13 && !parsed.parentConfirmed) {
+  const target = await db.query.users.findFirst({
+    where: eq(users.id, actor.activeId),
+    columns: { id: true, parentId: true },
+  });
+  if (!target) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+
+  // A managed profile is, by definition, set up by its parent. A standalone under-13 account needs the checkbox.
+  const parentManaged = !!target.parentId;
+  if (p.age < 13 && !parentManaged && !parsed.parentConfirmed) {
     return NextResponse.json(
       { error: "A parent or guardian must confirm this profile for children under 13." },
       { status: 400 }
     );
   }
 
-  const profile = computeFullProfile(
-    p.weightKg,
-    p.heightCm,
-    p.age,
-    p.gender,
-    p.activityLevel,
-    mapProfileGoalToLabel(p.primaryGoal),
-    p.bodyFat
-  );
-
-  await db
-    .update(users)
-    .set({
-      name: p.name,
-      age: p.age,
-      gender: p.gender,
-      birthdate: p.birthdate,
-      heightCm: p.heightCm,
-      weightKg: p.weightKg,
-      activityLevel: p.activityLevel,
-      bodyFat: p.bodyFat,
-      primaryGoal: p.primaryGoal,
-      dietaryPreferences: p.dietaryPreferences,
-      medicalConditions: p.medicalConditions,
-      trainingFrequency: p.trainingFrequency,
-      profileComplete: true,
-    })
-    .where(eq(users.id, userId));
-
-  // Replace goals with the personalised targets (carbs included).
-  await db.delete(dailyGoals).where(eq(dailyGoals.userId, userId));
-  await db.insert(dailyGoals).values({ userId, ...toDailyGoalValues(profile) });
+  const profile = await saveProfileAndGoals(target.id, p);
 
   return NextResponse.json({
     success: true,

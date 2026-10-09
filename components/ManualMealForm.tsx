@@ -6,7 +6,10 @@ import { enqueueOp } from "@/lib/offlineQueue";
 import { MEAL_SESSIONS, guessMealSession, type MealSession } from "@/lib/offlineTypes";
 
 interface Props {
+  /** The profile being tracked. */
   userId: string;
+  /** The signed-in account (owns the offline queue). */
+  accountUserId?: string;
   /** Called after the meal is safely stored on this device. */
   onSaved: (name: string) => void;
 }
@@ -18,7 +21,7 @@ const field =
  * Log a meal by typing it in. Works with no connection: the meal goes into the
  * on-device outbox (shows up instantly) and syncs automatically later.
  */
-export default function ManualMealForm({ userId, onSaved }: Props) {
+export default function ManualMealForm({ userId, accountUserId, onSaved }: Props) {
   const [name, setName] = useState("");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
@@ -44,6 +47,7 @@ export default function ManualMealForm({ userId, onSaved }: Props) {
     try {
       await enqueueOp({
         userId,
+        ownerId: accountUserId ?? userId,
         kind: "meal_manual",
         eatenAt: Date.now(),
         meal: {

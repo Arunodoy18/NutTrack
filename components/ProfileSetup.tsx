@@ -37,26 +37,34 @@ const DIETARY_PREFS = ["No preference", "Non-vegetarian", "Eggetarian", "Vegetar
 const MEDICAL_CONDITIONS = ["None", "Food allergy", "Diabetes", "Hypertension", "PCOS", "Thyroid", "High cholesterol", "Celiac disease"];
 const TRAINING_FREQ = ["0–1 / week", "2–3 / week", "4–5 / week", "6+ / week"];
 
-export default function ProfileSetup() {
+interface SetupProps {
+  /** Prefill (editing an existing profile, or a family member just created). */
+  initial?: Partial<Omit<ProfileData, "parentConfirmed">>;
+  editing?: boolean;
+  /** True when a parent is filling this in for a family member. */
+  managed?: boolean;
+}
+
+export default function ProfileSetup({ initial, editing = false, managed = false }: SetupProps = {}) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const [data, setData] = useState<ProfileData>({
-    name: "",
-    age: "",
-    gender: "",
-    birthdate: "",
-    heightCm: "",
-    weightKg: "",
-    activityLevel: "",
-    bodyFat: "",
-    primaryGoal: "",
-    dietaryPreferences: [],
-    medicalConditions: [],
-    trainingFrequency: "",
-    parentConfirmed: false,
+    name: initial?.name ?? "",
+    age: initial?.age ?? "",
+    gender: initial?.gender ?? "",
+    birthdate: initial?.birthdate ?? "",
+    heightCm: initial?.heightCm ?? "",
+    weightKg: initial?.weightKg ?? "",
+    activityLevel: initial?.activityLevel ?? "",
+    bodyFat: initial?.bodyFat ?? "",
+    primaryGoal: initial?.primaryGoal ?? "",
+    dietaryPreferences: initial?.dietaryPreferences ?? [],
+    medicalConditions: initial?.medicalConditions ?? [],
+    trainingFrequency: initial?.trainingFrequency ?? "",
+    parentConfirmed: managed, // a parent adding a family member has implicitly confirmed
   });
 
   /* ─── helpers ─── */
@@ -82,7 +90,7 @@ export default function ProfileSetup() {
 
   const ageNum = parseInt(data.age, 10);
   const isChild = Number.isFinite(ageNum) && ageNum >= 2 && ageNum < 18;
-  const needsParent = Number.isFinite(ageNum) && ageNum >= 2 && ageNum < 13;
+  const needsParent = !managed && Number.isFinite(ageNum) && ageNum >= 2 && ageNum < 13;
   const today = new Date().toISOString().slice(0, 10);
 
   const toggleMulti = (key: "dietaryPreferences" | "medicalConditions", val: string) => {
@@ -132,7 +140,8 @@ export default function ProfileSetup() {
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || "Failed to save profile");
-      router.push("/dashboard");
+      router.push(editing ? "/profile" : "/dashboard");
+      router.refresh();
     } catch (e: any) {
       setError(
         e?.name === "AbortError"

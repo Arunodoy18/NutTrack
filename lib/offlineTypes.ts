@@ -17,7 +17,10 @@ export type OutboxKind = "meal_manual" | "meal_photo";
 export interface OutboxOp {
   /** Client-generated id — also the idempotency key. */
   id: string;
+  /** The profile (family member) this item is for. */
   userId: string;
+  /** The signed-in account that queued it; flushing is scoped to this. Missing on old items = userId. */
+  ownerId?: string;
   kind: OutboxKind;
   createdAt: number;
   /** When the person actually ate (ms epoch). Preserved across offline delays. */

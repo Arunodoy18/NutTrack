@@ -33,3 +33,4 @@ twa/*.aab
 twa/build/
 twa/.gradle/
 twa/app/build/
+backups/

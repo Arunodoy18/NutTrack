@@ -92,6 +92,13 @@ export function onQueueChange(cb: () => void): () => void {
   };
 }
 
+let lastCreatedAt = 0;
+/** Strictly increasing, so items queued in the same millisecond still sync in the order they were added. */
+function nextCreatedAt() {
+  lastCreatedAt = Math.max(Date.now(), lastCreatedAt + 1);
+  return lastCreatedAt;
+}
+
 export function newOpId(): string {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
@@ -110,7 +117,8 @@ export async function listOps(userId?: string): Promise<OutboxOp[]> {
     all = lsRead();
   }
   all.sort((a, b) => a.createdAt - b.createdAt);
-  return userId ? all.filter((o) => o.userId === userId) : all;
+  // `userId` here is the ACCOUNT: it owns every profile's queued items.
+  return userId ? all.filter((o) => (o.ownerId ?? o.userId) === userId) : all;
 }
 
 async function putOp(op: OutboxOp) {
@@ -129,10 +137,10 @@ async function putOp(op: OutboxOp) {
 }
 
 export async function enqueueOp(
-  input: Pick<OutboxOp, "userId" | "kind" | "eatenAt" | "meal" | "image">
+  input: Pick<OutboxOp, "userId" | "ownerId" | "kind" | "eatenAt" | "meal" | "image">
 ): Promise<OutboxOp> {
   if (input.kind === "meal_photo") {
-    const photos = (await listOps(input.userId)).filter((o) => o.kind === "meal_photo").length;
+    const photos = (await listOps(input.ownerId ?? input.userId)).filter((o) => o.kind === "meal_photo").length;
     if (photos >= MAX_QUEUED_PHOTOS) {
       throw new Error(`You already have ${MAX_QUEUED_PHOTOS} photos waiting. Reconnect to sync them first.`);
     }
@@ -140,7 +148,7 @@ export async function enqueueOp(
   const op: OutboxOp = {
     ...input,
     id: newOpId(),
-    createdAt: Date.now(),
+    createdAt: nextCreatedAt(),
     attempts: 0,
     status: "pending",
   };

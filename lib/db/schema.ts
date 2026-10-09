@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, primaryKey } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, boolean, primaryKey, type AnyPgColumn } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // --- NextAuth tables for Drizzle adapter ---
@@ -26,6 +26,11 @@ export const users = pgTable("user", {
   medicalConditions: text("medical_conditions"),
   trainingFrequency: text("training_frequency"),
   profileComplete: boolean("profile_complete").default(false),
+  // Family profiles: a managed profile (e.g. a child) is a user row owned by a parent.
+  // It has no credentials of its own and is deleted with its parent (cascade).
+  parentId: text("parent_id").references((): AnyPgColumn => users.id, { onDelete: "cascade" }),
+  avatar: text("avatar"),
+  relation: text("relation"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 

@@ -54,11 +54,13 @@ interface CameraModalProps {
   isOpen: boolean;
   onClose: () => void;
   userId?: string;
+  /** Signed-in account (owner of the offline queue); differs from userId when tracking a family member. */
+  accountUserId?: string;
   isPremiumUser?: boolean;
   onMealSaved?: (mealData: SavedMealData) => void;
 }
 
-export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, onMealSaved }: CameraModalProps) {
+export default function CameraModal({ isOpen, onClose, userId, accountUserId, isPremiumUser, onMealSaved }: CameraModalProps) {
   const [activeModalMode, setActiveModalMode] = useState<'camera' | 'speak' | 'barcode' | 'manual'>('camera');
   const online = useOnline();
   const [networkFailed, setNetworkFailed] = useState(false);
@@ -218,7 +220,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
   const handleQueuePhoto = async () => {
     if (!base64Image || !localUserId) return;
     try {
-      await enqueueOp({ userId: localUserId, kind: 'meal_photo', eatenAt: Date.now(), image: base64Image });
+      await enqueueOp({ userId: localUserId, ownerId: accountUserId ?? localUserId, kind: 'meal_photo', eatenAt: Date.now(), image: base64Image });
       showToast("Photo saved — Nura will log it when you're back online");
       onClose();
       setTimeout(() => {
@@ -393,6 +395,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                   {activeModalMode === 'manual' && localUserId && (
                     <ManualMealForm
                       userId={localUserId}
+                      accountUserId={accountUserId}
                       onSaved={(name) => {
                         showToast(online ? `Logged "${name}"` : `Saved "${name}" — will sync when you're online`);
                         onClose();

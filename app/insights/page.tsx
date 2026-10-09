@@ -8,6 +8,7 @@ import { eq, and, gte, lte } from "drizzle-orm";
 import BottomNav from '@/components/BottomNav';
 import { calculateActiveStreak } from "@/lib/streak";
 import InsightsClient from '@/components/InsightsClient';
+import { getActiveProfileId } from "@/lib/access";
 import { computeFullProfile, mapProfileGoalToLabel } from "@/lib/nutritionEngine";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export default async function InsightsPage({
     redirect("/auth/login");
   }
   
-  const userId = session.user.id;
+  const userId = await getActiveProfileId(session.user.id);
 
   // Gate: force profile setup for incomplete profiles
   const currentUser = await db.query.users.findFirst({
