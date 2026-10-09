@@ -39,7 +39,10 @@ export async function POST(req: Request) {
 
     // Upstash Rate limiting check
     if (ratelimit) {
-      const { success } = await ratelimit.limit(cleanEmail);
+      const { success } = await ratelimit.limit(cleanEmail).catch((err: Error) => {
+        console.error("[send-otp] rate limiter unavailable, allowing:", err.message);
+        return { success: true };
+      });
       if (!success) {
         return NextResponse.json(
           { error: "Too many attempts. Please wait 15 minutes before requesting another OTP." },

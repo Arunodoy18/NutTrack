@@ -27,8 +27,14 @@ export async function checkScanRateLimit(userId: string, isPremium = false) {
     return { allowed: true, remaining: 999 };
   }
   
-  const { success, remaining } = await limiter.limit(userId);
-  return { allowed: success, remaining };
+  try {
+    const { success, remaining } = await limiter.limit(userId);
+    return { allowed: success, remaining };
+  } catch (err) {
+    // Redis unreachable: fail open rather than taking the feature down.
+    console.error("[rateLimit] scan limiter unavailable, allowing:", (err as Error).message);
+    return { allowed: true, remaining: 999 };
+  }
 }
 
 // Brute-force protection for credential endpoints, keyed by IP + email.
@@ -40,8 +46,14 @@ const authLimiter = redis ? new Ratelimit({
 
 export async function checkAuthRateLimit(key: string) {
   if (!authLimiter) return true;
-  const { success } = await authLimiter.limit(key);
-  return success;
+  try {
+    const { success } = await authLimiter.limit(key);
+    return success;
+  } catch (err) {
+    // Redis unreachable: fail open so login/signup keep working.
+    console.error("[rateLimit] auth limiter unavailable, allowing:", (err as Error).message);
+    return true;
+  }
 }
 
 export function clientIp(req: Request) {
