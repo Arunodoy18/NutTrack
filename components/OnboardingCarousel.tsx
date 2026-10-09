@@ -53,7 +53,7 @@ export default function OnboardingCarousel() {
       {/* Top Bar */}
       <div className="absolute top-0 inset-x-0 z-50 flex items-center justify-between px-6 py-6 pointer-events-none">
         <span className="font-display font-black text-xl text-ink pointer-events-auto">
-          diet<span className="text-brand">Buddy</span>
+          Nu<span className="text-brand">ra</span>
         </span>
         <button 
           onClick={handleSkip}

@@ -6,8 +6,9 @@ import { users, dailyGoals } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import {
   computeFullProfile,
-  mapProfileGoalToLabel,
   GOAL_ADJUSTMENTS,
+  isChildAge,
+  toDailyGoalValues,
 } from "@/lib/nutritionEngine";
 
 export async function POST(req: NextRequest) {
@@ -17,7 +18,12 @@ export async function POST(req: NextRequest) {
   }
   const userId = session.user.id;
 
-  const { goal } = await req.json();
+  let goal: string | undefined;
+  try {
+    ({ goal } = await req.json());
+  } catch {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
 
   if (!goal || !GOAL_ADJUSTMENTS.hasOwnProperty(goal)) {
     return NextResponse.json(
@@ -34,6 +40,14 @@ export async function POST(req: NextRequest) {
   if (!user || !user.weightKg || !user.heightCm || !user.age || !user.gender || !user.activityLevel) {
     return NextResponse.json(
       { error: "Profile incomplete. Complete setup first." },
+      { status: 400 }
+    );
+  }
+
+  // Children and teens are on a healthy-growth plan only.
+  if (isChildAge(user.age) && goal !== "Maintenance") {
+    return NextResponse.json(
+      { error: "Weight-change goals aren't available for under-18 profiles." },
       { status: 400 }
     );
   }
@@ -55,7 +69,7 @@ export async function POST(req: NextRequest) {
   if (goal === "Fat loss") profileGoal = "Lose weight";
   else if (goal === "Muscle gain") profileGoal = "Build muscle";
   else if (goal === "Surplus") profileGoal = "Build muscle";
-  else profileGoal = "Maintain";
+  else profileGoal = isChildAge(user.age) ? "Healthy growth" : "Maintain";
 
   await db
     .update(users)
@@ -65,17 +79,7 @@ export async function POST(req: NextRequest) {
   /* ─── Replace daily goals with recalculated targets ─── */
   await db.delete(dailyGoals).where(eq(dailyGoals.userId, userId));
 
-  await db.insert(dailyGoals).values({
-    userId,
-    calories: profile.macros.calories,
-    protein: profile.macros.proteinG,
-    fat: profile.macros.fatG,
-    fiber: profile.macros.fiberG,
-    sodium: profile.micros.sodium,
-    iron: profile.micros.iron,
-    calcium: profile.micros.calcium,
-    vitaminC: profile.micros.vitaminC,
-  });
+  await db.insert(dailyGoals).values({ userId, ...toDailyGoalValues(profile) });
 
   return NextResponse.json({
     success: true,

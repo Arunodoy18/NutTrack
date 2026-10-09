@@ -5,6 +5,7 @@ import BottomNav from '@/components/BottomNav';
 import GroceryListModal from '@/components/GroceryListModal';
 import { Camera, Refrigerator, Upload, RefreshCw, AlertTriangle, ChevronDown, ChevronUp, Sparkles, Utensils } from 'lucide-react';
 import { analyzeFridgeImageAction, addIngredientsToGroceryListAction } from "@/app/actions";
+import { compressImageFile } from "@/lib/imageCompress";
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Recipe {
@@ -69,30 +70,48 @@ export default function FridgeClient() {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
-      setSelectedImage(url);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setBase64Image(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      setSelectedImage((prev) => {
+        if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+        return url;
+      });
+      setBase64Image(null);
+      setError(null);
+      compressImageFile(file)
+        .then(setBase64Image)
+        .catch((err) => {
+          setSelectedImage(null);
+          setError(err?.message || "Could not read that image. Try another photo.");
+        });
     }
+    e.target.value = "";
   };
 
   const handleStartAnalysis = async () => {
-    if (!base64Image) return;
+    if (!base64Image || isAnalyzing) return;
     setStep(1);
     setIsAnalyzing(true);
     setError(null);
 
-    const res = await analyzeFridgeImageAction(base64Image);
-    setIsAnalyzing(false);
-
-    if (res.success && res.data) {
-      setResult(res.data);
-      setStep(2);
-    } else {
-      setError(res.error || "Failed to analyze your fridge.");
+    try {
+      const res = await Promise.race([
+        analyzeFridgeImageAction(base64Image),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 60000)),
+      ]);
+      if (res.success && res.data) {
+        setResult(res.data);
+      } else {
+        setError(res.error || "Failed to analyze your fridge.");
+      }
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message === "timeout"
+          ? "That took too long. Check your connection and try again."
+          : typeof navigator !== "undefined" && !navigator.onLine
+            ? "You're offline. Reconnect and try again."
+            : "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsAnalyzing(false);
       setStep(2);
     }
   };

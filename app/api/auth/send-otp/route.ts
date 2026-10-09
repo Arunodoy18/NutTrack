@@ -102,16 +102,16 @@ export async function POST(req: Request) {
     // Send the email via Resend
     if (process.env.RESEND_API_KEY) {
       const { error: resendError } = await resend.emails.send({
-        from: "dietBuddy <onboarding@resend.dev>", // Verified sender onboarding on free plans
+        from: "Nura <onboarding@resend.dev>", // Verified sender onboarding on free plans
         to: [cleanEmail],
-        subject: type === "RESET_PASSWORD" ? "Your dietBuddy Password Reset OTP" : "Verify Your dietBuddy Account",
+        subject: type === "RESET_PASSWORD" ? "Your Nura Password Reset OTP" : "Verify Your Nura Account",
         html: `
           <div style="font-family:Inter,sans-serif;max-width:400px;margin:0 auto;padding:32px;">
             <h2 style="font-size:24px;font-weight:700;margin-bottom:8px;">
               ${type === "RESET_PASSWORD" ? "Reset your password" : "Verify your account"}
             </h2>
             <p style="color:#64748B;margin-bottom:24px;">
-              Use the code below to ${type === "RESET_PASSWORD" ? "reset your dietBuddy password" : "verify your dietBuddy account"}. It expires in 10 minutes.
+              Use the code below to ${type === "RESET_PASSWORD" ? "reset your Nura password" : "verify your Nura account"}. It expires in 10 minutes.
             </p>
             <div style="background:#F1F5F9;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px;">
               <span style="font-size:36px;font-weight:800;letter-spacing:8px;color:#0A0F1E;">${otp}</span>

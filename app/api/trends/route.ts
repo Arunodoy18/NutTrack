@@ -20,19 +20,17 @@ export async function GET(request: Request) {
     const validRange = Math.min(Math.max(1, range), 365); // Cap to 1 year max
 
     // 1. Fetch user's Daily Nutrition Goals
-    let currentGoals = await db.query.dailyGoals.findFirst({
+    const storedGoals = await db.query.dailyGoals.findFirst({
       where: eq(dailyGoals.userId, userId),
       orderBy: (goals, { desc }) => [desc(goals.createdAt)]
     });
 
-    if (!currentGoals) {
-      // Fallbacks if somehow no goals set
-      currentGoals = {
-        calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30,
-        sodium: 2300, iron: 18, calcium: 1000, vitaminC: 90,
-        potassium: 4700, vitaminE: 15, vitaminB12: 2
-      } as any;
-    }
+    // Fallbacks if somehow no goals set
+    const currentGoals = storedGoals ?? {
+      calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30,
+      sodium: 2300, iron: 18, calcium: 1000, vitaminC: 90,
+      potassium: 4700, vitaminE: 15, vitaminB12: 2,
+    };
 
     // 2. Fetch meals for the last `validRange` days
     const today = new Date();

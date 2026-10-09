@@ -1,7 +1,7 @@
 {
-  "name": "dietBuddy",
-  "short_name": "dietBuddy",
-  "description": "AI-powered calorie and nutrition estimator from meal photos.",
+  "name": "Nura",
+  "short_name": "Nura",
+  "description": "Nura — AI nutrition tracking for the whole family. Snap a meal, get calories and macros.",
   "start_url": "/launch",
   "display": "standalone",
   "background_color": "#FFFFFF",

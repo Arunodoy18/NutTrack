@@ -69,8 +69,9 @@ export interface MealLogData {
 
 export interface DashboardProps {
   userId?: string;
+  userAge?: number;
   isPremiumUser?: boolean;
-  dailyGoals: {
+  dailyGoals?: {
     calories: number;
     protein: number;
     fat: number;
@@ -84,7 +85,7 @@ export interface DashboardProps {
     vitaminE?: number;
     vitaminB12?: number;
   };
-  todayTotals: {
+  todayTotals?: {
     calories: number;
     protein: number;
     fat: number;
@@ -98,7 +99,7 @@ export interface DashboardProps {
     vitaminE?: number;
     vitaminB12?: number;
   };
-  todayMeals: MealLogData[];
+  todayMeals?: MealLogData[];
   onAddMealClick?: () => void;
   onRefreshClick?: () => void;
   activeStreak?: number;
@@ -108,6 +109,7 @@ export interface DashboardProps {
 
 export default function Dashboard({
   userId = "guest-user-uuid",
+  userAge,
   isPremiumUser = false,
   dailyGoals = { calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30, sodium: 2300, potassium: 4700, iron: 18, calcium: 1000, vitaminC: 90, vitaminE: 15, vitaminB12: 2 },
   todayTotals: serverTotals = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0, potassium: 0, iron: 0, calcium: 0, vitaminC: 0, vitaminE: 0, vitaminB12: 0 },
@@ -139,10 +141,10 @@ export default function Dashboard({
 
   const cache = getCache();
 
-  const [liveTotals, setLiveTotals] = useState(cache?.totals || serverTotals);
+  const [liveTotals, setLiveTotals] = useState<NonNullable<DashboardProps['todayTotals']>>(cache?.totals || serverTotals);
   const [liveMeals, setLiveMeals] = useState<MealLogData[]>(cache?.meals || initialMeals);
   const [liveWeeklyData, setLiveWeeklyData] = useState<any[]>(cache?.weekly || serverWeeklyData);
-  const [liveMealCount, setLiveMealCount] = useState(cache?.mealCount || totalMealsCount);
+  const [liveMealCount, setLiveMealCount] = useState<number>(cache?.mealCount || totalMealsCount);
   const [liveGoals, setLiveGoals] = useState(cache?.goals || dailyGoals);
   const [liveIsPremium, setLiveIsPremium] = useState(cache?.isPremium || isPremiumUser);
   const [liveActiveStreak, setLiveActiveStreak] = useState(cache?.activeStreak || activeStreak);
@@ -522,7 +524,7 @@ export default function Dashboard({
           <div className="flex flex-col justify-center">
             <span className="text-[10px] font-black text-brand tracking-widest uppercase mb-1">Buddy Coach</span>
             <p className="text-sm font-medium text-ink leading-relaxed">
-              {generateBuddyCoachTip(todayTotals, dailyGoals)}
+              {generateBuddyCoachTip(todayTotals, dailyGoals, new Date(), userAge)}
             </p>
           </div>
         </div>
@@ -878,9 +880,9 @@ export default function Dashboard({
 
             {/* Title & Subtitle */}
             <div className="text-center space-y-2 mb-6">
-              <h3 className="font-display text-2xl font-black text-ink tracking-tight">Upgrade to dietBuddy Premium</h3>
+              <h3 className="font-display text-2xl font-black text-ink tracking-tight">Upgrade to Nura Premium</h3>
               <p className="text-xs text-ink-soft leading-relaxed">
-                You've reached your free daily scan limit. Unlock the full power of dietBuddy to crush your fitness goals.
+                You've reached your free daily scan limit. Unlock the full power of Nura to crush your fitness goals.
               </p>
             </div>
 
@@ -963,7 +965,7 @@ export default function Dashboard({
                     key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "", 
                     amount: orderData.order.amount,
                     currency: orderData.order.currency,
-                    name: "dietBuddy",
+                    name: "Nura",
                     description: "Premium Upgrade",
                     order_id: orderData.order.id,
                     handler: async function (response: any) {
@@ -983,7 +985,7 @@ export default function Dashboard({
                         setIsPremium(true);
                         setIsPaywallOpen(false);
                         localStorage.setItem("dietbuddy_premium", "true");
-                        alert("🎉 Payment Successful! Welcome to dietBuddy Premium!");
+                        alert("🎉 Payment Successful! Welcome to Nura Premium!");
                       } else {
                         alert("Payment verification failed. Please contact support.");
                       }

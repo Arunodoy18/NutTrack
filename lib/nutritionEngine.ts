@@ -35,6 +35,15 @@ export function mapProfileGoalToLabel(goal: string): string {
   return "Maintenance";
 }
 
+/** Youngest and oldest ages the engine supports. Under 2 needs a paediatrician. */
+export const MIN_SUPPORTED_AGE = 2;
+export const MAX_SUPPORTED_AGE = 120;
+
+/** Anyone under 18 gets paediatric targets (growth, never weight loss). */
+export function isChildAge(age: number): boolean {
+  return age < 18;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
  * BMI — WHO Standard
  * Source: WHO Technical Report Series 894 (2000)
@@ -43,14 +52,21 @@ export function mapProfileGoalToLabel(goal: string): string {
 
 export interface BMIResult {
   value: number;
-  label: "Underweight" | "Normal" | "Overweight" | "Obese";
+  label: "Underweight" | "Normal" | "Overweight" | "Obese" | "Growing";
 }
 
-export function calculateBMI(weightKg: number, heightCm: number): BMIResult {
+/**
+ * Adult cut-offs (WHO) only apply from 18. Children are classified by
+ * BMI-for-age percentile (CDC/WHO growth charts), which needs a clinician,
+ * so for under-18s we report the value but label it "Growing" instead of
+ * mislabelling a healthy child as under/overweight.
+ */
+export function calculateBMI(weightKg: number, heightCm: number, age = 30): BMIResult {
   const heightM = heightCm / 100;
   const value = Math.round((weightKg / (heightM * heightM)) * 10) / 10;
   let label: BMIResult["label"];
-  if (value < 18.5) label = "Underweight";
+  if (isChildAge(age)) label = "Growing";
+  else if (value < 18.5) label = "Underweight";
   else if (value < 25) label = "Normal";
   else if (value < 30) label = "Overweight";
   else label = "Obese";
@@ -74,6 +90,38 @@ export function calculateBMR(
     return Math.round(10 * weightKg + 6.25 * heightCm - 5 * age + 5);
   }
   return Math.round(10 * weightKg + 6.25 * heightCm - 5 * age - 161);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * Paediatric energy — IOM Dietary Reference Intakes (2005), EER equations
+ * Ages 2: (89 × wt − 100) + 20          (13–35 months equation, +20 growth)
+ * Ages 3–8:  Boys 88.5 − 61.9·age + PA·(26.7·wt + 903·ht_m) + 20
+ *            Girls 135.3 − 30.8·age + PA·(10·wt + 934·ht_m) + 20
+ * Ages 9–17: same equations, +25 kcal growth allowance
+ * PA = physical-activity coefficient (sedentary … very active)
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+const CHILD_PA: Record<"Male" | "Female", Record<string, number>> = {
+  Male: { Sedentary: 1.0, "Lightly active": 1.13, "Moderately active": 1.26, "Very active": 1.42, Athlete: 1.42 },
+  Female: { Sedentary: 1.0, "Lightly active": 1.16, "Moderately active": 1.31, "Very active": 1.56, Athlete: 1.56 },
+};
+
+export function calculateChildEER(
+  weightKg: number,
+  heightCm: number,
+  age: number,
+  gender: string,
+  activityLevel: string
+): number {
+  if (age < 3) return Math.round(89 * weightKg - 100 + 20);
+  const boy = gender === "Male";
+  const pa = CHILD_PA[boy ? "Male" : "Female"][activityLevel] ?? (boy ? 1.26 : 1.31);
+  const heightM = heightCm / 100;
+  const growth = age <= 8 ? 20 : 25;
+  const eer = boy
+    ? 88.5 - 61.9 * age + pa * (26.7 * weightKg + 903 * heightM) + growth
+    : 135.3 - 30.8 * age + pa * (10 * weightKg + 934 * heightM) + growth;
+  return Math.round(eer);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -158,10 +206,32 @@ export function calculateMacroTargets(
   tdee: number,
   goal: string,
   weightKg: number,
-  gender: string
+  gender: string,
+  age = 30
 ): MacroTargets {
+  /* ─── Children & teens: growth, never a deficit ─── */
+  if (isChildAge(age)) {
+    const calories = Math.round(Math.min(3500, Math.max(900, tdee)));
+    // Protein RDA (IOM): 2–3y 13g, 4–8y 19g, 9–13y 34g, 14–17y 52g (M) / 46g (F)
+    let rdaProtein: number;
+    if (age <= 3) rdaProtein = 13;
+    else if (age <= 8) rdaProtein = 19;
+    else if (age <= 13) rdaProtein = 34;
+    else rdaProtein = gender === "Male" ? 52 : 46;
+    // Never below 10% of energy (AMDR 10–30%)
+    const proteinG = Math.ceil(Math.max(rdaProtein, (calories * 0.1) / 4));
+    // Fat AMDR: 30–40% (2–3y), 25–35% (4–18y) — use 35% / 30%
+    const fatG = Math.round((calories * (age <= 3 ? 0.35 : 0.3)) / 9);
+    const carbsG = Math.round(Math.max(0, calories - proteinG * 4 - fatG * 9) / 4);
+    // IOM AI: 14 g fibre per 1000 kcal
+    const fiberG = Math.round((calories / 1000) * 14);
+    return { calories, proteinG, fatG, carbsG, fiberG };
+  }
+
   const adjustment = GOAL_ADJUSTMENTS[goal] ?? 0;
-  const calories = Math.round(Math.max(1200, tdee + adjustment));
+  // Medical-guidance floor: 1200 kcal (F) / 1500 kcal (M) so "Fat loss" can't go unsafe
+  const floor = gender === "Male" ? 1500 : 1200;
+  const calories = Math.round(Math.max(floor, tdee + adjustment));
 
   // Protein: g/kg based on goal
   let proteinPerKg: number;
@@ -184,8 +254,9 @@ export function calculateMacroTargets(
   const carbCals = Math.max(0, calories - proteinCals - fatCals);
   const carbsG = Math.round(carbCals / 4);
 
-  // Fiber: IOM recommendation
-  const fiberG = gender === "Male" ? 38 : 25;
+  // Fiber: IOM AI — 14 g/1000 kcal, capped at the adult AI by age/sex
+  const adultAI = age >= 51 ? (gender === "Male" ? 30 : 21) : (gender === "Male" ? 38 : 25);
+  const fiberG = Math.min(adultAI, Math.max(20, Math.round((calories / 1000) * 14)));
 
   return { calories, proteinG, fatG, carbsG, fiberG };
 }
@@ -205,6 +276,15 @@ export interface MicroTargets {
 }
 
 export function calculateMicroTargets(age: number, gender: string): MicroTargets {
+  /* ─── Children & teens — IOM DRIs; sodium = CDRR upper bound (NASEM 2019) ─── */
+  if (isChildAge(age)) {
+    const male = gender === "Male";
+    if (age <= 3) return { sodium: 1200, iron: 7, calcium: 700, vitaminC: 15 };
+    if (age <= 8) return { sodium: 1500, iron: 10, calcium: 1000, vitaminC: 25 };
+    if (age <= 13) return { sodium: 1800, iron: 8, calcium: 1300, vitaminC: 45 };
+    return { sodium: 2300, iron: male ? 11 : 15, calcium: 1300, vitaminC: male ? 75 : 65 };
+  }
+
   // Sodium: AHA recommends <2300mg for all adults
   const sodium = 2300;
 
@@ -245,7 +325,8 @@ export interface FullNutritionProfile {
   leanMuscleMass: number;
   macros: MacroTargets;
   micros: MicroTargets;
-  metabolicHealth: "Optimal" | "At Risk" | "High Risk";
+  metabolicHealth: "Optimal" | "At Risk" | "High Risk" | "Growing";
+  isChild: boolean;
 }
 
 export function computeFullProfile(
@@ -257,21 +338,46 @@ export function computeFullProfile(
   goal: string,
   userBodyFatCategory?: string | null
 ): FullNutritionProfile {
-  const bmi = calculateBMI(weightKg, heightCm);
+  const isChild = isChildAge(age);
+  const bmi = calculateBMI(weightKg, heightCm, age);
   const bmr = calculateBMR(weightKg, heightCm, age, gender);
-  const tdee = calculateTDEE(bmr, activityLevel);
-  const bodyFatPercent = resolveBodyFatPercent(userBodyFatCategory, bmi.value, age, gender);
+  // Children use the IOM EER (already includes activity); adults BMR × activity.
+  const tdee = isChild
+    ? calculateChildEER(weightKg, heightCm, age, gender, activityLevel)
+    : calculateTDEE(bmr, activityLevel);
+  // Children never get a deficit/surplus goal.
+  const effectiveGoal = isChild ? "Maintenance" : goal;
+  // Deurenberg child equation: 1.51·BMI − 0.70·age − 3.6·sex + 1.4 (Br J Nutr 1991)
+  const bodyFatPercent = isChild
+    ? Math.round(Math.max(5, Math.min(45, 1.51 * bmi.value - 0.7 * age - 3.6 * (gender === "Male" ? 1 : 0) + 1.4)) * 10) / 10
+    : resolveBodyFatPercent(userBodyFatCategory, bmi.value, age, gender);
   const ffm = calculateFFM(weightKg, bodyFatPercent);
   const leanMuscleMass = Math.round(ffm * 0.5 * 10) / 10; // ~50% of FFM is skeletal muscle
-  const macros = calculateMacroTargets(tdee, goal, weightKg, gender);
+  const macros = calculateMacroTargets(tdee, effectiveGoal, weightKg, gender, age);
   const micros = calculateMicroTargets(age, gender);
 
   let metabolicHealth: FullNutritionProfile["metabolicHealth"];
-  if (bmi.label === "Normal") metabolicHealth = "Optimal";
+  if (isChild) metabolicHealth = "Growing";
+  else if (bmi.label === "Normal") metabolicHealth = "Optimal";
   else if (bmi.label === "Overweight") metabolicHealth = "At Risk";
   else metabolicHealth = "High Risk";
 
-  return { bmi, bmr, tdee, bodyFatPercent, ffm, leanMuscleMass, macros, micros, metabolicHealth };
+  return { bmi, bmr, tdee, bodyFatPercent, ffm, leanMuscleMass, macros, micros, metabolicHealth, isChild };
+}
+
+/** Row values for the daily_goals table — includes carbs (previously never saved). */
+export function toDailyGoalValues(profile: FullNutritionProfile) {
+  return {
+    calories: profile.macros.calories,
+    protein: profile.macros.proteinG,
+    fat: profile.macros.fatG,
+    carbs: profile.macros.carbsG,
+    fiber: profile.macros.fiberG,
+    sodium: profile.micros.sodium,
+    iron: profile.micros.iron,
+    calcium: profile.micros.calcium,
+    vitaminC: profile.micros.vitaminC,
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -297,9 +403,11 @@ export interface DailyGoals {
 export function generateBuddyCoachTip(
   todayTotals: DailyTotals,
   dailyGoals: DailyGoals,
-  currentTime: Date = new Date()
+  currentTime: Date = new Date(),
+  age?: number
 ): string {
   const hour = currentTime.getHours();
+  const child = age !== undefined && isChildAge(age);
   
   // Calculate remaining amounts (can be negative if over)
   const remCals = dailyGoals.calories - todayTotals.calories;
@@ -312,6 +420,20 @@ export function generateBuddyCoachTip(
   else if (hour >= 11 && hour < 15) nextMeal = "lunch";
   else if (hour >= 15 && hour < 18) nextMeal = "an afternoon snack";
   else if (hour >= 18 && hour < 22) nextMeal = "dinner";
+
+  // Kids: positive, food-first messages — never about "over target" or restricting.
+  if (child) {
+    if (todayTotals.calories === 0) {
+      return `Fuel up for the day! Start with ${nextMeal} — try fruit, milk or curd, and something whole-grain.`;
+    }
+    if (remProtein > 8) {
+      return `Add a protein friend to ${nextMeal}: egg, dal, paneer, curd, chicken, fish or nuts (if no allergy) help growing bodies.`;
+    }
+    if (remFiber > 6) {
+      return `Eat the rainbow! A fruit or colourful veggie with ${nextMeal} adds fibre and vitamins.`;
+    }
+    return "Great eating today! Keep drinking water and enjoy a variety of colourful foods.";
+  }
 
   // Check if they are completely done / over
   if (remCals <= -200) {

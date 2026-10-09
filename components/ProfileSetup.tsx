@@ -18,6 +18,7 @@ interface ProfileData {
   dietaryPreferences: string[];
   medicalConditions: string[];
   trainingFrequency: string;
+  parentConfirmed: boolean;
 }
 
 /* ─── step config ─── */
@@ -31,8 +32,9 @@ const STEPS = [
 const ACTIVITY_LEVELS = ["Sedentary", "Lightly active", "Moderately active", "Very active", "Athlete"];
 const BODY_FAT_OPTIONS = ["Low (<15%)", "Average (15–24%)", "High (25–31%)", "Very high (32%+)"];
 const GOALS = ["Lose weight", "Maintain", "Build muscle", "Improve health"];
-const DIETARY_PREFS = ["No preference", "Non-vegetarian", "Vegetarian", "Vegan", "Keto", "High protein", "Low carb"];
-const MEDICAL_CONDITIONS = ["None", "Diabetes", "Hypertension", "PCOS", "Thyroid", "High cholesterol"];
+const KID_GOAL = "Healthy growth";
+const DIETARY_PREFS = ["No preference", "Non-vegetarian", "Eggetarian", "Vegetarian", "Vegan", "Jain", "Gluten-free", "Dairy-free", "Keto", "High protein", "Low carb"];
+const MEDICAL_CONDITIONS = ["None", "Food allergy", "Diabetes", "Hypertension", "PCOS", "Thyroid", "High cholesterol", "Celiac disease"];
 const TRAINING_FREQ = ["0–1 / week", "2–3 / week", "4–5 / week", "6+ / week"];
 
 export default function ProfileSetup() {
@@ -54,50 +56,99 @@ export default function ProfileSetup() {
     dietaryPreferences: [],
     medicalConditions: [],
     trainingFrequency: "",
+    parentConfirmed: false,
   });
 
   /* ─── helpers ─── */
   const set = (key: keyof ProfileData, value: string) =>
     setData((prev) => ({ ...prev, [key]: value }));
 
+  /** Age in whole years from an ISO birthdate, or null if empty/invalid/future. */
+  const ageFromBirthdate = (iso: string): number | null => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return null;
+    const b = new Date(iso + "T00:00:00");
+    const now = new Date();
+    if (Number.isNaN(b.getTime()) || b > now) return null;
+    let a = now.getFullYear() - b.getFullYear();
+    if (now.getMonth() < b.getMonth() || (now.getMonth() === b.getMonth() && now.getDate() < b.getDate())) a--;
+    return a;
+  };
+
+  const setBirthdate = (iso: string) =>
+    setData((prev) => {
+      const a = ageFromBirthdate(iso);
+      return { ...prev, birthdate: iso, age: a !== null ? String(a) : prev.age };
+    });
+
+  const ageNum = parseInt(data.age, 10);
+  const isChild = Number.isFinite(ageNum) && ageNum >= 2 && ageNum < 18;
+  const needsParent = Number.isFinite(ageNum) && ageNum >= 2 && ageNum < 13;
+  const today = new Date().toISOString().slice(0, 10);
+
   const toggleMulti = (key: "dietaryPreferences" | "medicalConditions", val: string) => {
     setData((prev) => {
       const arr = prev[key];
-      return { ...prev, [key]: arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val] };
+      // "No preference" / "None" are exclusive: picking one clears the rest, and vice versa.
+      const exclusive = val === "No preference" || val === "None";
+      if (arr.includes(val)) return { ...prev, [key]: arr.filter((v) => v !== val) };
+      if (exclusive) return { ...prev, [key]: [val] };
+      return { ...prev, [key]: [...arr.filter((v) => v !== "No preference" && v !== "None"), val] };
     });
   };
 
   /* ─── validation ─── */
   const canContinue = (): boolean => {
     switch (step) {
-      case 1: return data.name.trim().length > 0 && data.age.trim().length > 0 && data.gender.length > 0;
-      case 2: return data.heightCm.trim().length > 0 && data.weightKg.trim().length > 0;
+      case 1:
+        return (
+          data.name.trim().length > 0 &&
+          Number.isFinite(ageNum) && ageNum >= 2 && ageNum <= 120 &&
+          data.gender.length > 0 &&
+          (!needsParent || data.parentConfirmed)
+        );
+      case 2: {
+        const h = parseFloat(data.heightCm), w = parseFloat(data.weightKg);
+        return h >= 50 && h <= 250 && w >= 8 && w <= 400;
+      }
       case 3: return data.activityLevel.length > 0;
-      case 4: return data.primaryGoal.length > 0 && data.trainingFrequency.length > 0;
+      case 4: return (isChild || data.primaryGoal.length > 0) && data.trainingFrequency.length > 0;
       default: return false;
     }
   };
 
   /* ─── submit ─── */
   const handleFinish = async () => {
+    if (saving) return; // guard against double taps
     setSaving(true);
     setError("");
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
     try {
       const res = await fetch("/api/setup/save", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, primaryGoal: isChild ? KID_GOAL : data.primaryGoal }),
+        signal: ctrl.signal,
       });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error || "Failed to save profile");
       router.push("/dashboard");
     } catch (e: any) {
-      setError(e.message);
+      setError(
+        e?.name === "AbortError"
+          ? "That took too long. Check your connection and try again."
+          : e?.message === "Failed to fetch"
+            ? "You seem to be offline. Please reconnect and try again."
+            : e?.message || "Something went wrong. Please try again."
+      );
       setSaving(false);
+    } finally {
+      clearTimeout(timer);
     }
   };
 
   const next = () => {
+    if (!canContinue()) return;
     if (step < 4) setStep(step + 1);
     else handleFinish();
   };
@@ -195,7 +246,9 @@ export default function ProfileSetup() {
                 type="text"
                 value={data.name}
                 onChange={(e) => set("name", e.target.value)}
-                placeholder="Arunodoy Banerjee"
+                placeholder="Your name"
+                maxLength={80}
+                autoComplete="name"
                 className="w-full bg-surface-muted rounded-[16px] px-4 py-2.5 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
               />
             </div>
@@ -210,7 +263,9 @@ export default function ProfileSetup() {
                   inputMode="numeric"
                   value={data.age}
                   onChange={(e) => set("age", e.target.value)}
-                  placeholder="24"
+                  placeholder="e.g. 25"
+                  min={2}
+                  max={120}
                   className="w-full bg-surface-muted rounded-[16px] px-4 py-2.5 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
                 />
               </div>
@@ -244,10 +299,35 @@ export default function ProfileSetup() {
               <input
                 type="date"
                 value={data.birthdate}
-                onChange={(e) => set("birthdate", e.target.value)}
+                max={today}
+                onChange={(e) => setBirthdate(e.target.value)}
                 className="w-full bg-surface-muted rounded-[16px] px-4 py-2.5 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
               />
             </div>
+
+            {Number.isFinite(ageNum) && ageNum < 2 && ageNum >= 0 && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-[16px] p-3 text-sm font-medium">
+                Nura supports ages 2 and up. For babies and toddlers, please follow your paediatrician&apos;s feeding advice.
+              </div>
+            )}
+            {isChild && (
+              <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-[16px] p-3 text-sm font-medium">
+                Kids&apos; targets focus on healthy growth — no dieting or weight-loss goals.
+              </div>
+            )}
+            {needsParent && (
+              <label className="flex items-start gap-3 bg-surface-muted rounded-[16px] p-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={data.parentConfirmed}
+                  onChange={(e) => setData((prev) => ({ ...prev, parentConfirmed: e.target.checked }))}
+                  className="mt-1 w-5 h-5 accent-[#FC4C02]"
+                />
+                <span className="text-sm font-medium text-ink-soft leading-snug">
+                  I&apos;m this child&apos;s parent or guardian and I&apos;m setting up this profile for them.
+                </span>
+              </label>
+            )}
           </div>
         )}
 
@@ -264,7 +344,7 @@ export default function ProfileSetup() {
                   inputMode="numeric"
                   value={data.heightCm}
                   onChange={(e) => set("heightCm", e.target.value)}
-                  placeholder="176"
+                  placeholder={isChild ? "e.g. 120" : "e.g. 170"}
                   className="w-full bg-surface-muted rounded-[20px] px-5 py-3 pr-24 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
                 />
                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft whitespace-nowrap">
@@ -291,7 +371,7 @@ export default function ProfileSetup() {
                   inputMode="numeric"
                   value={data.weightKg}
                   onChange={(e) => set("weightKg", e.target.value)}
-                  placeholder="72"
+                  placeholder={isChild ? "e.g. 25" : "e.g. 65"}
                   className="w-full bg-surface-muted rounded-[20px] px-5 py-3 pr-24 text-sm font-bold text-ink placeholder:text-ink-faint border-none focus:ring-2 focus:ring-brand outline-none transition-shadow"
                 />
                 <span className="absolute right-5 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft whitespace-nowrap">
@@ -329,16 +409,18 @@ export default function ProfileSetup() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-[10px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-3 ml-1">
-                Body Fat (optional)
-              </label>
-              <div className="grid grid-cols-2 gap-2.5">
-                {BODY_FAT_OPTIONS.map((opt) => (
-                  <Chip key={opt} label={opt} selected={data.bodyFat === opt} onPress={() => set("bodyFat", data.bodyFat === opt ? "" : opt)} />
-                ))}
+            {!isChild && (
+              <div>
+                <label className="block text-[10px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-3 ml-1">
+                  Body Fat (optional)
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {BODY_FAT_OPTIONS.map((opt) => (
+                    <Chip key={opt} label={opt} selected={data.bodyFat === opt} onPress={() => set("bodyFat", data.bodyFat === opt ? "" : opt)} />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -350,8 +432,8 @@ export default function ProfileSetup() {
                 Primary Goal
               </label>
               <div className="grid grid-cols-2 gap-2.5">
-                {GOALS.map((g) => (
-                  <Chip key={g} label={g} selected={data.primaryGoal === g} onPress={() => set("primaryGoal", g)} />
+                {(isChild ? [KID_GOAL] : GOALS).map((g) => (
+                  <Chip key={g} label={g} selected={isChild ? true : data.primaryGoal === g} onPress={() => set("primaryGoal", g)} />
                 ))}
               </div>
             </div>
@@ -380,7 +462,7 @@ export default function ProfileSetup() {
 
             <div>
               <label className="block text-[10px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-3 ml-1">
-                Training Frequency
+                {isChild ? "Sports & active play" : "Training Frequency"}
               </label>
               <div className="grid grid-cols-2 gap-2.5">
                 {TRAINING_FREQ.map((t) => (
@@ -394,6 +476,14 @@ export default function ProfileSetup() {
 
       {/* Bottom sticky bar */}
       <div className="shrink-0 px-6 pb-4 pt-2 bg-white border-t border-surface-line/50">
+        {!canContinue() && !saving && (
+          <p className="text-xs font-medium text-ink-faint text-center mb-2">
+            {step === 1 && "Add a name, age (2–120), sex"+(needsParent ? " and the parent confirmation" : "")+" to continue."}
+            {step === 2 && "Enter a realistic height (50–250 cm) and weight (8–400 kg)."}
+            {step === 3 && "Pick the activity level that fits best."}
+            {step === 4 && "Choose a goal and how often you train to finish."}
+          </p>
+        )}
 
         <button
           onClick={next}

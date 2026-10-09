@@ -103,7 +103,7 @@ export default function ProfileHeaderClient({
                   <div className="text-3xl font-black text-ink leading-none">{analyticsProfile.bmi.value}</div>
                   <div className="mt-2">
                     <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                      analyticsProfile.bmi.label === 'Normal' ? 'bg-emerald-50 text-emerald-600' : 
+                      analyticsProfile.bmi.label === 'Normal' || analyticsProfile.bmi.label === 'Growing' ? 'bg-emerald-50 text-emerald-600' : 
                       analyticsProfile.bmi.label === 'Underweight' ? 'bg-amber-50 text-amber-600' :
                       'bg-red-50 text-red-500'
                     }`}>

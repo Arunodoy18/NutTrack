@@ -7,7 +7,9 @@ import { eq } from "drizzle-orm";
 import {
   computeFullProfile,
   mapProfileGoalToLabel,
+  toDailyGoalValues,
 } from "@/lib/nutritionEngine";
+import { validateProfileInput } from "@/lib/profileValidation";
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -16,81 +18,59 @@ export async function POST(req: NextRequest) {
   }
   const userId = session.user.id;
 
-  const body = await req.json();
-  const {
-    name,
-    age,
-    gender,
-    birthdate,
-    heightCm,
-    weightKg,
-    activityLevel,
-    bodyFat,
-    primaryGoal,
-    dietaryPreferences,
-    medicalConditions,
-    trainingFrequency,
-  } = body;
-
-  /* ─── basic validation ─── */
-  if (!name || !age || !gender || !heightCm || !weightKg || !activityLevel || !primaryGoal) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const ageNum = parseInt(age, 10);
-  const height = parseInt(heightCm, 10);
-  const weight = parseInt(weightKg, 10);
+  const parsed = validateProfileInput(body);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+  const p = parsed.value;
 
-  /* ─── compute full nutrition profile using centralized engine ─── */
-  const goalLabel = mapProfileGoalToLabel(primaryGoal);
+  // Under-13 profiles must be set up by a parent or guardian.
+  if (p.age < 13 && !parsed.parentConfirmed) {
+    return NextResponse.json(
+      { error: "A parent or guardian must confirm this profile for children under 13." },
+      { status: 400 }
+    );
+  }
+
   const profile = computeFullProfile(
-    weight,
-    height,
-    ageNum,
-    gender,
-    activityLevel,
-    goalLabel,
-    bodyFat || null
+    p.weightKg,
+    p.heightCm,
+    p.age,
+    p.gender,
+    p.activityLevel,
+    mapProfileGoalToLabel(p.primaryGoal),
+    p.bodyFat
   );
 
-  /* ─── Save user profile ─── */
   await db
     .update(users)
     .set({
-      name,
-      age: ageNum,
-      gender,
-      birthdate: birthdate || null,
-      heightCm: height,
-      weightKg: weight,
-      activityLevel,
-      bodyFat: bodyFat || null,
-      primaryGoal,
-      dietaryPreferences: Array.isArray(dietaryPreferences)
-        ? dietaryPreferences.join(",")
-        : (dietaryPreferences || null),
-      medicalConditions: Array.isArray(medicalConditions)
-        ? medicalConditions.join(",")
-        : (medicalConditions || null),
-      trainingFrequency: trainingFrequency || null,
+      name: p.name,
+      age: p.age,
+      gender: p.gender,
+      birthdate: p.birthdate,
+      heightCm: p.heightCm,
+      weightKg: p.weightKg,
+      activityLevel: p.activityLevel,
+      bodyFat: p.bodyFat,
+      primaryGoal: p.primaryGoal,
+      dietaryPreferences: p.dietaryPreferences,
+      medicalConditions: p.medicalConditions,
+      trainingFrequency: p.trainingFrequency,
       profileComplete: true,
     })
     .where(eq(users.id, userId));
 
-  /* ─── Create personalised daily goals ─── */
+  // Replace goals with the personalised targets (carbs included).
   await db.delete(dailyGoals).where(eq(dailyGoals.userId, userId));
-
-  await db.insert(dailyGoals).values({
-    userId,
-    calories: profile.macros.calories,
-    protein: profile.macros.proteinG,
-    fat: profile.macros.fatG,
-    fiber: profile.macros.fiberG,
-    sodium: profile.micros.sodium,
-    iron: profile.micros.iron,
-    calcium: profile.micros.calcium,
-    vitaminC: profile.micros.vitaminC,
-  });
+  await db.insert(dailyGoals).values({ userId, ...toDailyGoalValues(profile) });
 
   return NextResponse.json({
     success: true,
@@ -102,6 +82,7 @@ export async function POST(req: NextRequest) {
       ffm: profile.ffm,
       macros: profile.macros,
       micros: profile.micros,
+      isChild: profile.isChild,
     },
   });
 }

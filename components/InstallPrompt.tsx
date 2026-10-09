@@ -77,7 +77,7 @@ export default function InstallPrompt() {
             <Download size={20} />
           </div>
           <div>
-            <h4 className="text-sm font-black text-[#3D3B38] leading-tight">Install dietBuddy</h4>
+            <h4 className="text-sm font-black text-[#3D3B38] leading-tight">Install Nura</h4>
             {isIOS ? (
               <p className="text-[10px] font-bold text-[#8D8B86] mt-0.5">
                 Tap <Share size={10} className="inline mx-0.5" /> then "Add to Home Screen"

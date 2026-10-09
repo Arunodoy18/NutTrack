@@ -20,5 +20,11 @@ export default async function DashboardPage() {
 
   // App Shell architecture: render instantly using JWT userId.
   // The client component will handle reading from cache and background syncing.
-  return <Dashboard userId={userId} />;
+  // Tiny single-column lookup so kids get age-appropriate coaching copy.
+  const profile = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { age: true },
+  });
+
+  return <Dashboard userId={userId} userAge={profile?.age ?? undefined} />;
 }

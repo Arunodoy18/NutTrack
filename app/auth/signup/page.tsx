@@ -61,8 +61,8 @@ export default function SignupPage() {
 
         {/* Logo */}
         <div className="text-xl font-black tracking-tight flex items-center mb-6">
-          <span className="text-ink">diet</span>
-          <span className="text-brand">Buddy</span>
+          <span className="text-ink">Nu</span>
+          <span className="text-brand">ra</span>
         </div>
 
         {/* Header */}

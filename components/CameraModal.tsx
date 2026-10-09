@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Webcam from 'react-webcam';
+import { compressImageFile, compressDataUrl } from '@/lib/imageCompress';
 import { Camera, Upload, X, Mic, MicOff, Barcode, Maximize, User, RefreshCw, AlertTriangle, Check, Sparkles } from 'lucide-react';
 import ComingSoon from "@/components/ComingSoon";
 import dynamic from "next/dynamic";
@@ -64,7 +65,8 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
     const imageSrc = webcamRef.current?.getScreenshot();
     if (imageSrc) {
       setSelectedImage(imageSrc);
-      setBase64Image(imageSrc);
+      setBase64Image(imageSrc); // show instantly, then swap for a compressed copy
+      compressDataUrl(imageSrc).then(setBase64Image).catch(() => {});
     }
   }, [webcamRef]);
   
@@ -104,17 +106,19 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
       setScanningMsgIdx(prev => (prev + 1) % SCAN_MESSAGES.length);
     }, 1500);
 
-    const res = await analyzeMealTextAction(text);
-    
-    clearInterval(msgInterval);
-    setIsAnalyzing(false);
-
-    if (res.success && res.analysis) {
-      setActiveAnalysis(res.analysis);
-      setCustomMealName(res.analysis.name || "My Meal");
-      setUploadStep(2);
-    } else {
-      setAnalysisError(res.error || "Failed to analyze speech.");
+    try {
+      const res = await runWithSafety(() => analyzeMealTextAction(text));
+      if (res.success && res.analysis) {
+        setActiveAnalysis(res.analysis);
+        setCustomMealName(res.analysis.name || "My Meal");
+      } else {
+        setAnalysisError(res.error || "Failed to analyze speech.");
+      }
+    } catch (err) {
+      setAnalysisError(friendlyError(err));
+    } finally {
+      clearInterval(msgInterval);
+      setIsAnalyzing(false);
       setUploadStep(2);
     }
   };
@@ -132,22 +136,45 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
     if (file) {
       // INSTANT UI UPDATE: Use a blob URL so the user immediately sees the image.
       const url = URL.createObjectURL(file);
-      setSelectedImage(url);
-      
-      // DEFER HEAVY WORK: Base64 encoding blocks the main UI thread.
-      // Moving it to a setTimeout lets React render the image first, eliminating the lag.
-      setTimeout(() => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setBase64Image(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      }, 50);
+      setSelectedImage((prev) => {
+        if (prev && prev.startsWith("blob:")) URL.revokeObjectURL(prev);
+        return url;
+      });
+      setBase64Image(null);
+      setAnalysisError(null);
+
+      // Downscale + re-encode off the critical path so the preview shows instantly
+      // and the upload is ~100–300 KB instead of several MB.
+      compressImageFile(file)
+        .then(setBase64Image)
+        .catch((err) => {
+          setSelectedImage(null);
+          setAnalysisError(err?.message || "Could not read that image. Try another photo.");
+        });
     }
+    // allow re-selecting the same file
+    e.target.value = "";
+  };
+
+  /** Runs an analysis with a timeout and guarantees the UI never gets stuck. */
+  const runWithSafety = async <T,>(task: () => Promise<T>, ms = 45000): Promise<T> => {
+    return await Promise.race([
+      task(),
+      new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), ms)
+      ),
+    ]);
+  };
+
+  const friendlyError = (err: unknown): string => {
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === "timeout") return "That took too long. Check your connection and try again.";
+    if (typeof navigator !== "undefined" && !navigator.onLine) return "You're offline. Reconnect and try again.";
+    return "Something went wrong analysing that. Please try again.";
   };
 
   const handleStartAnalysis = async () => {
-    if (!base64Image) return;
+    if (!base64Image || isAnalyzing) return;
     setUploadStep(1);
     setIsAnalyzing(true);
     setAnalysisError(null);
@@ -157,17 +184,19 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
       setScanningMsgIdx(prev => (prev + 1) % SCAN_MESSAGES.length);
     }, 1500);
 
-    const res = await analyzeMealImageAction(base64Image);
-    
-    clearInterval(msgInterval);
-    setIsAnalyzing(false);
-
-    if (res.success && res.analysis) {
-      setActiveAnalysis(res.analysis);
-      setCustomMealName(res.analysis.name || "My Meal");
-      setUploadStep(2);
-    } else {
-      setAnalysisError(res.error || "Failed to analyze image.");
+    try {
+      const res = await runWithSafety(() => analyzeMealImageAction(base64Image));
+      if (res.success && res.analysis) {
+        setActiveAnalysis(res.analysis);
+        setCustomMealName(res.analysis.name || "My Meal");
+      } else {
+        setAnalysisError(res.error || "Failed to analyze image.");
+      }
+    } catch (err) {
+      setAnalysisError(friendlyError(err));
+    } finally {
+      clearInterval(msgInterval);
+      setIsAnalyzing(false);
       setUploadStep(2);
     }
   };
@@ -208,7 +237,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
   };
 
   const handleSaveMeal = async () => {
-    if (!activeAnalysis) return;
+    if (!activeAnalysis || isSavingMeal) return; // ignore double taps
     if (!localUserId) {
       setMealSaveError("User not authenticated.");
       return;

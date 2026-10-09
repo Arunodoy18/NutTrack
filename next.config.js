@@ -4,13 +4,14 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  fallbacks: { document: '/offline' },
 });
 
 const nextConfig = {
   reactStrictMode: true,
-  // We ignore typescript errors here because Android files in app/src might occasionally trip up the nextjs builder
+  // Type errors must fail the build (the legacy Android sources and the mobile/ folder are excluded in tsconfig).
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   eslint: {
     ignoreDuringBuilds: true,
@@ -28,16 +29,23 @@ const nextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=self, microphone=self" },
+          { key: "Permissions-Policy", value: "camera=(self), microphone=(self), geolocation=(), payment=(self)" },
           {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://checkout.razorpay.com",
               "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
               "font-src 'self' fonts.gstatic.com data:",
-              "img-src 'self' data: blob: images.unsplash.com *.googleusercontent.com",
-              "connect-src 'self' api.openai.com *.nsvcs.net",
+              "img-src 'self' data: blob: images.unsplash.com *.googleusercontent.com https://*.razorpay.com",
+              "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com https://checkout.razorpay.com",
+              "frame-src https://api.razorpay.com https://checkout.razorpay.com",
+              "media-src 'self' blob:",
+              "worker-src 'self' blob:",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
             ].join("; "),
           },
           {

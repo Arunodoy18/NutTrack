@@ -12,7 +12,7 @@ export default function LandingPage() {
       <nav className="sticky top-0 z-50 bg-surface-muted/85 backdrop-blur-md border-b border-surface-line">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-5 sm:px-6 py-4">
           <span className="font-display text-2xl font-extrabold tracking-tight">
-            diet<span className="text-brand">Buddy</span>
+            Nu<span className="text-brand">ra</span>
           </span>
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
@@ -188,7 +188,7 @@ export default function LandingPage() {
           <Link href="/privacy" className="hover:text-ink transition-colors">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-ink transition-colors">Terms of Service</Link>
         </div>
-        <p>© {new Date().getFullYear()} dietBuddy · Grow your health. Instantly.</p>
+        <p>© {new Date().getFullYear()} Nura · Grow your health. Instantly.</p>
       </footer>
     </div>
   );

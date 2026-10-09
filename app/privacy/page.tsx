@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-surface p-6 pb-24 font-sans text-ink">
+    <div className="select-text min-h-screen bg-surface p-6 pb-24 font-sans text-ink">
       <div className="max-w-3xl mx-auto">
         <Link href="/profile" className="inline-flex items-center gap-2 text-ink-soft hover:text-ink transition-colors mb-8">
           <ArrowLeft className="w-5 h-5" />
@@ -27,7 +27,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <h2 className="text-xl font-bold mb-3">2. How We Use Your Data</h2>
-            <p>Your data is strictly used to provide the core services of DietBuddy, including calculating nutritional targets, logging meals, and generating recipes. We do not sell your personal data to data brokers.</p>
+            <p>Your data is strictly used to provide the core services of Nura, including calculating nutritional targets, logging meals, and generating recipes. We do not sell your personal data to data brokers.</p>
           </section>
 
           <section>

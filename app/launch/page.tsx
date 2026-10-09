@@ -14,7 +14,7 @@ export default function LaunchPage() {
   return (
     <div className="min-h-screen bg-brand flex flex-col items-center justify-center p-6 text-white text-center">
       <div className="w-32 h-32 bg-white rounded-[32px] flex items-center justify-center shadow-2xl mb-8 animate-pulse overflow-hidden p-2">
-        <img src="/icon.png" alt="DietBuddy" className="w-full h-full object-contain" />
+        <img src="/icon.png" alt="Nura" className="w-full h-full object-contain" />
       </div>
     </div>
   );

@@ -56,6 +56,24 @@ export async function checkAuthRateLimit(key: string) {
   }
 }
 
+const chatLimiter = redis ? new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(40, "1 h"),
+  prefix: "dietbuddy:chat",
+}) : null;
+
+/** Caps AI-advisor chat usage per user so one account can't run up the bill. */
+export async function checkChatRateLimit(userId: string) {
+  if (!chatLimiter) return true;
+  try {
+    const { success } = await chatLimiter.limit(userId);
+    return success;
+  } catch (err) {
+    console.error("[rateLimit] chat limiter unavailable, allowing:", (err as Error).message);
+    return true;
+  }
+}
+
 export function clientIp(req: Request) {
   return req.headers.get("x-nf-client-connection-ip")
     || req.headers.get("x-forwarded-for")?.split(",")[0].trim()

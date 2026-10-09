@@ -22,6 +22,42 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ── Native-app feel ─────────────────────────────────────────────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior-y: none;      /* no pull-to-refresh / rubber-band flash */
+  scroll-behavior: smooth;
+}
+body {
+  overscroll-behavior-y: none;
+  -webkit-touch-callout: none;      /* no long-press callout menu on UI chrome */
+  -webkit-user-select: none;
+  user-select: none;                /* UI text isn't selectable, like a real app */
+}
+/* …but text people may need to copy/edit stays selectable */
+input, textarea, select, [contenteditable="true"], .select-text, .select-text * {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+button, a, [role="button"], input, select, summary, label {
+  touch-action: manipulation;       /* removes the 300ms tap delay + double-tap zoom */
+}
+img, svg { -webkit-user-drag: none; }
+
+/* Respect users who ask for less motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visible keyboard focus for accessibility */
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+
 /* Thin, unobtrusive scrollbars to match the app surfaces */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: #D6D6DB; border-radius: 8px; }

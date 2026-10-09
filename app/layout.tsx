@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Nura - Intelligent Nutrition Tracking",
   description: "Track your meals effortlessly with Nura AI",
   manifest: "/manifest.json",
+  formatDetection: { telephone: false, email: false, address: false },
   appleWebApp: {
     capable: true,
     title: "Nura",
@@ -17,6 +18,10 @@ export const metadata: Metadata = {
 
 export const viewport = {
   themeColor: "#FFFFFF",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  colorScheme: "light",
 };
 
 export default function RootLayout({

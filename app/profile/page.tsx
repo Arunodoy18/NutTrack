@@ -187,7 +187,7 @@ export default async function ProfilePage() {
         <div className="bg-gradient-to-br from-[#fc5c16] to-[#e63e00] rounded-[32px] p-6 text-white shadow-xl shadow-brand/20 mb-6 relative overflow-hidden">
           <div className="flex items-center gap-2 mb-3 relative z-10">
             <Zap className="w-4 h-4" fill="currentColor" />
-            <span className="text-[10px] font-black tracking-widest uppercase">Dietbuddy Premium</span>
+            <span className="text-[10px] font-black tracking-widest uppercase">Nura Premium</span>
           </div>
           <h2 className="text-2xl font-black mb-2 relative z-10">Unlimited AI scans</h2>
           <p className="text-sm text-white/90 font-medium mb-6 relative z-10">

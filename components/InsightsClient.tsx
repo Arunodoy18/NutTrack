@@ -14,6 +14,7 @@ interface AnalyticsProfile {
   ffm: number;
   leanMuscleMass: number;
   metabolicHealth: string;
+  isChild?: boolean;
   macros: { calories: number; proteinG: number; fatG: number; carbsG: number; fiberG: number };
   micros: { sodium: number; iron: number; calcium: number; vitaminC: number };
   currentGoalLabel: string;
@@ -75,7 +76,7 @@ export default function InsightsClient({
   // Removed old trend calculations as TrendsChart handles it now.
 
   /* ─── Shorthand for server-computed analytics ─── */
-  const { bmi, bmr, tdee, bodyFatPercent, ffm, leanMuscleMass, metabolicHealth, macros, micros } = analyticsProfile;
+  const { bmi, bmr, tdee, bodyFatPercent, ffm, leanMuscleMass, metabolicHealth, macros, micros, isChild } = analyticsProfile;
 
   return (
     <>
@@ -150,7 +151,7 @@ export default function InsightsClient({
               <div className="text-4xl font-black text-ink leading-none">{bmi.value}</div>
               <div className="mt-2">
                 <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${
-                  bmi.label === 'Normal' ? 'bg-emerald-50 text-emerald-600' : 
+                  bmi.label === 'Normal' || bmi.label === 'Growing' ? 'bg-emerald-50 text-emerald-600' : 
                   bmi.label === 'Underweight' ? 'bg-amber-50 text-amber-600' :
                   'bg-red-50 text-red-500'
                 }`}>
@@ -188,13 +189,24 @@ export default function InsightsClient({
               </div>
               <div className="text-right">
                 <div className="text-[8px] font-mono font-bold tracking-wider text-ink-faint uppercase">Deurenberg eq.</div>
-                <div className="text-[10px] font-medium text-ink-soft mt-0.5">1.20×BMI + 0.23×Age – 10.8×Sex – 5.4</div>
+                <div className="text-[10px] font-medium text-ink-soft mt-0.5">{isChild ? "1.51×BMI – 0.70×Age – 3.6×Sex + 1.4 (child)" : "1.20×BMI + 0.23×Age – 10.8×Sex – 5.4"}</div>
               </div>
             </div>
           </div>
 
+          {/* Kids: growth plan instead of weight goals */}
+          {isChild && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-[24px] p-5">
+              <div className="text-sm font-black text-emerald-800 mb-1">Healthy growth plan</div>
+              <p className="text-sm font-medium text-emerald-900/80 leading-relaxed">
+                Targets are set for growing bodies (IOM energy needs, RDA protein, calcium and iron) — no dieting or weight-loss goals.
+                BMI for children is read on growth charts by percentile, so please check growth with your paediatrician.
+              </p>
+            </div>
+          )}
+
           {/* Goal Setter */}
-          <div>
+          {!isChild && (<div>
             <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-3 ml-1">
               Set Your Goal
             </div>
@@ -226,7 +238,7 @@ export default function InsightsClient({
               </span>
               <span className="text-2xl font-black text-brand tracking-tight">{dailyTarget}</span>
             </div>
-          </div>
+          </div>)}
 
           {/* Gold Metric Card */}
           <button
@@ -258,7 +270,7 @@ export default function InsightsClient({
                   </div>
                   <div>
                     <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-1">Metabolic Health</div>
-                    <div className={`text-xl font-black ${metabolicHealth === 'Optimal' ? 'text-emerald-500' : metabolicHealth === 'At Risk' ? 'text-amber-500' : 'text-red-500'}`}>
+                    <div className={`text-xl font-black ${metabolicHealth === 'Optimal' || metabolicHealth === 'Growing' ? 'text-emerald-500' : metabolicHealth === 'At Risk' ? 'text-amber-500' : 'text-red-500'}`}>
                       {metabolicHealth}
                     </div>
                   </div>
