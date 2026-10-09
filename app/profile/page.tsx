@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { users, meals, dailyGoals } from "@/lib/db/schema";
+import { users, meals, dailyGoals, weightLogs } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import BottomNav from '@/components/BottomNav';
 import { ChevronRight, Zap, Edit2 } from 'lucide-react';
@@ -15,7 +15,9 @@ import DeleteAccountButton from '@/components/DeleteAccountButton';
 import ProfileHeaderClient from '@/components/ProfileHeaderClient';
 import { computeFullProfile, mapProfileGoalToLabel } from "@/lib/nutritionEngine";
 import { getActiveProfileId, listProfiles } from "@/lib/access";
+import { getUserTz } from "@/lib/tzServer";
 import FamilySection from "@/components/FamilySection";
+import WeightTracker from "@/components/WeightTracker";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +35,12 @@ export default async function ProfilePage() {
   // Fetch user data
   const currentUser = await db.query.users.findFirst({
     where: eq(users.id, userId)
+  });
+
+  const weightHistory = await db.query.weightLogs.findMany({
+    where: eq(weightLogs.userId, userId),
+    orderBy: (t, { desc }) => [desc(t.timestamp)],
+    limit: 180,
   });
 
   // Gate: force profile setup for incomplete profiles
@@ -63,7 +71,7 @@ export default async function ProfilePage() {
     orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
   });
   
-  const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp));
+  const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp), getUserTz());
   const totalMeals = allUserMealTimestamps.length;
   
   // Calculate "On Goal" percentage (mock metric based on recent streak)
@@ -242,6 +250,16 @@ export default async function ProfilePage() {
             </ComingSoon>
           ))}
         </div>
+
+        <WeightTracker
+          userId={userId}
+          accountUserId={accountId}
+          logs={weightHistory.map((w) => ({ id: w.id, weightKg: w.weightKg, timestamp: w.timestamp.toISOString() }))}
+          profileWeightKg={currentUser?.weightKg ?? null}
+          isChild={(currentUser?.age ?? 30) < 18}
+          goal={currentUser?.primaryGoal ?? null}
+          name={name}
+        />
 
         <FamilySection profiles={profiles} activeId={userId} />
 

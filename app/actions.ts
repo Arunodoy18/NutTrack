@@ -1,12 +1,15 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { dailyGoals, meals, mealItems, users, groceryList, payments } from "@/lib/db/schema";
+import { dailyGoals, meals, mealItems, users, groceryList, payments, waterLogs } from "@/lib/db/schema";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit, checkChatRateLimit } from "@/lib/rateLimit";
 import { canAccessProfile, ownerOf, getActiveProfileId } from "@/lib/access";
+import { getUserTz } from "@/lib/tzServer";
+import { startOfDayInTz, startOfDayDaysAgo, dateKeyInTz, weekdayInTz } from "@/lib/tz";
+import { dailyWaterGoalMl } from "@/lib/hydration";
 import { eq, and, gte, lte } from "drizzle-orm";
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
@@ -1140,14 +1143,11 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
     }
 
     // Date precomputations
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const sevenDaysAgo = new Date(today);
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    // "Today" is the USER's day (the server runs in UTC, which made totals reset at 5:30 AM in India).
+    const tz = getUserTz();
+    const startOfDay = startOfDayInTz(tz);
+    const endOfDay = new Date(startOfDay.getTime() + 86_400_000 - 1);
+    const sevenDaysAgo = startOfDayDaysAgo(tz, 7);
 
     // Parallel DB fetch
     const [rawTodayMeals, allUserMealTimestamps, recentMealsForChart] = await Promise.all([
@@ -1173,6 +1173,11 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
         columns: { timestamp: true, totalCalories: true, totalProtein: true, totalFat: true, totalCarbs: true, totalFiber: true }
       }),
     ]);
+
+    const waterRows = await db.query.waterLogs.findMany({
+      where: and(eq(waterLogs.userId, userId), gte(waterLogs.timestamp, startOfDay), lte(waterLogs.timestamp, endOfDay)),
+      orderBy: (t, { desc }) => [desc(t.timestamp)],
+    });
 
     // Map today meals
     const mappedTodayMeals = rawTodayMeals.map((meal) => {
@@ -1237,17 +1242,12 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
     // Weekly Chart
     const weeklyDataMap = new Map();
     for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
-      const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-      const dateStr = d.toDateString();
-      weeklyDataMap.set(dateStr, { name: dayName, Calories: 0, Protein: 0, Fats: 0, Carbs: 0, Fiber: 0 });
+      const midday = new Date(startOfDayDaysAgo(tz, i).getTime() + 12 * 3_600_000); // noon: immune to DST edges
+      weeklyDataMap.set(dateKeyInTz(tz, midday), { name: weekdayInTz(tz, midday), Calories: 0, Protein: 0, Fats: 0, Carbs: 0, Fiber: 0 });
     }
 
     recentMealsForChart.forEach(meal => {
-      const mDate = new Date(meal.timestamp);
-      mDate.setHours(0, 0, 0, 0);
-      const mDateStr = mDate.toDateString();
+      const mDateStr = dateKeyInTz(tz, meal.timestamp);
       if (weeklyDataMap.has(mDateStr)) {
         const dayData = weeklyDataMap.get(mDateStr);
         dayData.Calories += meal.totalCalories;
@@ -1280,6 +1280,11 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
         },
         todayTotals,
         todayMeals: mappedTodayMeals,
+        water: {
+          todayMl: waterRows.reduce((a, w) => a + w.amountMl, 0),
+          goalMl: dailyWaterGoalMl(currentUser.age ?? 30, currentUser.gender ?? "Male", currentUser.activityLevel),
+          entries: waterRows.map((w) => ({ id: w.id, amountMl: w.amountMl, timestamp: w.timestamp.toISOString() })),
+        },
         allUserMealTimestamps: allUserMealTimestamps.map(m => m.timestamp.toISOString()),
         weeklyData
       }

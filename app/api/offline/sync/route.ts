@@ -4,7 +4,10 @@ import { getServerSession } from "next-auth/next";
 import { and, eq } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { meals, mealItems, users } from "@/lib/db/schema";
+import { meals, mealItems, users, waterLogs, weightLogs } from "@/lib/db/schema";
+import { and as andOp, desc, gte, sql } from "drizzle-orm";
+import { MIN_DRINK_ML, MAX_DRINK_ML, MAX_DAILY_WATER_ML } from "@/lib/hydration";
+import { applyWeightToProfile } from "@/lib/profileService";
 import {
   analyzeFridgeImageAction,
   analyzeMealImageAction,
@@ -81,7 +84,7 @@ export async function POST(req: NextRequest) {
   }
 
   const kind = String(op.kind);
-  const needsTime = kind === "meal_manual" || kind === "meal_photo" || kind === "meal_text" || kind === "meal_barcode";
+  const needsTime = ["meal_manual", "meal_photo", "meal_text", "meal_barcode", "water_add", "weight_log"].includes(kind);
   const eatenAt = Number(op.eatenAt);
   const now = Date.now();
   if (needsTime) {
@@ -208,6 +211,50 @@ export async function POST(req: NextRequest) {
         }
       }
       return json({ status: "ok" });
+    }
+
+    /* ── Water ── */
+    if (kind === "water_add") {
+      const ml = Math.round(Number(op.amountMl));
+      if (!Number.isFinite(ml) || ml < MIN_DRINK_ML || ml > MAX_DRINK_ML) {
+        return json({ status: "invalid", error: `A drink must be between ${MIN_DRINK_ML} and ${MAX_DRINK_ML} ml.` }, 400);
+      }
+      // Sanity cap on the day's total (typos / runaway taps).
+      const [{ total }] = await db
+        .select({ total: sql<number>`coalesce(sum(${waterLogs.amountMl}), 0)::int` })
+        .from(waterLogs)
+        .where(andOp(eq(waterLogs.userId, userId), gte(waterLogs.timestamp, new Date(timestamp.getTime() - 24 * 3600_000))));
+      if (total + ml > MAX_DAILY_WATER_ML) return json({ status: "invalid", error: "That's more water than is safe to log in a day." }, 400);
+      const ins = await db.insert(waterLogs).values({ id, userId, amountMl: ml, timestamp }).onConflictDoNothing().returning({ id: waterLogs.id });
+      return json({ status: ins.length ? "ok" : "duplicate" });
+    }
+    if (kind === "water_delete") {
+      const logId = String(op.logId ?? "");
+      if (!logId) return json({ status: "invalid", error: "Missing entry." }, 400);
+      const gone = await db.delete(waterLogs).where(andOp(eq(waterLogs.id, logId), eq(waterLogs.userId, userId))).returning({ id: waterLogs.id });
+      return json({ status: gone.length ? "ok" : "duplicate" });
+    }
+
+    /* ── Weight ── */
+    if (kind === "weight_log") {
+      const kg = Math.round(Number(op.weightKg) * 10) / 10;
+      if (!Number.isFinite(kg) || kg < 8 || kg > 400) return json({ status: "invalid", error: "Weight must be between 8 and 400 kg." }, 400);
+      const ins = await db.insert(weightLogs).values({ id, userId, weightKg: kg, timestamp }).onConflictDoNothing().returning({ id: weightLogs.id });
+      if (!ins.length) return json({ status: "duplicate" });
+      // Only the newest weigh-in drives the profile (offline entries can arrive out of order).
+      const [latest] = await db.select().from(weightLogs).where(eq(weightLogs.userId, userId)).orderBy(desc(weightLogs.timestamp)).limit(1);
+      if (latest?.id === id) await applyWeightToProfile(userId, kg);
+      return json({ status: "ok" });
+    }
+    if (kind === "weight_delete") {
+      const logId = String(op.logId ?? "");
+      if (!logId) return json({ status: "invalid", error: "Missing entry." }, 400);
+      const gone = await db.delete(weightLogs).where(andOp(eq(weightLogs.id, logId), eq(weightLogs.userId, userId))).returning({ id: weightLogs.id });
+      if (gone.length) {
+        const [latest] = await db.select().from(weightLogs).where(eq(weightLogs.userId, userId)).orderBy(desc(weightLogs.timestamp)).limit(1);
+        if (latest) await applyWeightToProfile(userId, latest.weightKg);
+      }
+      return json({ status: gone.length ? "ok" : "duplicate" });
     }
 
     /* ── Fridge photo: generate recipes now, hand the result back to the device ── */

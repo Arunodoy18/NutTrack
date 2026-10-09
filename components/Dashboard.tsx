@@ -41,6 +41,7 @@ import { useOfflineSync } from '@/lib/useOfflineSync';
 import OfflineStatusBar from '@/components/OfflineStatusBar';
 import type { OutboxOp } from '@/lib/offlineTypes';
 import ProfileSwitcher from '@/components/ProfileSwitcher';
+import WaterCard, { type WaterEntry } from '@/components/WaterCard';
 import { showToast } from '@/components/OfflineStatusBar';
 import { enqueueOp, updateOp } from '@/lib/offlineQueue';
 import type { ProfileSummary } from '@/lib/access';
@@ -81,6 +82,8 @@ export interface DashboardProps {
   accountUserId?: string;
   profiles?: ProfileSummary[];
   userAge?: number;
+  /** Personal daily water target (ml), computed on the server. */
+  waterGoalMl?: number;
   isPremiumUser?: boolean;
   dailyGoals?: {
     calories: number;
@@ -123,6 +126,7 @@ export default function Dashboard({
   accountUserId,
   profiles = [],
   userAge,
+  waterGoalMl = 2200,
   isPremiumUser = false,
   dailyGoals = { calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30, sodium: 2300, potassium: 4700, iron: 18, calcium: 1000, vitaminC: 90, vitaminE: 15, vitaminB12: 2 },
   todayTotals: serverTotals = { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0, potassium: 0, iron: 0, calcium: 0, vitaminC: 0, vitaminE: 0, vitaminB12: 0 },
@@ -161,6 +165,7 @@ export default function Dashboard({
   const [liveGoals, setLiveGoals] = useState(dailyGoals);
   const [liveIsPremium, setLiveIsPremium] = useState(isPremiumUser);
   const [liveActiveStreak, setLiveActiveStreak] = useState(activeStreak);
+  const [liveWater, setLiveWater] = useState<{ todayMl: number; goalMl: number; entries: WaterEntry[] }>({ todayMl: 0, goalMl: waterGoalMl, entries: [] });
   const [isSyncing, setIsSyncing] = useState(false);
   const cacheReady = React.useRef(false);
   React.useEffect(() => {
@@ -173,6 +178,7 @@ export default function Dashboard({
       if (cache.goals) setLiveGoals(cache.goals);
       if (cache.isPremium !== undefined) setLiveIsPremium(cache.isPremium);
       if (cache.activeStreak !== undefined) setLiveActiveStreak(cache.activeStreak);
+      if (cache.water) setLiveWater({ ...cache.water, goalMl: waterGoalMl });
     }
     // Let the persist effect start only after these values have rendered (don't overwrite the cache with defaults).
     setTimeout(() => { cacheReady.current = true; }, 0);
@@ -211,6 +217,7 @@ export default function Dashboard({
           setLiveGoals(result.data.currentGoals);
           setLiveIsPremium(result.data.isPremium);
           setLiveActiveStreak(fetchedStreak);
+          if (result.data.water) setLiveWater(result.data.water);
           
           // Persist fresh data to cache
           localStorage.setItem(CACHE_KEY, JSON.stringify({
@@ -222,6 +229,7 @@ export default function Dashboard({
             goals: result.data.currentGoals,
             isPremium: result.data.isPremium,
             activeStreak: fetchedStreak,
+            water: result.data.water,
           }));
           // Server data now includes these; anything synced after this fetch started stays overlaid.
           recentRef.current = recentRef.current.filter((o) => !handedOver.has(o.id));
@@ -253,10 +261,11 @@ export default function Dashboard({
           goals: liveGoals,
           isPremium: liveIsPremium,
           activeStreak: liveActiveStreak,
+          water: liveWater,
         }));
       } catch {}
     }
-  }, [liveTotals, liveMeals, liveWeeklyData, liveMealCount, liveGoals, liveIsPremium, liveActiveStreak, isSyncing]);
+  }, [liveTotals, liveMeals, liveWeeklyData, liveMealCount, liveGoals, liveIsPremium, liveActiveStreak, liveWater, isSyncing]);
 
   // Alias for compatibility with existing template references
   // Pending + just-synced offline meals eaten today count toward totals and the list immediately.
@@ -345,6 +354,15 @@ export default function Dashboard({
           }
     );
   const displayMeals: any[] = [...pendingRows, ...baseMeals];
+
+  // Water: pending drinks add instantly, pending undo hides an entry instantly.
+  const removedWaterIds = new Set(profileOps.filter((o) => o.kind === 'water_delete').map((o) => o.logId));
+  const pendingWater: WaterEntry[] = profileOps
+    .filter((o) => o.kind === 'water_add' && isToday(o.eatenAt))
+    .map((o) => ({ id: `pending-${o.id}`, amountMl: o.amountMl ?? 0, timestamp: new Date(o.eatenAt).toISOString(), pending: true }));
+  const waterEntries: WaterEntry[] = [...pendingWater, ...liveWater.entries.filter((e) => !removedWaterIds.has(e.id))]
+    .sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp));
+  const waterTotal = waterEntries.reduce((a, e) => a + e.amountMl, 0);
   // Overwrite props with live state
   dailyGoals = liveGoals;
   isPremiumUser = liveIsPremium;
@@ -737,6 +755,17 @@ export default function Dashboard({
 
       {/* Right Column: Historical / Today Meal Log Stream */}
       <div className="lg:col-span-4 space-y-4">
+        <WaterCard
+          userId={userId}
+          accountUserId={accountUserId}
+          totalMl={waterTotal}
+          goalMl={liveWater.goalMl || waterGoalMl}
+          entries={waterEntries}
+          isChild={userAge !== undefined && userAge < 18}
+          name={profiles.find((p) => p.id === userId)?.name}
+          onDiscardPending={(opId) => offlineSync.discard(opId)}
+        />
+
         {/* Today's Meals Header */}
         <div 
           className="flex justify-between items-center px-1 cursor-pointer hover:opacity-80 transition-opacity" 

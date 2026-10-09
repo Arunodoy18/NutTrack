@@ -73,3 +73,18 @@ test("kid coach tips are positive and never mention being over target", () => {
   assert.ok(!/over|slightly|target/i.test(tip), tip);
   assert.ok(isChildAge(17) && !isChildAge(18));
 });
+
+import { dailyWaterGoalMl } from "../lib/hydration";
+
+test("water goals follow IOM adequate intakes by age/sex, with an activity bump", () => {
+  assert.equal(dailyWaterGoalMl(2, "Female"), 900);
+  assert.equal(dailyWaterGoalMl(6, "Male"), 1200);
+  assert.equal(dailyWaterGoalMl(10, "Female"), 1600);
+  assert.equal(dailyWaterGoalMl(10, "Male"), 1800);
+  assert.equal(dailyWaterGoalMl(16, "Male"), 2600);
+  assert.equal(dailyWaterGoalMl(30, "Female"), 2200);
+  assert.equal(dailyWaterGoalMl(30, "Male"), 3000);
+  assert.equal(dailyWaterGoalMl(30, "Female", "Moderately active"), 2450);
+  assert.equal(dailyWaterGoalMl(30, "Male", "Athlete"), 3500);
+  assert.equal(dailyWaterGoalMl(9, "Male", "Very active"), 2050); // younger kids get a smaller bump
+});

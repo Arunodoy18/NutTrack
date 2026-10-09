@@ -43,3 +43,19 @@ export async function saveProfileAndGoals(targetId: string, p: ValidProfile) {
   await db.insert(dailyGoals).values({ userId: targetId, ...toDailyGoalValues(profile) });
   return profile;
 }
+
+
+/**
+ * A new weigh-in changes a person's energy needs (especially a growing child's): refresh their stored
+ * weight and regenerate their targets from the profile they already completed.
+ */
+export async function applyWeightToProfile(userId: string, weightKg: number) {
+  const u = await db.query.users.findFirst({ where: eq(users.id, userId) });
+  if (!u || !u.profileComplete || !u.age || !u.gender || !u.heightCm || !u.activityLevel || !u.primaryGoal) return;
+  const rounded = Math.round(weightKg);
+  if (rounded === u.weightKg) return;
+  const profile = computeFullProfile(rounded, u.heightCm, u.age, u.gender, u.activityLevel, mapProfileGoalToLabel(u.primaryGoal), u.bodyFat);
+  await db.update(users).set({ weightKg: rounded }).where(eq(users.id, userId));
+  await db.delete(dailyGoals).where(eq(dailyGoals.userId, userId));
+  await db.insert(dailyGoals).values({ userId, ...toDailyGoalValues(profile) });
+}

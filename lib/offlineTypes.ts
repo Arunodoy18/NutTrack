@@ -19,7 +19,11 @@ export type OutboxKind =
   | "meal_barcode" // scanned offline, looked up once online
   | "meal_delete" // remove an already-saved meal
   | "meal_edit" // rename / change portion of an already-saved meal
-  | "fridge_photo"; // recipes generated once online
+  | "fridge_photo" // recipes generated once online
+  | "water_add" // a drink
+  | "water_delete" // undo a drink
+  | "weight_log" // a weigh-in
+  | "weight_delete"; // remove a weigh-in
 
 export interface OutboxOp {
   /** Client-generated id — also the idempotency key. */
@@ -48,6 +52,12 @@ export interface OutboxOp {
   /** meal_edit: portion multiplier (0.25–4) and/or new title. */
   scale?: number;
   newName?: string;
+  /** water_add: millilitres. */
+  amountMl?: number;
+  /** weight_log: kilograms (one decimal). */
+  weightKg?: number;
+  /** water_delete / weight_delete: the saved log entry. */
+  logId?: string;
   /** meal_edit precondition: the meal's calories when the edit was queued. Makes retries idempotent. */
   expectedCalories?: number;
 }

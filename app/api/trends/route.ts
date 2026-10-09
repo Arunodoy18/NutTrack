@@ -1,4 +1,6 @@
 import { getActiveProfileId } from "@/lib/access";
+import { getUserTz } from "@/lib/tzServer";
+import { startOfDayInTz, startOfDayDaysAgo, dateKeyInTz, weekdayInTz } from "@/lib/tz";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -34,11 +36,9 @@ export async function GET(request: Request) {
     };
 
     // 2. Fetch meals for the last `validRange` days
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    const pastDate = new Date();
-    pastDate.setDate(today.getDate() - (validRange - 1));
-    pastDate.setHours(0, 0, 0, 0);
+    const tz = getUserTz();
+    const today = new Date(startOfDayInTz(tz).getTime() + 86_400_000 - 1); // end of the user's day
+    const pastDate = startOfDayDaysAgo(tz, validRange - 1);
 
     const rangeMeals = await db.query.meals.findMany({
       where: and(
@@ -50,11 +50,10 @@ export async function GET(request: Request) {
 
     // 3. Aggregate daily totals
     const dailyTotals = Array.from({ length: validRange }).map((_, i) => {
-      const d = new Date(pastDate);
-      d.setDate(d.getDate() + i);
-      const dayFormat = d.toLocaleDateString("en-US", { weekday: 'short' });
+      const d = new Date(startOfDayDaysAgo(tz, validRange - 1 - i).getTime() + 12 * 3_600_000); // noon of that local day
+      const dayFormat = weekdayInTz(tz, d);
       return {
-        dateStr: d.toISOString().split("T")[0],
+        dateStr: dateKeyInTz(tz, d),
         day: dayFormat, // 'Sun', 'Mon', etc.
         timestamp: d.getTime(),
         calories: 0,
@@ -73,7 +72,7 @@ export async function GET(request: Request) {
     });
 
     rangeMeals.forEach(meal => {
-      const mealDateStr = new Date(meal.timestamp).toISOString().split("T")[0];
+      const mealDateStr = dateKeyInTz(tz, meal.timestamp);
       const dayObj = dailyTotals.find(d => d.dateStr === mealDateStr);
       if (dayObj) {
         dayObj.calories += meal.totalCalories;

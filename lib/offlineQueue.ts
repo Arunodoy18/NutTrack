@@ -137,7 +137,7 @@ async function putOp(op: OutboxOp) {
 }
 
 export async function enqueueOp(
-  input: Pick<OutboxOp, "userId" | "ownerId" | "kind" | "eatenAt" | "meal" | "image" | "text" | "barcode" | "mealId" | "scale" | "newName" | "expectedCalories">
+  input: Pick<OutboxOp, "userId" | "ownerId" | "kind" | "eatenAt" | "meal" | "image" | "text" | "barcode" | "mealId" | "scale" | "newName" | "expectedCalories" | "amountMl" | "weightKg" | "logId">
 ): Promise<OutboxOp> {
   if (input.image) {
     // Photos are the heavy items (~150 KB each): cap them to protect device storage.

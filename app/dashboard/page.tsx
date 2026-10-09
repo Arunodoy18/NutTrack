@@ -5,6 +5,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import Dashboard from "@/components/Dashboard";
 import { getActor, listProfiles } from "@/lib/access";
+import { dailyWaterGoalMl } from "@/lib/hydration";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function DashboardPage() {
   // App Shell architecture: render instantly; the client component reads its cache and syncs in the background.
   // Tiny lookups so kids get age-appropriate coaching and the family switcher has what it needs.
   const [profile, profiles] = await Promise.all([
-    db.query.users.findFirst({ where: eq(users.id, actor.activeId), columns: { age: true } }),
+    db.query.users.findFirst({ where: eq(users.id, actor.activeId), columns: { age: true, gender: true, activityLevel: true } }),
     listProfiles(actor.sessionUserId),
   ]);
 
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
       userId={actor.activeId}
       accountUserId={actor.sessionUserId}
       userAge={profile.age ?? undefined}
+      waterGoalMl={dailyWaterGoalMl(profile.age ?? 30, profile.gender ?? "Male", profile.activityLevel)}
       profiles={profiles}
     />
   );

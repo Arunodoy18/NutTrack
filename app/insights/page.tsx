@@ -9,6 +9,8 @@ import BottomNav from '@/components/BottomNav';
 import { calculateActiveStreak } from "@/lib/streak";
 import InsightsClient from '@/components/InsightsClient';
 import { getActiveProfileId } from "@/lib/access";
+import { getUserTz } from "@/lib/tzServer";
+import { startOfDayInTz, startOfDayDaysAgo, dateKeyInTz, weekdayInTz } from "@/lib/tz";
 import { computeFullProfile, mapProfileGoalToLabel } from "@/lib/nutritionEngine";
 
 export const dynamic = "force-dynamic";
@@ -52,12 +54,10 @@ export default async function InsightsPage({
     } as any;
   }
 
-  // 2. Fetch meals for the last 7 days
-  const today = new Date();
-  today.setHours(23, 59, 59, 999);
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(today.getDate() - 6);
-  sevenDaysAgo.setHours(0, 0, 0, 0);
+  // 2. Fetch meals for the last 7 days (the USER's days, not the server's UTC days)
+  const tz = getUserTz();
+  const sevenDaysAgo = startOfDayDaysAgo(tz, 6);
+  const today = new Date(startOfDayInTz(tz).getTime() + 86_400_000 - 1);
 
   const last7DaysMeals = await db.query.meals.findMany({
     where: and(
@@ -68,13 +68,11 @@ export default async function InsightsPage({
   });
 
   // Calculate daily totals for the last 7 days
-  const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const dailyTotals = Array(7).fill(0).map((_, i) => {
-    const d = new Date(sevenDaysAgo);
-    d.setDate(d.getDate() + i);
+    const noon = new Date(startOfDayDaysAgo(tz, 6 - i).getTime() + 12 * 3_600_000);
     return {
-      dateStr: d.toISOString(),
-      day: daysOfWeek[d.getDay()],
+      dateStr: dateKeyInTz(tz, noon),
+      day: weekdayInTz(tz, noon),
       calories: 0,
       protein: 0,
       fat: 0,
@@ -84,13 +82,8 @@ export default async function InsightsPage({
   });
 
   last7DaysMeals.forEach(meal => {
-    const mealDate = new Date(meal.timestamp);
-    // Find matching day in our array
-    const dayObj = dailyTotals.find(d => {
-      const dDate = new Date(d.dateStr);
-      return dDate.getDate() === mealDate.getDate() && 
-             dDate.getMonth() === mealDate.getMonth();
-    });
+    const key = dateKeyInTz(tz, meal.timestamp);
+    const dayObj = dailyTotals.find(d => d.dateStr === key);
     if (dayObj) {
       dayObj.calories += meal.totalCalories;
       dayObj.protein += meal.totalProtein;
@@ -106,7 +99,7 @@ export default async function InsightsPage({
     orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
   });
 
-  const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp));
+  const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp), tz);
 
   // 3. Compute full analytics profile server-side using centralized engine
   const goalLabel = mapProfileGoalToLabel(currentUser?.primaryGoal || "Maintain");

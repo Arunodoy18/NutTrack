@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, boolean, primaryKey, type AnyPgColumn } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, integer, boolean, primaryKey, real, jsonb, type AnyPgColumn } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // --- NextAuth tables for Drizzle adapter ---
@@ -221,3 +221,52 @@ export const groceryListRelations = relations(groceryList, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+
+/* ─── Water, weight and reminders ─── */
+
+/** One drink. Totals are summed per day per profile. */
+export const waterLogs = pgTable("water_logs", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  amountMl: integer("amount_ml").notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
+/** One weigh-in for a profile. */
+export const weightLogs = pgTable("weight_logs", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  weightKg: real("weight_kg").notNull(),
+  timestamp: timestamp("timestamp").notNull().defaultNow(),
+});
+
+/** A device that can receive push notifications for an ACCOUNT. */
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+/** Reminder preferences for an ACCOUNT (times are local to `timezone`). */
+export const reminderSettings = pgTable("reminder_settings", {
+  ownerId: text("owner_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  enabled: boolean("enabled").notNull().default(false),
+  timezone: text("timezone").notNull().default("Asia/Kolkata"),
+  settings: jsonb("settings").notNull().default({}),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/** De-duplication: which reminder was already sent today (key like "meal:lunch:2026-10-10"). */
+export const reminderSent = pgTable(
+  "reminder_sent",
+  {
+    ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    key: text("key").notNull(),
+    sentAt: timestamp("sent_at").notNull().defaultNow(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.ownerId, t.key] }) })
+);
