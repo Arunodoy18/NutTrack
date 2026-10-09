@@ -1065,6 +1065,7 @@ export default function Dashboard({
           const newMeal: MealLogData = {
             id: mealData.id,
             timestamp: mealData.timestamp,
+            mealSession: mealData.mealSession,
             summary: mealData.summary,
             imageUrl: mealData.imageUrl,
             totalCalories: mealData.totalCalories,

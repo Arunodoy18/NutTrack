@@ -305,7 +305,8 @@ export async function saveMealAction(
     }
 
     revalidatePath("/dashboard");
-    return { success: true };
+    // Hand back the real id so the UI can delete/edit the meal immediately (no temporary ids).
+    return { success: true, mealId: insertedMeal.id };
   } catch (err) {
     console.error("Failed to save meal:", err);
     return { success: false, error: String(err) };

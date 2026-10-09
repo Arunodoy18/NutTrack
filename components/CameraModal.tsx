@@ -39,6 +39,7 @@ const SCAN_MESSAGES = [
 
 export interface SavedMealData {
   id: string;
+  mealSession?: string;
   timestamp: string;
   summary: string;
   imageUrl?: string;
@@ -307,7 +308,8 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
       if (result.success) {
         // Build optimistic meal data for instant UI update
         const savedMeal: SavedMealData = {
-          id: `optimistic-${Date.now()}`,
+          id: (result as { mealId?: string }).mealId ?? `optimistic-${Date.now()}`,
+          mealSession: activeAnalysis.mealSession,
           timestamp: new Date().toISOString(),
           summary: customMealName || activeAnalysis.name || "Meal",
           imageUrl: selectedImage || undefined,
