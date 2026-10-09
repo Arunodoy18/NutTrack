@@ -28,3 +28,8 @@ node_modules/
 gradle-8.5/
 gradle.zip
 .gradle/
+twa/*.apk
+twa/*.aab
+twa/build/
+twa/.gradle/
+twa/app/build/

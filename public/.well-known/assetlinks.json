@@ -2,9 +2,9 @@
   "relation": ["delegate_permission/common.handle_all_urls"],
   "target": {
     "namespace": "android_app",
-    "package_name": "tech.buildc3.dietbuddy.twa",
+    "package_name": "tech.buildc3.nura",
     "sha256_cert_fingerprints": [
-      "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+      "32:B3:5B:22:EA:7B:70:D4:BF:24:1C:40:AC:8A:66:A6:E4:00:7E:A4:D6:6F:10:41:02:B8:D8:D3:3C:12:3E:B0"
     ]
   }
 }]
