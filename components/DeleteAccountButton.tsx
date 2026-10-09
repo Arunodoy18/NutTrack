@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { signOut } from "next-auth/react";
 import { Trash2 } from "lucide-react";
 import { deleteAccountAction } from "@/app/actions";
-import { clearLocalUserData } from "@/lib/clientStorage";
+import { clearLocalUserData, clearOfflineCaches } from "@/lib/clientStorage";
 import { clearOutbox } from "@/lib/offlineQueue";
 
 export default function DeleteAccountButton({ userId }: { userId: string }) {
@@ -16,6 +16,7 @@ export default function DeleteAccountButton({ userId }: { userId: string }) {
     const result = await deleteAccountAction(userId);
     if (result.success) {
       clearLocalUserData();
+      await clearOfflineCaches();
       await clearOutbox(); // never leave a deleted account's queued meals/photos on the device
       signOut({ callbackUrl: "/auth/login" });
     } else {

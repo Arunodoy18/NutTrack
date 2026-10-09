@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { signOut } from "next-auth/react";
-import { clearLocalUserData } from "@/lib/clientStorage";
+import { clearLocalUserData, clearOfflineCaches } from "@/lib/clientStorage";
 import { clearOutbox } from "@/lib/offlineQueue";
 
 /**
@@ -13,7 +13,7 @@ import { clearOutbox } from "@/lib/offlineQueue";
 export default function SignedOutPage() {
   useEffect(() => {
     clearLocalUserData();
-    clearOutbox().finally(() => signOut({ callbackUrl: "/auth/login" }));
+    Promise.all([clearOutbox(), clearOfflineCaches()]).finally(() => signOut({ callbackUrl: "/auth/login" }));
   }, []);
 
   return (

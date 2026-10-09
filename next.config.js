@@ -5,6 +5,9 @@ const withPWA = require('next-pwa')({
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
   fallbacks: { document: '/offline' },
+  // app-build-manifest.json 404s in production; one failed precache entry aborts the whole
+  // service-worker install, which silently disabled all offline support.
+  buildExcludes: [/app-build-manifest\.json$/],
 });
 
 const nextConfig = {

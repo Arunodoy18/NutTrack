@@ -14,3 +14,18 @@ export function clearLocalUserData() {
     /* storage may be unavailable (private mode) */
   }
 }
+
+/**
+ * Drops cached page/API responses held by the service worker so a cached screen
+ * from one account is never shown to the next person on a shared device.
+ */
+export async function clearOfflineCaches() {
+  try {
+    if (typeof caches === "undefined") return;
+    const keep = /^(workbox-precache|static-|google-fonts)/; // shared, non-personal assets
+    const names = await caches.keys();
+    await Promise.all(names.filter((n) => !keep.test(n)).map((n) => caches.delete(n)));
+  } catch {
+    /* ignore */
+  }
+}
