@@ -6,9 +6,13 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req: Request) {
   try {
-    const { email, otp, type, newPassword } = await req.json();
+    const body = await req.json();
+    const email = typeof body?.email === "string" ? body.email.toLowerCase().trim() : "";
+    const otp = typeof body?.otp === "string" ? body.otp.trim() : "";
+    const type = body?.type;
+    const newPassword = body?.newPassword;
 
-    if (!email || !otp || !type) {
+    if (!email || !otp || (type !== "RESET_PASSWORD" && type !== "VERIFY_ACCOUNT")) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -50,8 +54,8 @@ export async function POST(req: Request) {
     const tokenRecord = activeToken;
 
     if (type === "RESET_PASSWORD") {
-      if (!newPassword) {
-        return NextResponse.json({ error: "New password is required" }, { status: 400 });
+      if (typeof newPassword !== "string" || newPassword.length < 8 || newPassword.length > 128) {
+        return NextResponse.json({ error: "New password must be 8-128 characters" }, { status: 400 });
       }
       
       const hashedPassword = await bcrypt.hash(newPassword, 10);

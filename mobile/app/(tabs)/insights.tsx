@@ -22,6 +22,7 @@ export default function InsightsScreen() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchInsights();
   }, []);
 

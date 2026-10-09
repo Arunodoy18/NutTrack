@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Linking } from 'react-native';
 import { useAuth } from '../../src/context/AuthContext';
 import { apiClient } from '../../src/lib/apiClient';
 import Purchases from 'react-native-purchases';
@@ -133,6 +133,15 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 24, marginBottom: 12 }}>
+        <TouchableOpacity onPress={() => Linking.openURL('https://dietbuddy.buildc3.tech/privacy')}>
+          <Text style={styles.deleteText}>Privacy Policy</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => Linking.openURL('https://dietbuddy.buildc3.tech/terms')}>
+          <Text style={styles.deleteText}>Terms of Service</Text>
+        </TouchableOpacity>
+      </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
         <Text style={styles.logoutText}>Log Out</Text>

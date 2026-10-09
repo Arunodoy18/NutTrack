@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { timingSafeEqual } from 'crypto';
+
+function safeEqual(a: string, b: string) {
+  const ab = Buffer.from(a);
+  const bb = Buffer.from(b);
+  return ab.length === bb.length && timingSafeEqual(ab, bb);
+}
 
 export async function POST(request: Request) {
   try {
@@ -14,7 +21,7 @@ export async function POST(request: Request) {
       console.error('[RevenueCat Webhook] REVENUECAT_WEBHOOK_SECRET is not configured');
       return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 });
     }
-    if (request.headers.get('authorization') !== expectedSecret) {
+    if (!safeEqual(request.headers.get('authorization') ?? '', expectedSecret)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -48,8 +55,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: 'User upgraded successfully' });
     }
 
-    // Handle cancellations if necessary
-    if (type === 'CANCELLATION' || type === 'EXPIRATION') {
+    // CANCELLATION only means auto-renew was turned off - the user has still
+    // paid for the current period. Access ends at EXPIRATION.
+    if (type === 'EXPIRATION') {
       await db.update(users)
         .set({ isPremium: false })
         .where(eq(users.id, app_user_id));

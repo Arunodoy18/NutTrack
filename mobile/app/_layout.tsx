@@ -31,7 +31,7 @@ function RootLayoutNav() {
   useEffect(() => {
     if (!isRevenueCatConfigured) return;
     try {
-      Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+      Purchases.setLogLevel(LOG_LEVEL.WARN);
       if (Platform.OS === 'android') {
         Purchases.configure({ apiKey: revenueCatKey! });
       }
@@ -52,6 +52,7 @@ function RootLayoutNav() {
       // Redirect to the dashboard
       router.replace('/(tabs)/dashboard');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, isLoading, segments]);
 
   useEffect(() => {

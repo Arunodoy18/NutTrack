@@ -11,6 +11,7 @@ const BASE_URL = process.env.EXPO_PUBLIC_API_URL ||
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
+  timeout: 60000, // AI photo analysis can take a while, but never hang forever
   headers: {
     'Content-Type': 'application/json',
   },

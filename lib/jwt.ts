@@ -1,8 +1,14 @@
 import { SignJWT, jwtVerify } from "jose";
 
-const SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret-change-me"
-);
+// No fallback: a hardcoded default secret would let anyone forge tokens.
+// Resolved lazily so a missing var fails the request, not the build.
+function getSecret() {
+  const raw = process.env.NEXTAUTH_SECRET;
+  if (!raw || raw.length < 16) {
+    throw new Error("NEXTAUTH_SECRET must be set (16+ chars) to sign mobile JWTs");
+  }
+  return new TextEncoder().encode(raw);
+}
 
 const ALG = "HS256";
 const ISSUER = "dietbuddy";
@@ -19,11 +25,11 @@ export async function signMobileJwt(payload: JwtPayload): Promise<string> {
     .setIssuer(ISSUER)
     .setIssuedAt()
     .setExpirationTime(EXPIRATION)
-    .sign(SECRET);
+    .sign(getSecret());
 }
 
 export async function verifyMobileJwt(token: string): Promise<JwtPayload> {
-  const { payload } = await jwtVerify(token, SECRET, {
+  const { payload } = await jwtVerify(token, getSecret(), {
     issuer: ISSUER,
   });
   return {

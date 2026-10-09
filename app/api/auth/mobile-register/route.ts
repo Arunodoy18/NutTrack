@@ -4,13 +4,26 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { signMobileJwt } from "@/lib/jwt";
+import { checkAuthRateLimit, clientIp } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const body = await req.json();
+    const name = typeof body?.name === "string" ? body.name.trim().slice(0, 100) : "";
+    const email = typeof body?.email === "string" ? body.email.toLowerCase().trim() : "";
+    const password = typeof body?.password === "string" ? body.password : "";
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+      return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
+    }
+    if (password.length < 8 || password.length > 128) {
+      return NextResponse.json({ error: "Password must be 8-128 characters" }, { status: 400 });
+    }
+    if (!(await checkAuthRateLimit(`register:${clientIp(req)}`))) {
+      return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
     }
 
     // Check if user exists

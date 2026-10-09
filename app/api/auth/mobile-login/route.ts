@@ -4,15 +4,25 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { signMobileJwt } from "@/lib/jwt";
+import { checkAuthRateLimit, clientIp } from "@/lib/rateLimit";
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const body = await req.json();
+    const email = typeof body?.email === "string" ? body.email.toLowerCase().trim() : "";
+    const password = typeof body?.password === "string" ? body.password : "";
 
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
         { status: 400 }
+      );
+    }
+
+    if (!(await checkAuthRateLimit(`login:${clientIp(req)}:${email}`))) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please try again in 15 minutes." },
+        { status: 429 }
       );
     }
 

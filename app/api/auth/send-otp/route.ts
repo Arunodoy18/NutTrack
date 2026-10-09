@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { users, otpTokens } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { Resend } from "resend";
+import { randomInt } from "crypto";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email and type are required" }, { status: 400 });
     }
 
-    const cleanEmail = email.toLowerCase().trim();
+    const cleanEmail = String(email).toLowerCase().trim();
 
     if (!cleanEmail.includes("@")) {
       return NextResponse.json(
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
     }
 
     // Generate a 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = randomInt(100000, 1000000).toString();
 
     // Set expiration to 10 minutes from now
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);

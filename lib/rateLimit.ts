@@ -30,3 +30,22 @@ export async function checkScanRateLimit(userId: string, isPremium = false) {
   const { success, remaining } = await limiter.limit(userId);
   return { allowed: success, remaining };
 }
+
+// Brute-force protection for credential endpoints, keyed by IP + email.
+const authLimiter = redis ? new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, "15 m"),
+  prefix: "dietbuddy:auth",
+}) : null;
+
+export async function checkAuthRateLimit(key: string) {
+  if (!authLimiter) return true;
+  const { success } = await authLimiter.limit(key);
+  return success;
+}
+
+export function clientIp(req: Request) {
+  return req.headers.get("x-nf-client-connection-ip")
+    || req.headers.get("x-forwarded-for")?.split(",")[0].trim()
+    || "unknown";
+}
