@@ -241,9 +241,13 @@ export default async function ProfilePage() {
 
         {/* Settings List */}
         <div className="bg-white rounded-[32px] shadow-sm border border-surface-line overflow-hidden mb-2">
-          {['Notifications', 'Units & measurements', 'Connected apps'].map((item, i) => (
+          <Link href="/reminders" className="flex justify-between items-center p-5 hover:bg-surface-muted transition-colors border-b border-surface-line">
+            <span className="text-sm font-medium text-ink">Reminders &amp; notifications</span>
+            <ChevronRight className="w-5 h-5 text-ink-soft" />
+          </Link>
+          {['Units & measurements', 'Connected apps'].map((item, i) => (
             <ComingSoon key={item}>
-              <div className={`flex justify-between items-center p-5 cursor-pointer hover:bg-surface-muted transition-colors ${i !== 2 ? 'border-b border-surface-line' : ''}`}>
+              <div className={`flex justify-between items-center p-5 cursor-pointer hover:bg-surface-muted transition-colors ${i !== 1 ? 'border-b border-surface-line' : ''}`}>
                 <span className="text-sm font-medium text-ink">{item}</span>
                 <ChevronRight className="w-5 h-5 text-ink-soft" />
               </div>
