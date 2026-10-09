@@ -44,7 +44,7 @@ async function postOp(op: OutboxOp): Promise<{ res: SyncResponse; http: number }
   }
 }
 
-async function flushInner(userId: string, force: boolean): Promise<FlushResult> {
+async function flushInner(userId: string, force: boolean, onOp?: (op: OutboxOp) => void): Promise<FlushResult> {
   let synced = 0;
   const syncedOps: OutboxOp[] = [];
   let failed = 0;
@@ -66,6 +66,7 @@ async function flushInner(userId: string, force: boolean): Promise<FlushResult> 
       await removeOp(op.id);
       synced++;
       syncedOps.push(op);
+      onOp?.(op); // tell the UI right away, not only when the whole queue is done
     } else if (res.status === "wrong_user") {
       continue; // belongs to another account on this device; leave untouched
     } else if (res.status === "unauthorized" || http === 401) {
@@ -95,14 +96,14 @@ async function flushInner(userId: string, force: boolean): Promise<FlushResult> 
  * one tab flushes at a time, and server-side idempotency means a retry can never
  * double-log a meal.
  */
-export async function flushOutbox(userId: string, force = false): Promise<FlushResult> {
+export async function flushOutbox(userId: string, force = false, onOp?: (op: OutboxOp) => void): Promise<FlushResult> {
   if (typeof navigator === "undefined") return { synced: 0, syncedOps: [], failed: 0, remaining: 0, offline: false, skipped: true };
   const locks = (navigator as any).locks;
   if (locks?.request) {
     return await locks.request("nura-outbox-flush", { ifAvailable: true }, async (lock: unknown) => {
       if (!lock) return { synced: 0, syncedOps: [], failed: 0, remaining: 0, offline: false, skipped: true };
-      return flushInner(userId, force);
+      return flushInner(userId, force, onOp);
     });
   }
-  return flushInner(userId, force);
+  return flushInner(userId, force, onOp);
 }

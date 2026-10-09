@@ -157,8 +157,12 @@ export default function Dashboard({
   // Items synced a moment ago stay on screen until the fresh server data lands (no calorie "dip").
   const [syncTick, setSyncTick] = useState(0);
   const [recentlySynced, setRecentlySynced] = useState<OutboxOp[]>([]);
+  const recentRef = React.useRef<OutboxOp[]>([]);
   const offlineSync = useOfflineSync(userId, (synced) => {
-    setRecentlySynced(synced);
+    // Called once per confirmed item: keep it visible until a refresh that includes it lands.
+    const next = [...recentRef.current, ...synced];
+    recentRef.current = next;
+    setRecentlySynced(next);
     setSyncTick((t) => t + 1);
   });
 
@@ -166,6 +170,7 @@ export default function Dashboard({
   React.useEffect(() => {
     let mounted = true;
     async function syncData() {
+      const handedOver = new Set(recentRef.current.map((o) => o.id)); // covered by this fetch
       setIsSyncing(true);
       try {
         const { getDashboardDataAction } = await import('@/app/actions');
@@ -192,7 +197,9 @@ export default function Dashboard({
             isPremium: result.data.isPremium,
             activeStreak: fetchedStreak,
           }));
-          setRecentlySynced([]); // server data now includes them
+          // Server data now includes these; anything synced after this fetch started stays overlaid.
+          recentRef.current = recentRef.current.filter((o) => !handedOver.has(o.id));
+          setRecentlySynced(recentRef.current);
         }
       } catch (err) {
         console.error("Background sync failed:", err);

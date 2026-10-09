@@ -152,3 +152,16 @@ test("meal session guess by time of day", () => {
   assert.equal(guessMealSession(at(20)), "Dinner");
   assert.equal(guessMealSession(at(2)), "Dinner");
 });
+
+test("each synced item is reported immediately, before the rest of the queue finishes", async () => {
+  await enqueueOp(manual("u1", "First")); await enqueueOp(manual("u1", "Second"));
+  const order: string[] = [];
+  g.fetch = async (_u: string, init: any) => {
+    const op = JSON.parse(init.body).op;
+    // By the time the 2nd request starts, the 1st item must already have been reported.
+    order.push(`req:${op.meal.name}`);
+    return { status: 200, json: async () => ({ status: "ok" }) };
+  };
+  await flushOutbox("u1", true, (op) => order.push(`done:${op.meal?.name}`));
+  assert.deepEqual(order, ["req:First", "done:First", "req:Second", "done:Second"]);
+});

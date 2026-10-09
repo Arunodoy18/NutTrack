@@ -378,6 +378,10 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   )}
+                  {selectedImage && (activeModalMode === 'camera' || activeModalMode === 'speak') && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={selectedImage} alt="Selected meal" className="absolute inset-0 w-full h-full object-cover z-[5]" />
+                  )}
                   {activeModalMode === 'barcode' && (
                     <div className="absolute inset-0 w-full h-full">
                       <BarcodeScanner 

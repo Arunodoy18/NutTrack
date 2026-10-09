@@ -59,12 +59,14 @@ export function useOfflineSync(userId: string, onSynced?: (syncedOps: OutboxOp[]
       busy.current = true;
       setSyncing(true);
       try {
-        const r = await flushOutbox(userId, force);
+        const r = await flushOutbox(userId, force, (op) => {
+          // Hand each item to the UI the moment the server confirms it.
+          onSyncedRef.current?.([op]);
+        });
         await refresh();
         if (r.synced > 0) {
           setJustSynced(true);
           setTimeout(() => setJustSynced(false), 3000);
-          onSyncedRef.current?.(r.syncedOps);
         }
       } finally {
         busy.current = false;
