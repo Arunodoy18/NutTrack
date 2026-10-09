@@ -4,9 +4,12 @@ import { Sparkles } from 'lucide-react';
 
 interface HumanHeroProps {
   fillPct: number;
+  /** Kids get a friendly "fuel ring" with their avatar — never a muscular adult silhouette. */
+  child?: boolean;
+  avatar?: string;
 }
 
-export default function HumanHero({ fillPct }: HumanHeroProps) {
+export default function HumanHero({ fillPct, child = false, avatar }: HumanHeroProps) {
   // Cap visual fill at 100% so it doesn't overflow the silhouette, 
   // but keep the actual logic for color coding.
   const visualFill = Math.min(Math.max(fillPct, 0), 100);
@@ -33,6 +36,42 @@ export default function HumanHero({ fillPct }: HumanHeroProps) {
   } else if (fillPct > 100) {
     fillColor = "#ef4444"; // Red
     glowColor = "rgba(239, 68, 68, 0.5)";
+  }
+
+  if (child) {
+    const R = 112;
+    const C = 2 * Math.PI * R;
+    return (
+      <motion.div
+        className="relative w-full max-w-[280px] aspect-square mx-auto flex items-center justify-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        role="img"
+        aria-label={`${Math.round(visualFill)} percent of today's fuel`}
+      >
+        <svg viewBox="0 0 260 260" className="absolute inset-0 w-full h-full -rotate-90">
+          <circle cx="130" cy="130" r={R} fill="none" stroke="#E5E7EB" strokeWidth="18" />
+          <circle
+            cx="130" cy="130" r={R} fill="none" stroke={fillColor} strokeWidth="18" strokeLinecap="round"
+            strokeDasharray={C} strokeDashoffset={C * (1 - animatedFill / 100)}
+            style={{ transition: "stroke-dashoffset 1.2s cubic-bezier(0.34,1.56,0.64,1)", filter: `drop-shadow(0 0 8px ${glowColor})` }}
+          />
+        </svg>
+        <motion.div
+          className="text-[120px] leading-none select-none"
+          animate={{ y: [0, -6, 0] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          aria-hidden
+        >
+          {avatar || "🧒"}
+        </motion.div>
+        <div className="absolute top-2 -right-2 bg-white px-3 py-1.5 rounded-full shadow-lg border border-surface-line z-20">
+          <span className="text-sm font-black" style={{ color: fillColor }}>{Math.round(animatedFill)}%</span>
+        </div>
+        {isPerfect && <span className="absolute -top-2 -left-2 text-3xl" aria-hidden>⭐</span>}
+      </motion.div>
+    );
   }
 
   // Calculate the clip-path inset from top. 

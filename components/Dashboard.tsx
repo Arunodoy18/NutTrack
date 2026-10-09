@@ -64,6 +64,7 @@ export interface FoodItemData {
 export interface MealLogData {
   id: string;
   timestamp: string;
+  mealSession?: string;
   summary: string;
   imageUrl?: string;
   totalCalories: number;
@@ -646,7 +647,11 @@ export default function Dashboard({
               <div className="absolute top-0 right-0 w-64 h-64 bg-brand-50 rounded-full blur-3xl -z-10 pointer-events-none" />
               <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -z-10 pointer-events-none" />
               
-              <HumanHero fillPct={calPercent} />
+              <HumanHero
+                fillPct={calPercent}
+                child={userAge !== undefined && userAge < 18}
+                avatar={profiles.find((p) => p.id === userId)?.avatar ?? undefined}
+              />
               
               <div className="text-center z-10 flex flex-col items-center pt-8">
                 <span className="text-[10px] font-bold text-brand uppercase tracking-widest">Calories</span>
@@ -759,7 +764,7 @@ export default function Dashboard({
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center">
-                      <span className="text-[9px] font-bold text-brand bg-brand-50 px-1.5 py-0.5 rounded-sm uppercase tracking-widest mr-2">{meal.mealSession || 'LUNCH'}</span>
+                      <span className="text-[9px] font-bold text-brand bg-brand-50 px-1.5 py-0.5 rounded-sm uppercase tracking-widest mr-2">{meal.mealSession || 'Snack'}</span>
                       <span className="text-ink-soft text-xs">{mounted ? new Date(meal.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ""}</span>
                     </div>
                     <div className="flex items-center gap-1 text-right">

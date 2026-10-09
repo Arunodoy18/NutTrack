@@ -1194,6 +1194,7 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
         id: meal.id,
         timestamp: meal.timestamp.toISOString(),
         summary: meal.summary || "No description provided",
+        mealSession: meal.mealSession || "Snack",
         imageUrl: meal.imagePath || undefined,
         totalCalories: meal.totalCalories,
         totalProtein: meal.totalProtein,
