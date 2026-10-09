@@ -352,7 +352,7 @@ export default function FridgeClient({ userId, accountUserId }: { userId: string
                     <div>
                       <h4 className="text-[10px] font-black text-ink-faint uppercase tracking-widest mb-2 text-center md:text-left">Detected Ingredients</h4>
                       <div className="flex flex-wrap justify-center md:justify-start gap-2">
-                        {result.ingredients.map((ing, i) => (
+                        {(result.ingredients ?? []).map((ing, i) => (
                           <span key={i} className="px-3 py-1 bg-surface-muted text-ink-soft rounded-lg text-xs font-semibold border border-surface-line">
                             {ing}
                           </span>
@@ -389,7 +389,7 @@ export default function FridgeClient({ userId, accountUserId }: { userId: string
                     </div>
 
                     <div className="grid grid-cols-1 gap-6">
-                      {result.recipes.map((recipe, idx) => (
+                      {(result.recipes ?? []).map((recipe, idx) => (
                         <div key={idx} className={`bg-white border ${recipe.matchStatus === 'warn' ? 'border-amber-300 shadow-amber-500/10' : 'border-surface-line'} rounded-3xl overflow-hidden transition-all flex flex-col group shadow-sm ${recipe.matchStatus === 'dim' ? 'opacity-60 grayscale-[0.2]' : ''}`}>
                           
                           {/* Recipe Flags */}

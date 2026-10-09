@@ -987,9 +987,14 @@ OUTPUT FORMAT:
       throw new Error("No identifiable ingredients found in the image.");
     }
 
+    // The prompt asks for `ingredients_found`; the UI reads `ingredients`. Normalise so neither side can crash.
+    const ingredients = Array.isArray(parsed.ingredients) ? parsed.ingredients : Array.isArray(parsed.ingredients_found) ? parsed.ingredients_found : [];
+    const recipes = Array.isArray(parsed.recipes) ? parsed.recipes : [];
+    if (recipes.length === 0) throw new Error("No recipes could be made from that photo. Try a clearer shot.");
+
     return {
       success: true,
-      data: parsed
+      data: { ...parsed, ingredients, recipes }
     };
   } catch (err) {
     console.error("AI Fridge scan error:", err);
