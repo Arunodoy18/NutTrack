@@ -152,16 +152,32 @@ export default function Dashboard({
     } catch { return null; }
   };
 
-  const cache = getCache();
-
-  const [liveTotals, setLiveTotals] = useState<NonNullable<DashboardProps['todayTotals']>>(cache?.totals || serverTotals);
-  const [liveMeals, setLiveMeals] = useState<MealLogData[]>(cache?.meals || initialMeals);
-  const [liveWeeklyData, setLiveWeeklyData] = useState<any[]>(cache?.weekly || serverWeeklyData);
-  const [liveMealCount, setLiveMealCount] = useState<number>(cache?.mealCount || totalMealsCount);
-  const [liveGoals, setLiveGoals] = useState(cache?.goals || dailyGoals);
-  const [liveIsPremium, setLiveIsPremium] = useState(cache?.isPremium || isPremiumUser);
-  const [liveActiveStreak, setLiveActiveStreak] = useState(cache?.activeStreak || activeStreak);
+  // First render must match the server HTML exactly (reading localStorage here caused React hydration
+  // errors #425/#422), so start from the server values and apply the on-device cache right after mount.
+  const [liveTotals, setLiveTotals] = useState<NonNullable<DashboardProps['todayTotals']>>(serverTotals);
+  const [liveMeals, setLiveMeals] = useState<MealLogData[]>(initialMeals);
+  const [liveWeeklyData, setLiveWeeklyData] = useState<any[]>(serverWeeklyData);
+  const [liveMealCount, setLiveMealCount] = useState<number>(totalMealsCount);
+  const [liveGoals, setLiveGoals] = useState(dailyGoals);
+  const [liveIsPremium, setLiveIsPremium] = useState(isPremiumUser);
+  const [liveActiveStreak, setLiveActiveStreak] = useState(activeStreak);
   const [isSyncing, setIsSyncing] = useState(false);
+  const cacheReady = React.useRef(false);
+  React.useEffect(() => {
+    const cache = getCache();
+    if (cache) {
+      if (cache.totals) setLiveTotals(cache.totals);
+      if (cache.meals) setLiveMeals(cache.meals);
+      if (cache.weekly) setLiveWeeklyData(cache.weekly);
+      if (cache.mealCount !== undefined) setLiveMealCount(cache.mealCount);
+      if (cache.goals) setLiveGoals(cache.goals);
+      if (cache.isPremium !== undefined) setLiveIsPremium(cache.isPremium);
+      if (cache.activeStreak !== undefined) setLiveActiveStreak(cache.activeStreak);
+    }
+    // Let the persist effect start only after these values have rendered (don't overwrite the cache with defaults).
+    setTimeout(() => { cacheReady.current = true; }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // === OFFLINE OUTBOX ===
   // Items synced a moment ago stay on screen until the fresh server data lands (no calorie "dip").
@@ -226,7 +242,7 @@ export default function Dashboard({
 
   // Persist optimistic updates (when user adds a meal)
   React.useEffect(() => {
-    if (typeof window !== 'undefined' && !isSyncing) {
+    if (typeof window !== 'undefined' && !isSyncing && cacheReady.current) {
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           _date: new Date().toDateString(),
@@ -711,7 +727,7 @@ export default function Dashboard({
           <div className="flex flex-col justify-center">
             <span className="text-[10px] font-black text-brand tracking-widest uppercase mb-1">Buddy Coach</span>
             <p className="text-sm font-medium text-ink leading-relaxed">
-              {generateBuddyCoachTip(todayTotals, dailyGoals, new Date(), userAge)}
+              {mounted ? generateBuddyCoachTip(todayTotals, dailyGoals, new Date(), userAge) : "\u00A0"}
             </p>
           </div>
         </div>

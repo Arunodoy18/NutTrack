@@ -217,3 +217,14 @@ test("fridge results are stored per profile, expire after 3 days, and clear", ()
   clearFridgeResult("kid");
   assert.equal(loadFridgeResult("kid"), null);
 });
+
+test("one barcode scanned repeatedly (camera fires every frame) queues exactly one item", async () => {
+  const first = await enqueueOp({ userId: "u1", kind: "meal_barcode", eatenAt: Date.now(), barcode: "3017620422003" });
+  for (let i = 0; i < 9; i++) await enqueueOp({ userId: "u1", kind: "meal_barcode", eatenAt: Date.now(), barcode: "3017620422003" });
+  const ops = (await listOps("u1")).filter((o) => o.kind === "meal_barcode");
+  assert.equal(ops.length, 1);
+  assert.equal(ops[0].id, first.id);
+  // a different product is a different item
+  await enqueueOp({ userId: "u1", kind: "meal_barcode", eatenAt: Date.now(), barcode: "8901058852349" });
+  assert.equal((await listOps("u1")).filter((o) => o.kind === "meal_barcode").length, 2);
+});

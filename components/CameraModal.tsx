@@ -66,7 +66,10 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
   const online = useOnline();
   const [networkFailed, setNetworkFailed] = useState(false);
   const [manualMode, setManualMode] = useState<'numbers' | 'describe'>('numbers');
+  // The scanner reports the same code on every frame (10/s): act on the first one only.
+  const barcodeLock = useRef(false);
   const [uploadStep, setUploadStep] = useState<number>(0); 
+  useEffect(() => { barcodeLock.current = false; }, [activeModalMode, isOpen, uploadStep]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
   const webcamRef = useRef<Webcam>(null);
@@ -243,6 +246,8 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
   const handleBarcodeSuccess = async (barcode: string) => {
     // Only run if not already analyzing to prevent duplicate scans
     if (isAnalyzing || uploadStep !== 0) return;
+    if (barcodeLock.current) return;
+    barcodeLock.current = true;
 
     // Offline: the code was read on the phone; save it and look the product up once back online.
     if (typeof navigator !== 'undefined' && !navigator.onLine && localUserId) {

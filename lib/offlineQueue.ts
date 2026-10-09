@@ -146,6 +146,14 @@ export async function enqueueOp(
       throw new Error(`You already have ${MAX_QUEUED_PHOTOS} photos waiting. Reconnect to sync them first.`);
     }
   }
+  // Same barcode seen again within seconds is the camera re-reading one product, not a second item.
+  if (input.kind === "meal_barcode") {
+    const recent = (await listOps(input.ownerId ?? input.userId)).find(
+      (o) => o.kind === "meal_barcode" && o.userId === input.userId && o.barcode === input.barcode && Date.now() - o.createdAt < 10_000
+    );
+    if (recent) return recent;
+  }
+
   const op: OutboxOp = {
     ...input,
     id: newOpId(),
