@@ -366,7 +366,7 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
           className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/90 sm:p-4 backdrop-blur-sm"
         >
-          <div className="w-full h-[100dvh] sm:max-w-[420px] sm:h-[85vh] bg-black sm:rounded-[40px] overflow-hidden flex flex-col relative shadow-[0_0_50px_rgba(0,0,0,0.5)] border-surface-line sm:border">
+          <div className="w-full h-full sm:max-w-[420px] sm:h-[85vh] bg-black sm:rounded-[40px] overflow-hidden flex flex-col relative shadow-[0_0_50px_rgba(0,0,0,0.5)] border-surface-line sm:border">
             
             {/* Header - Floating Top */}
             <div className="absolute top-0 inset-x-0 z-50 flex items-center justify-between p-6 bg-gradient-to-b from-black/70 via-black/40 to-transparent">

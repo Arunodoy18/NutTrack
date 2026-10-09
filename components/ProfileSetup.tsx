@@ -210,7 +210,7 @@ export default function ProfileSetup({ initial, editing = false, managed = false
 
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-white font-sans text-ink overflow-hidden">
+    <div className="fixed inset-0 z-10 flex flex-col bg-white font-sans text-ink overflow-hidden">
       {/* Top bar: back + progress */}
       <div className="shrink-0 px-5 pt-3 pb-2 flex flex-col gap-3">
         <div className="flex items-center gap-4">

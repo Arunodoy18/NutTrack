@@ -3,7 +3,7 @@ import OnboardingCarousel from '@/components/OnboardingCarousel';
 
 export default function OnboardingPage() {
   return (
-    <div className="h-[100dvh] overflow-hidden bg-surface-muted flex flex-col">
+    <div className="fixed inset-0 overflow-hidden bg-surface-muted flex flex-col">
       <OnboardingCarousel />
     </div>
   );
