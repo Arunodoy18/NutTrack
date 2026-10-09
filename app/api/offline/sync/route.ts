@@ -20,7 +20,9 @@ function mealIdFor(userId: string, opId: string) {
   return "off_" + createHash("sha256").update(`${userId}:${opId}`).digest("hex").slice(0, 32);
 }
 
+// Missing optional values count as 0; present-but-garbage values are rejected.
 const num = (v: unknown, max: number) => {
+  if (v === undefined || v === null || v === "") return 0;
   const n = Number(v);
   return Number.isFinite(n) ? Math.min(Math.max(0, Math.round(n)), max) : NaN;
 };
