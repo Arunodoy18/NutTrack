@@ -26,6 +26,9 @@
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -67,9 +70,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "46539737-a970-43cb-ba65-8801f1d036be"
+        "projectId": "60fe6757-d564-48da-adc7-26bf3db4ce18"
       }
     },
-    "owner": "arunodoy"
+    "owner": "arunodoy18"
   }
 }
