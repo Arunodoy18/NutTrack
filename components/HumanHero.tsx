@@ -66,7 +66,7 @@ export default function HumanHero({ fillPct, child = false, avatar }: HumanHeroP
         >
           {avatar || "🧒"}
         </motion.div>
-        <div className="absolute top-2 -right-2 bg-white px-3 py-1.5 rounded-full shadow-lg border border-surface-line z-20">
+        <div className="absolute bottom-3 -right-1 bg-white px-3 py-1.5 rounded-full shadow-lg border border-surface-line z-20">
           <span className="text-sm font-black" style={{ color: fillColor }}>{Math.round(animatedFill)}%</span>
         </div>
         {isPerfect && <span className="absolute -top-2 -left-2 text-3xl" aria-hidden>⭐</span>}

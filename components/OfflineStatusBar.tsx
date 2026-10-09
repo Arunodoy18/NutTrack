@@ -49,7 +49,7 @@ export default function OfflineStatusBar({ sync }: { sync: OfflineSyncState }) {
           <WifiOff className="w-4 h-4 shrink-0" />
           <span className="flex-1">
             You&apos;re offline
-            {pending.length > 0 ? ` · ${label(pending.length, "meal", "meals")} saved on this phone` : " · you can still log meals manually"}
+            {pending.length > 0 ? ` · ${label(pending.length, "item", "items")} saved on this phone` : " · you can still log meals manually"}
           </span>
         </div>
       </div>
@@ -59,7 +59,7 @@ export default function OfflineStatusBar({ sync }: { sync: OfflineSyncState }) {
       <div className="bg-sky-600 text-white" role="status">
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-2 text-xs font-bold">
           <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
-          <span>Syncing {label(pending.length, "meal", "meals")}…</span>
+          <span>Syncing {label(pending.length, "item", "items")}…</span>
         </div>
       </div>
     );
@@ -68,7 +68,7 @@ export default function OfflineStatusBar({ sync }: { sync: OfflineSyncState }) {
       <div className="bg-emerald-600 text-white" role="status">
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-2 text-xs font-bold">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>All caught up — your offline meals are saved</span>
+          <span>All caught up — everything you saved offline is synced</span>
         </div>
       </div>
     );
@@ -77,7 +77,7 @@ export default function OfflineStatusBar({ sync }: { sync: OfflineSyncState }) {
       <button onClick={() => sync.flushNow()} className="w-full bg-sky-600 text-white text-left" role="status">
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-2 text-xs font-bold">
           <RefreshCw className="w-4 h-4 shrink-0" />
-          <span className="flex-1">{label(pending.length, "meal", "meals")} waiting to sync · tap to retry</span>
+          <span className="flex-1">{label(pending.length, "item", "items")} waiting to sync · tap to retry</span>
         </div>
       </button>
     );
@@ -94,7 +94,7 @@ export default function OfflineStatusBar({ sync }: { sync: OfflineSyncState }) {
               className="w-full max-w-lg mx-auto px-4 py-2 flex items-center gap-2 text-xs font-bold text-left"
             >
               <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span className="flex-1">{label(failed.length, "meal", "meals")} couldn&apos;t be saved · tap to review</span>
+              <span className="flex-1">{label(failed.length, "item", "items")} couldn&apos;t be saved · tap to review</span>
             </button>
             {showFailed && (
               <ul className="max-w-lg mx-auto px-4 pb-3 space-y-2">
