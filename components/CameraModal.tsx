@@ -4,6 +4,10 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Webcam from 'react-webcam';
 import { compressImageFile, compressDataUrl } from '@/lib/imageCompress';
+import ManualMealForm from '@/components/ManualMealForm';
+import { showToast } from '@/components/OfflineStatusBar';
+import { enqueueOp } from '@/lib/offlineQueue';
+import { useOnline } from '@/lib/useOfflineSync';
 import { Camera, Upload, X, Mic, MicOff, Barcode, Maximize, User, RefreshCw, AlertTriangle, Check, Sparkles } from 'lucide-react';
 import ComingSoon from "@/components/ComingSoon";
 import dynamic from "next/dynamic";
@@ -55,7 +59,9 @@ interface CameraModalProps {
 }
 
 export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, onMealSaved }: CameraModalProps) {
-  const [activeModalMode, setActiveModalMode] = useState<'camera' | 'speak' | 'barcode'>('camera');
+  const [activeModalMode, setActiveModalMode] = useState<'camera' | 'speak' | 'barcode' | 'manual'>('camera');
+  const online = useOnline();
+  const [networkFailed, setNetworkFailed] = useState(false);
   const [uploadStep, setUploadStep] = useState<number>(0); 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
@@ -115,6 +121,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
         setAnalysisError(res.error || "Failed to analyze speech.");
       }
     } catch (err) {
+      setNetworkFailed(isNetworkError(err));
       setAnalysisError(friendlyError(err));
     } finally {
       clearInterval(msgInterval);
@@ -166,6 +173,11 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
     ]);
   };
 
+  const isNetworkError = (err: unknown) =>
+    (err instanceof Error && err.message === "timeout") ||
+    (typeof navigator !== "undefined" && !navigator.onLine) ||
+    (err instanceof TypeError); // fetch failure surfaces as TypeError
+
   const friendlyError = (err: unknown): string => {
     const msg = err instanceof Error ? err.message : "";
     if (msg === "timeout") return "That took too long. Check your connection and try again.";
@@ -193,10 +205,33 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
         setAnalysisError(res.error || "Failed to analyze image.");
       }
     } catch (err) {
+      setNetworkFailed(isNetworkError(err));
       setAnalysisError(friendlyError(err));
     } finally {
       clearInterval(msgInterval);
       setIsAnalyzing(false);
+      setUploadStep(2);
+    }
+  };
+
+  /** Save the current photo on this device; it's analysed and logged automatically once online. */
+  const handleQueuePhoto = async () => {
+    if (!base64Image || !localUserId) return;
+    try {
+      await enqueueOp({ userId: localUserId, kind: 'meal_photo', eatenAt: Date.now(), image: base64Image });
+      showToast("Photo saved — Nura will log it when you're back online");
+      onClose();
+      setTimeout(() => {
+        setUploadStep(0);
+        setSelectedImage(null);
+        setBase64Image(null);
+        setAnalysisError(null);
+        setNetworkFailed(false);
+        setActiveModalMode('camera');
+      }, 400);
+    } catch (e: any) {
+      setAnalysisError(e?.message || "Couldn't save the photo on this device.");
+      setNetworkFailed(false);
       setUploadStep(2);
     }
   };
@@ -351,7 +386,28 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                       />
                     </div>
                   )}
-                  {activeModalMode === 'speak' && (
+                  {activeModalMode === 'manual' && localUserId && (
+                    <ManualMealForm
+                      userId={localUserId}
+                      onSaved={(name) => {
+                        showToast(online ? `Logged "${name}"` : `Saved "${name}" — will sync when you're online`);
+                        onClose();
+                        setActiveModalMode('camera');
+                      }}
+                    />
+                  )}
+                  {(activeModalMode === 'barcode' || activeModalMode === 'speak') && !online && (
+                    <div className="absolute inset-0 z-20 bg-black/85 flex flex-col items-center justify-center text-center px-8 text-white">
+                      <p className="text-lg font-black mb-2">This needs a connection</p>
+                      <p className="text-sm text-white/60 font-medium mb-5">
+                        {activeModalMode === 'barcode' ? 'Barcode lookups' : 'Voice logging'} use the internet. You can still take a photo or log a meal manually.
+                      </p>
+                      <button onClick={() => setActiveModalMode('manual')} className="px-6 py-3 rounded-full bg-white text-black font-bold text-sm">
+                        Log manually
+                      </button>
+                    </div>
+                  )}
+                  {activeModalMode === 'speak' && online && (
                     <div className="flex flex-col items-center justify-center text-white/90 text-center px-8 z-10">
                       <motion.div 
                         animate={isListening ? { scale: [1, 1.2, 1], opacity: [1, 0.5, 1] } : {}}
@@ -373,7 +429,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                 <div className="w-full bg-black pb-8 pt-6 px-6 rounded-t-[40px] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] z-40 relative">
                   {/* Mode Selector */}
                   <div className="flex p-1 bg-white/10 backdrop-blur-md rounded-full mb-8 relative z-10">
-                    {(['camera', 'barcode', 'speak'] as const).map(mode => (
+                    {(['camera', 'barcode', 'speak', 'manual'] as const).map(mode => (
                       <button
                         key={mode}
                         onClick={() => setActiveModalMode(mode)}
@@ -389,7 +445,7 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                   </div>
 
                   {/* Shutter Row */}
-                  <div className="flex items-center justify-between relative z-10">
+                  <div className={`flex items-center justify-between relative z-10 ${activeModalMode === 'manual' ? 'hidden' : ''}`}>
                     {/* Left: Upload */}
                     <div className="relative w-14 h-14 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-pointer backdrop-blur-md text-white">
                       <input 
@@ -429,14 +485,32 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                   {/* Analysis specific states */}
                   {selectedImage && activeModalMode !== 'barcode' && (
                      <div className="absolute inset-0 bg-black/80 backdrop-blur-md rounded-t-[40px] z-50 flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={handleStartAnalysis}
-                          className="px-8 py-4 bg-brand hover:bg-brand-500 font-bold text-white text-lg rounded-full shadow-lg shadow-brand/40 flex items-center gap-3 transition-all hover:scale-105"
-                        >
-                          <Sparkles className="w-5 h-5" />
-                          <span>Analyze Photo</span>
-                        </button>
+                        {online ? (
+                          <button
+                            type="button"
+                            onClick={handleStartAnalysis}
+                            className="px-8 py-4 bg-brand hover:bg-brand-500 font-bold text-white text-lg rounded-full shadow-lg shadow-brand/40 flex items-center gap-3 transition-all hover:scale-105"
+                          >
+                            <Sparkles className="w-5 h-5" />
+                            <span>Analyze Photo</span>
+                          </button>
+                        ) : (
+                          <div className="flex flex-col items-center gap-3 px-8 text-center">
+                            <p className="text-white/70 text-sm font-medium">You&apos;re offline. Save this photo and Nura will analyze and log it as soon as you&apos;re back online.</p>
+                            <button
+                              type="button"
+                              onClick={handleQueuePhoto}
+                              disabled={!base64Image}
+                              className="px-8 py-4 bg-brand font-bold text-white text-lg rounded-full shadow-lg shadow-brand/40 flex items-center gap-3 disabled:opacity-50"
+                            >
+                              <Sparkles className="w-5 h-5" />
+                              <span>Save for later</span>
+                            </button>
+                            <button type="button" onClick={() => { setSelectedImage(null); setBase64Image(null); }} className="text-white/60 text-sm font-bold">
+                              Retake
+                            </button>
+                          </div>
+                        )}
                      </div>
                   )}
                 </div>
@@ -487,7 +561,12 @@ export default function CameraModal({ isOpen, onClose, userId, isPremiumUser, on
                      <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
                      <h2 className="text-xl font-bold text-ink">Scan Failed</h2>
                      <p className="text-ink-soft text-sm">{analysisError}</p>
-                     <button onClick={() => setUploadStep(0)} className="mt-8 px-8 py-4 bg-ink text-white rounded-full font-bold shadow-lg">Try Again</button>
+                     {networkFailed && base64Image && (
+                       <button onClick={handleQueuePhoto} className="mt-6 px-8 py-4 bg-brand text-white rounded-full font-bold shadow-lg block mx-auto">
+                         Save photo &amp; log it when I&apos;m online
+                       </button>
+                     )}
+                     <button onClick={() => { setNetworkFailed(false); setUploadStep(0); }} className="mt-4 px-8 py-4 bg-ink text-white rounded-full font-bold shadow-lg">Try Again</button>
                   </div>
                 ) : activeAnalysis ? (
                   <div className="flex-1 overflow-y-auto px-4 pb-[120px] pt-4 custom-scrollbar">

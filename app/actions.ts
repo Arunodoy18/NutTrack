@@ -151,6 +151,8 @@ export async function saveMealAction(
   userId: string,
   mealData: {
     summary: string;
+    /** Display title chosen by the user / AI. Preferred over `summary` (AI notes). */
+    name?: string;
     mealSession?: string;
     totalCalories: number;
     totalProtein: number;
@@ -182,7 +184,9 @@ export async function saveMealAction(
       estimatedQuantity: string;
     }[];
   },
-  bypassSessionCheck: boolean = false
+  bypassSessionCheck: boolean = false,
+  /** Offline sync: deterministic id (idempotent retries) + the real eaten-at time. */
+  opts?: { id?: string; timestamp?: Date }
 ) {
   try {
     if (!bypassSessionCheck) {
@@ -191,6 +195,16 @@ export async function saveMealAction(
         throw new Error("Unauthorized: Invalid session or user ID mismatch");
       }
     }
+
+    // Meals can be back-dated only a little (offline logging), never into the future.
+    const nowMs = Date.now();
+    const when =
+      opts?.timestamp &&
+      Number.isFinite(opts.timestamp.getTime()) &&
+      opts.timestamp.getTime() <= nowMs + 5 * 60_000 &&
+      opts.timestamp.getTime() >= nowMs - 14 * 24 * 3600_000
+        ? opts.timestamp
+        : new Date(nowMs);
 
     // Sanitize and bound totals
     const safeTotalCals = Math.min(Math.max(0, mealData.totalCalories || 0), 20000);
@@ -206,9 +220,11 @@ export async function saveMealAction(
     const safeTotalVitE = Math.min(Math.max(0, mealData.totalVitaminE || 0), 1000);
     const safeTotalVitB12 = Math.min(Math.max(0, mealData.totalVitaminB12 || 0), 1000);
 
-    const [insertedMeal] = await db.insert(meals).values({
+    const inserted = await db.insert(meals).values({
+      ...(opts?.id ? { id: opts.id } : {}),
       userId: userId,
-      summary: mealData.summary || "Meal",
+      // The dashboard shows `summary` as the meal title, so prefer the chosen name over AI notes.
+      summary: (mealData.name?.trim() || mealData.summary || "Meal").slice(0, 120),
       mealSession: mealData.mealSession || "Snack",
       totalCalories: safeTotalCals,
       totalProtein: safeTotalProt,
@@ -224,8 +240,14 @@ export async function saveMealAction(
       totalVitaminB12: safeTotalVitB12,
       // Only keep reasonably sized images (the client compresses to ~150 KB)
       imagePath: mealData.imageUrl && mealData.imageUrl.length <= 700_000 ? mealData.imageUrl : null,
-      timestamp: new Date(),
-    }).returning();
+      timestamp: when,
+    }).onConflictDoNothing().returning();
+
+    // Same id already saved (a retried offline sync): succeed without duplicating.
+    if (inserted.length === 0) {
+      return { success: true, duplicate: true };
+    }
+    const insertedMeal = inserted[0];
 
     for (const item of mealData.items) {
       if (!item.name || item.name.trim() === "") continue;

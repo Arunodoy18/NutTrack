@@ -37,6 +37,9 @@ import dynamic from 'next/dynamic';
 import HumanHero from './HumanHero';
 import DailyCarousel from './DailyCarousel';
 import { gradeMeal } from '@/lib/grading';
+import { useOfflineSync } from '@/lib/useOfflineSync';
+import OfflineStatusBar from '@/components/OfflineStatusBar';
+import type { OutboxOp } from '@/lib/offlineTypes';
 
 const WeeklyChart = dynamic(() => import('@/components/WeeklyChart'), { ssr: false });
 import { saveDailyGoalsAction, saveMealAction, generateNutritionInsightAction, analyzeMealImageAction, analyzeMealTextAction } from "@/app/actions";
@@ -150,6 +153,15 @@ export default function Dashboard({
   const [liveActiveStreak, setLiveActiveStreak] = useState(cache?.activeStreak || activeStreak);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  // === OFFLINE OUTBOX ===
+  // Items synced a moment ago stay on screen until the fresh server data lands (no calorie "dip").
+  const [syncTick, setSyncTick] = useState(0);
+  const [recentlySynced, setRecentlySynced] = useState<OutboxOp[]>([]);
+  const offlineSync = useOfflineSync(userId, (synced) => {
+    setRecentlySynced(synced);
+    setSyncTick((t) => t + 1);
+  });
+
   // === BACKGROUND SYNC (APP SHELL) ===
   React.useEffect(() => {
     let mounted = true;
@@ -180,6 +192,7 @@ export default function Dashboard({
             isPremium: result.data.isPremium,
             activeStreak: fetchedStreak,
           }));
+          setRecentlySynced([]); // server data now includes them
         }
       } catch (err) {
         console.error("Background sync failed:", err);
@@ -188,11 +201,11 @@ export default function Dashboard({
       }
     }
     
-    // Sync immediately on mount
+    // Sync immediately on mount, and again whenever the offline outbox has been flushed
     syncData();
 
     return () => { mounted = false; };
-  }, [userId]);
+  }, [userId, syncTick]);
 
   // Persist optimistic updates (when user adds a meal)
   React.useEffect(() => {
@@ -213,7 +226,50 @@ export default function Dashboard({
   }, [liveTotals, liveMeals, liveWeeklyData, liveMealCount, liveGoals, liveIsPremium, liveActiveStreak, isSyncing]);
 
   // Alias for compatibility with existing template references
-  const todayTotals = liveTotals;
+  // Pending + just-synced offline meals eaten today count toward totals and the list immediately.
+  const isToday = (ms: number) => new Date(ms).toDateString() === new Date().toDateString();
+  const overlayOps = [...offlineSync.pending, ...recentlySynced].filter((o) => o.kind === 'meal_manual' && o.meal && isToday(o.eatenAt));
+  const todayTotals = overlayOps.reduce(
+    (acc, o) => ({
+      ...acc,
+      calories: acc.calories + (o.meal?.totalCalories ?? 0),
+      protein: acc.protein + (o.meal?.totalProtein ?? 0),
+      fat: acc.fat + (o.meal?.totalFat ?? 0),
+      carbs: acc.carbs + (o.meal?.totalCarbs ?? 0),
+      fiber: acc.fiber + (o.meal?.totalFiber ?? 0),
+    }),
+    liveTotals
+  );
+  const pendingRows: any[] = [...offlineSync.pending, ...recentlySynced]
+    .filter((o) => isToday(o.eatenAt))
+    .map((o) =>
+      o.kind === 'meal_manual' && o.meal
+        ? {
+            id: `pending-${o.id}`,
+            pending: true,
+            timestamp: new Date(o.eatenAt).toISOString(),
+            mealSession: o.meal.mealSession,
+            summary: o.meal.name,
+            totalCalories: o.meal.totalCalories,
+            totalProtein: o.meal.totalProtein,
+            totalFat: o.meal.totalFat,
+            totalCarbs: o.meal.totalCarbs,
+            totalFiber: o.meal.totalFiber,
+            items: [{ id: `pending-item-${o.id}`, name: o.meal.name, calories: o.meal.totalCalories, protein: o.meal.totalProtein, fat: o.meal.totalFat, carbs: o.meal.totalCarbs, fiber: o.meal.totalFiber, estimatedQuantity: '1 serving' }],
+          }
+        : {
+            id: `pending-${o.id}`,
+            pending: true,
+            photoQueued: true,
+            timestamp: new Date(o.eatenAt).toISOString(),
+            mealSession: 'Snack',
+            imageUrl: o.image,
+            summary: 'Photo — will be analysed when online',
+            totalCalories: 0, totalProtein: 0, totalFat: 0, totalCarbs: 0, totalFiber: 0,
+            items: [],
+          }
+    );
+  const displayMeals: any[] = [...pendingRows, ...liveMeals];
   // Overwrite props with live state
   dailyGoals = liveGoals;
   isPremiumUser = liveIsPremium;
@@ -541,13 +597,13 @@ export default function Dashboard({
         >
           <h2 className="text-xl font-black text-ink flex items-center gap-1">Today's meals <ChevronRight className="w-4 h-4 text-ink-soft mt-0.5" /></h2>
           <span className="text-xs font-bold text-ink-soft bg-surface-line/50 px-3 py-1 rounded-full">
-            {liveMeals.length} logged
+            {displayMeals.length} logged
           </span>
         </div>
 
         <div className="space-y-3">
-          {liveMeals.length > 0 ? (
-            liveMeals.map((meal: any) => {
+          {displayMeals.length > 0 ? (
+            displayMeals.map((meal: any) => {
               const { grade, color, textColor } = gradeMeal(meal);
               return (
               <div 
@@ -556,17 +612,23 @@ export default function Dashboard({
                 className="bg-white rounded-3xl p-4 flex items-center gap-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               >
                 <div className="w-16 h-16 bg-surface-muted rounded-2xl flex items-center justify-center shrink-0 overflow-hidden relative">
-                  <Image 
-                    src={meal.imageUrl || "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop"} 
-                    alt={meal.summary}
-                    fill
-                    className="object-cover"
-                    unoptimized
-                  />
+                  {meal.imageUrl ? (
+                    <Image 
+                      src={meal.imageUrl} 
+                      alt={meal.summary}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <span className="text-2xl" aria-hidden>🍽️</span>
+                  )}
                   {/* Grade Badge */}
-                  <div className={`absolute bottom-1 right-1 w-5 h-5 rounded-md ${color} flex items-center justify-center shadow-md`}>
-                    <span className={`text-[10px] font-black ${textColor}`}>{grade}</span>
-                  </div>
+                  {!meal.photoQueued && (
+                    <div className={`absolute bottom-1 right-1 w-5 h-5 rounded-md ${color} flex items-center justify-center shadow-md`}>
+                      <span className={`text-[10px] font-black ${textColor}`}>{grade}</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
@@ -582,7 +644,13 @@ export default function Dashboard({
                   </div>
                   <div className="mt-1.5">
                     <h3 className="font-bold text-ink text-base truncate">{meal.summary || "Meal Log"}</h3>
-                    <div className="text-emerald-500 font-bold text-xs mt-0.5">{meal.totalProtein}g protein</div>
+                    {meal.pending ? (
+                      <div className="text-sky-600 font-bold text-xs mt-0.5">
+                        {meal.photoQueued ? 'Queued · analysing when online' : 'Saved on this phone · syncing soon'}
+                      </div>
+                    ) : (
+                      <div className="text-emerald-500 font-bold text-xs mt-0.5">{meal.totalProtein}g protein</div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -604,6 +672,7 @@ export default function Dashboard({
       </div>
       </div>
 
+      <OfflineStatusBar sync={offlineSync} />
       <BottomNav onCameraClick={() => { setIsUploadModalOpen(true); setActiveModalMode('camera'); }} />
 
       {/* Target Nutritional Goals Setup Modal */}
@@ -1029,7 +1098,7 @@ export default function Dashboard({
             
             <div className="p-6 space-y-8 max-h-[70vh] overflow-y-auto">
               {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map(session => {
-                const sessionMeals = liveMeals.filter((m: any) => (m.mealSession || 'Snack') === session);
+                const sessionMeals = displayMeals.filter((m: any) => (m.mealSession || 'Snack') === session);
                 if (sessionMeals.length === 0) return null;
                 
                 const sessionCalories = sessionMeals.reduce((acc: number, m: any) => acc + m.totalCalories, 0);
@@ -1082,7 +1151,7 @@ export default function Dashboard({
                 );
               })}
               
-              {liveMeals.length === 0 && (
+              {displayMeals.length === 0 && (
                 <div className="text-center py-8 text-ink-soft">
                   <p>No meals logged yet.</p>
                 </div>

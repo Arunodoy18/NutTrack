@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { clearLocalUserData } from "@/lib/clientStorage";
+import { clearOutbox } from "@/lib/offlineQueue";
 
 /**
  * Landing spot when a signed-in cookie points at an account that no longer
@@ -12,7 +13,7 @@ import { clearLocalUserData } from "@/lib/clientStorage";
 export default function SignedOutPage() {
   useEffect(() => {
     clearLocalUserData();
-    signOut({ callbackUrl: "/auth/login" });
+    clearOutbox().finally(() => signOut({ callbackUrl: "/auth/login" }));
   }, []);
 
   return (

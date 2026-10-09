@@ -23,12 +23,9 @@ export async function POST(req: NextRequest) {
       where: eq(users.id, userId),
     });
 
+    // Never resurrect a deleted account: a valid cookie for a missing user is stale.
     if (!dbUser) {
-      await db.insert(users).values({
-        id: userId,
-        name: "Sync User",
-        email: `${userId}@sync.dietbuddy.com`,
-      });
+      return NextResponse.json({ success: false, error: "Account not found" }, { status: 401 });
     }
 
     // Process each incoming meal
