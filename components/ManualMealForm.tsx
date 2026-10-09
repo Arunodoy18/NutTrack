@@ -12,6 +12,7 @@ interface Props {
   accountUserId?: string;
   /** Called after the meal is safely stored on this device. */
   onSaved: (name: string) => void;
+  defaultMode?: "numbers" | "describe";
 }
 
 const field =
@@ -21,7 +22,9 @@ const field =
  * Log a meal by typing it in. Works with no connection: the meal goes into the
  * on-device outbox (shows up instantly) and syncs automatically later.
  */
-export default function ManualMealForm({ userId, accountUserId, onSaved }: Props) {
+export default function ManualMealForm({ userId, accountUserId, onSaved, defaultMode = "numbers" }: Props) {
+  const [mode, setMode] = useState<"numbers" | "describe">(defaultMode);
+  const [description, setDescription] = useState("");
   const [name, setName] = useState("");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
@@ -39,6 +42,20 @@ export default function ManualMealForm({ userId, accountUserId, onSaved }: Props
     calories.trim() !== "" &&
     [calories, protein, carbs, fat, fiber].every((v) => v.trim() === "" || (Number(v) >= 0 && Number.isFinite(Number(v)))) &&
     cal <= 20000;
+
+  const saveDescription = async () => {
+    const text = description.trim();
+    if (!text || saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      await enqueueOp({ userId, ownerId: accountUserId ?? userId, kind: "meal_text", eatenAt: Date.now(), text: text.slice(0, 500) });
+      onSaved(text.length > 30 ? text.slice(0, 30) + "…" : text);
+    } catch (e: any) {
+      setError(e?.message || "Couldn't save on this device. Please try again.");
+      setSaving(false);
+    }
+  };
 
   const save = async () => {
     if (!valid || saving) return;
@@ -79,6 +96,48 @@ export default function ManualMealForm({ userId, accountUserId, onSaved }: Props
         </div>
       </div>
 
+      <div className="flex p-1 bg-white/10 rounded-full mb-4" role="tablist">
+        {([["numbers", "I know the numbers"], ["describe", "Describe it"]] as const).map(([m, label]) => (
+          <button
+            key={m}
+            type="button"
+            role="tab"
+            aria-selected={mode === m}
+            onClick={() => setMode(m)}
+            className={`flex-1 py-2 text-xs font-bold rounded-full transition-all ${mode === m ? "bg-white text-black" : "text-white/60"}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === "describe" ? (
+        <div className="space-y-3">
+          <textarea
+            className={`${field} min-h-[120px] resize-none`}
+            placeholder="e.g. 2 rotis with dal and a bowl of curd"
+            value={description}
+            maxLength={500}
+            onChange={(e) => setDescription(e.target.value)}
+            aria-label="Describe your meal"
+          />
+          <p className="text-[11px] text-white/45 font-medium">
+            Nura&apos;s AI estimates calories and macros once you&apos;re online, and logs it at the time you save it here.
+          </p>
+          {error && <p className="text-sm font-bold text-red-400">{error}</p>}
+          <button
+            type="button"
+            onClick={saveDescription}
+            disabled={!description.trim() || saving}
+            className={`w-full mt-2 py-4 rounded-full font-bold text-base flex items-center justify-center gap-2 transition-all ${
+              description.trim() && !saving ? "bg-brand text-white shadow-lg shadow-brand/40 active:scale-[0.98]" : "bg-white/10 text-white/40"
+            }`}
+          >
+            <Check className="w-5 h-5" />
+            {saving ? "Saving…" : "Save description"}
+          </button>
+        </div>
+      ) : (
       <div className="space-y-3">
         <input
           className={field}
@@ -158,6 +217,7 @@ export default function ManualMealForm({ userId, accountUserId, onSaved }: Props
           {saving ? "Saving…" : "Save meal"}
         </button>
       </div>
+      )}
     </div>
   );
 }

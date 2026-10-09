@@ -165,3 +165,55 @@ test("each synced item is reported immediately, before the rest of the queue fin
   await flushOutbox("u1", true, (op) => order.push(`done:${op.meal?.name}`));
   assert.deepEqual(order, ["req:First", "done:First", "req:Second", "done:Second"]);
 });
+
+import { saveFridgeResult, loadFridgeResult, clearFridgeResult } from "../lib/fridgeResults";
+
+test("photo cap counts every image item (meal + fridge photos together)", async () => {
+  for (let i = 0; i < MAX_QUEUED_PHOTOS - 1; i++) {
+    await enqueueOp({ userId: "u1", kind: "meal_photo", eatenAt: Date.now(), image: "data:image/jpeg;base64,AAAA" });
+  }
+  await enqueueOp({ userId: "u1", kind: "fridge_photo", eatenAt: Date.now(), image: "data:image/jpeg;base64,AAAA" });
+  await assert.rejects(
+    () => enqueueOp({ userId: "u1", kind: "fridge_photo", eatenAt: Date.now(), image: "data:image/jpeg;base64,AAAA" }),
+    /photos waiting/
+  );
+  // non-image items are never blocked by the photo cap
+  await enqueueOp({ userId: "u1", kind: "meal_barcode", eatenAt: Date.now(), barcode: "8901058852349" });
+});
+
+test("a queue is scoped to the ACCOUNT but items keep their family member", async () => {
+  await enqueueOp({ userId: "kid", ownerId: "parent", kind: "meal_text", eatenAt: Date.now(), text: "2 rotis and dal" });
+  await enqueueOp({ userId: "parent", ownerId: "parent", kind: "meal_barcode", eatenAt: Date.now(), barcode: "8901058852349" });
+  await enqueueOp({ userId: "stranger", ownerId: "stranger", kind: "meal_text", eatenAt: Date.now(), text: "x" });
+  const forParent = await listOps("parent");
+  assert.deepEqual(forParent.map((o) => o.userId).sort(), ["kid", "parent"]);
+  const calls = mockFetch(() => ({ status: "ok" }));
+  const r = await flushOutbox("parent", true);
+  assert.equal(r.synced, 2);
+  assert.deepEqual(calls.map((c) => c.userId).sort(), ["kid", "parent"]);
+  assert.equal((await listOps("stranger")).length, 1, "another account's queue is untouched");
+});
+
+test("delete/edit items carry what the server needs to be idempotent", async () => {
+  const del = await enqueueOp({ userId: "u1", kind: "meal_delete", eatenAt: Date.now(), mealId: "m-123" });
+  const edit = await enqueueOp({ userId: "u1", kind: "meal_edit", eatenAt: Date.now(), mealId: "m-123", scale: 0.5, expectedCalories: 600 });
+  assert.equal(del.mealId, "m-123");
+  assert.equal(edit.expectedCalories, 600);
+  assert.equal(edit.scale, 0.5);
+});
+
+test("fridge results are stored per profile, expire after 3 days, and clear", () => {
+  const store = new Map<string, string>();
+  g.localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v), removeItem: (k: string) => void store.delete(k) };
+  saveFridgeResult("kid", { ingredients: ["milk"], recipes: [] });
+  assert.ok(loadFridgeResult("kid"));
+  assert.equal(loadFridgeResult("parent"), null, "other profile sees nothing");
+  // make it 4 days old
+  const raw = JSON.parse(store.get("nura_fridge_result_kid")!);
+  raw.savedAt = Date.now() - 4 * 24 * 3600_000;
+  store.set("nura_fridge_result_kid", JSON.stringify(raw));
+  assert.equal(loadFridgeResult("kid"), null, "stale recipes are dropped");
+  saveFridgeResult("kid", { ingredients: [], recipes: [] });
+  clearFridgeResult("kid");
+  assert.equal(loadFridgeResult("kid"), null);
+});

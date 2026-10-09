@@ -1,6 +1,7 @@
 "use client";
 
 import { listOps, removeOp, updateOp } from "./offlineQueue";
+import { saveFridgeResult } from "./fridgeResults";
 import type { OutboxOp, SyncResponse } from "./offlineTypes";
 
 const MAX_ATTEMPTS = 5;
@@ -63,6 +64,11 @@ async function flushInner(userId: string, force: boolean, onOp?: (op: OutboxOp) 
     const { res, http } = out;
 
     if (res.status === "ok" || res.status === "duplicate") {
+      // Fridge photos produce something to look at: keep it on the device and tell the person.
+      if (op.kind === "fridge_photo" && res.result) {
+        saveFridgeResult(op.userId, res.result);
+        window.dispatchEvent(new CustomEvent("nura:toast", { detail: "Your fridge recipes are ready — open Fridge" }));
+      }
       await removeOp(op.id);
       synced++;
       syncedOps.push(op);

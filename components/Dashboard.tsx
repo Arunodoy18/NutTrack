@@ -41,6 +41,8 @@ import { useOfflineSync } from '@/lib/useOfflineSync';
 import OfflineStatusBar from '@/components/OfflineStatusBar';
 import type { OutboxOp } from '@/lib/offlineTypes';
 import ProfileSwitcher from '@/components/ProfileSwitcher';
+import { showToast } from '@/components/OfflineStatusBar';
+import { enqueueOp, updateOp } from '@/lib/offlineQueue';
 import type { ProfileSummary } from '@/lib/access';
 
 const WeeklyChart = dynamic(() => import('@/components/WeeklyChart'), { ssr: false });
@@ -243,7 +245,45 @@ export default function Dashboard({
   // Pending + just-synced offline meals eaten today count toward totals and the list immediately.
   const isToday = (ms: number) => new Date(ms).toDateString() === new Date().toDateString();
   const forThisProfile = (o: OutboxOp) => o.userId === userId; // queue spans the family; show only who's on screen
-  const overlayOps = [...offlineSync.pending, ...recentlySynced].filter((o) => forThisProfile(o) && o.kind === 'meal_manual' && o.meal && isToday(o.eatenAt));
+  const profileOps = [...offlineSync.pending, ...recentlySynced].filter(forThisProfile);
+
+  // Pending deletes / edits of already-saved meals are applied on screen immediately.
+  const SCALE_KEYS = ['totalCalories', 'totalProtein', 'totalFat', 'totalCarbs', 'totalFiber'] as const;
+  const deletedIds = new Set(profileOps.filter((o) => o.kind === 'meal_delete').map((o) => o.mealId));
+  const editOps = profileOps.filter((o) => o.kind === 'meal_edit');
+  const baseMeals: any[] = liveMeals
+    .filter((m: any) => !deletedIds.has(m.id))
+    .map((m: any) => {
+      const mine = editOps.filter((e) => e.mealId === m.id);
+      if (mine.length === 0) return m;
+      let out: any = { ...m };
+      for (const e of mine) {
+        const k = e.scale ?? 1;
+        if (k !== 1) {
+          for (const key of SCALE_KEYS) out[key] = Math.round((out[key] ?? 0) * k);
+          out.items = (out.items ?? []).map((it: any) => ({
+            ...it,
+            calories: Math.round((it.calories ?? 0) * k),
+            protein: Math.round((it.protein ?? 0) * k),
+            fat: Math.round((it.fat ?? 0) * k),
+            carbs: Math.round((it.carbs ?? 0) * k),
+            fiber: Math.round((it.fiber ?? 0) * k),
+          }));
+        }
+        if (e.newName) out.summary = e.newName;
+      }
+      return out;
+    });
+  const sumOf = (list: any[], key: string) => list.reduce((a, m) => a + (m[key] ?? 0), 0);
+  const adjusted = {
+    ...liveTotals,
+    calories: liveTotals.calories + sumOf(baseMeals, 'totalCalories') - sumOf(liveMeals, 'totalCalories'),
+    protein: liveTotals.protein + sumOf(baseMeals, 'totalProtein') - sumOf(liveMeals, 'totalProtein'),
+    fat: liveTotals.fat + sumOf(baseMeals, 'totalFat') - sumOf(liveMeals, 'totalFat'),
+    carbs: liveTotals.carbs + sumOf(baseMeals, 'totalCarbs') - sumOf(liveMeals, 'totalCarbs'),
+    fiber: liveTotals.fiber + sumOf(baseMeals, 'totalFiber') - sumOf(liveMeals, 'totalFiber'),
+  };
+  const overlayOps = profileOps.filter((o) => o.kind === 'meal_manual' && o.meal && isToday(o.eatenAt));
   const todayTotals = overlayOps.reduce(
     (acc, o) => ({
       ...acc,
@@ -253,10 +293,10 @@ export default function Dashboard({
       carbs: acc.carbs + (o.meal?.totalCarbs ?? 0),
       fiber: acc.fiber + (o.meal?.totalFiber ?? 0),
     }),
-    liveTotals
+    adjusted
   );
-  const pendingRows: any[] = [...offlineSync.pending, ...recentlySynced]
-    .filter((o) => forThisProfile(o) && isToday(o.eatenAt))
+  const pendingRows: any[] = profileOps
+    .filter((o) => ['meal_manual', 'meal_photo', 'meal_text', 'meal_barcode'].includes(o.kind) && isToday(o.eatenAt))
     .map((o) =>
       o.kind === 'meal_manual' && o.meal
         ? {
@@ -279,12 +319,15 @@ export default function Dashboard({
             timestamp: new Date(o.eatenAt).toISOString(),
             mealSession: 'Snack',
             imageUrl: o.image,
-            summary: 'Photo — will be analysed when online',
+            summary:
+              o.kind === 'meal_text' ? `“${(o.text ?? '').slice(0, 40)}”`
+              : o.kind === 'meal_barcode' ? `Barcode ${o.barcode ?? ''}`
+              : 'Photo — will be analysed when online',
             totalCalories: 0, totalProtein: 0, totalFat: 0, totalCarbs: 0, totalFiber: 0,
             items: [],
           }
     );
-  const displayMeals: any[] = [...pendingRows, ...liveMeals];
+  const displayMeals: any[] = [...pendingRows, ...baseMeals];
   // Overwrite props with live state
   dailyGoals = liveGoals;
   isPremiumUser = liveIsPremium;
@@ -488,6 +531,69 @@ export default function Dashboard({
 
   const isOverCal = todayTotals.calories > dailyGoals.calories;
 
+  /* ── Meal delete / edit (queue-first: instant on screen, works offline, idempotent on the server) ── */
+  const [editingMeal, setEditingMeal] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editScale, setEditScale] = useState(1);
+  const closeMealDetails = () => { setSelectedMealForDetails(null); setEditingMeal(false); setConfirmingDelete(false); };
+
+  const deleteSelectedMeal = async () => {
+    const meal = selectedMealForDetails;
+    if (!meal) return;
+    try {
+      if (meal.pending) {
+        await offlineSync.discard(String(meal.id).replace('pending-', ''));
+      } else if (String(meal.id).startsWith('optimistic-')) {
+        showToast('Still saving that meal — try again in a moment');
+        return;
+      } else {
+        await enqueueOp({ userId, ownerId: accountUserId ?? userId, kind: 'meal_delete', eatenAt: Date.now(), mealId: meal.id });
+      }
+      showToast('Meal deleted');
+      closeMealDetails();
+    } catch (e: any) {
+      showToast(e?.message || "Couldn't delete that meal");
+    }
+  };
+
+  const saveMealEdit = async () => {
+    const meal = selectedMealForDetails;
+    if (!meal) return;
+    const newName = editName.trim() && editName.trim() !== meal.summary ? editName.trim() : undefined;
+    if (editScale === 1 && !newName) { setEditingMeal(false); return; }
+    try {
+      if (meal.pending && String(meal.id).startsWith('pending-')) {
+        // Still only on this phone: just rewrite the queued item.
+        const op = offlineSync.ops.find((o) => o.id === String(meal.id).replace('pending-', ''));
+        if (op?.kind === 'meal_manual' && op.meal) {
+          const k = editScale;
+          await updateOp({ ...op, meal: {
+            ...op.meal,
+            name: newName ?? op.meal.name,
+            totalCalories: Math.round(op.meal.totalCalories * k),
+            totalProtein: Math.round(op.meal.totalProtein * k),
+            totalFat: Math.round(op.meal.totalFat * k),
+            totalCarbs: Math.round(op.meal.totalCarbs * k),
+            totalFiber: Math.round(op.meal.totalFiber * k),
+          } });
+        }
+      } else if (String(meal.id).startsWith('optimistic-')) {
+        showToast('Still saving that meal — try again in a moment');
+        return;
+      } else {
+        await enqueueOp({
+          userId, ownerId: accountUserId ?? userId, kind: 'meal_edit', eatenAt: Date.now(),
+          mealId: meal.id, scale: editScale, newName, expectedCalories: meal.totalCalories,
+        });
+      }
+      showToast('Meal updated');
+      closeMealDetails();
+    } catch (e: any) {
+      showToast(e?.message || "Couldn't update that meal");
+    }
+  };
+
   const handleSaveGoals = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
@@ -666,7 +772,7 @@ export default function Dashboard({
                     <h3 className="font-bold text-ink text-base truncate">{meal.summary || "Meal Log"}</h3>
                     {meal.pending ? (
                       <div className="text-sky-600 font-bold text-xs mt-0.5">
-                        {meal.photoQueued ? 'Queued · analysing when online' : 'Saved on this phone · syncing soon'}
+                        {meal.photoQueued ? 'Queued · will be analysed when online' : 'Saved on this phone · syncing soon'}
                       </div>
                     ) : (
                       <div className="text-emerald-500 font-bold text-xs mt-0.5">{meal.totalProtein}g protein</div>
@@ -811,7 +917,7 @@ export default function Dashboard({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            onClick={() => setSelectedMealForDetails(null)}
+            onClick={closeMealDetails}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -823,21 +929,26 @@ export default function Dashboard({
               <div className="flex justify-between items-start mb-4">
                 <h3 className="text-xl font-black text-ink">{selectedMealForDetails.summary}</h3>
                 <button 
-                  onClick={() => setSelectedMealForDetails(null)}
+                  onClick={closeMealDetails}
                   className="p-1 text-ink-soft hover:text-ink bg-surface-muted rounded-full"
+                  aria-label="Close"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               
               <div className="w-full aspect-video bg-surface-muted rounded-2xl relative overflow-hidden mb-5">
-                <Image 
-                  src={selectedMealForDetails.imageUrl || "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&h=300&fit=crop"} 
-                  alt={selectedMealForDetails.summary}
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
+                {selectedMealForDetails.imageUrl ? (
+                  <Image 
+                    src={selectedMealForDetails.imageUrl} 
+                    alt={selectedMealForDetails.summary}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center text-5xl" aria-hidden>🍽️</div>
+                )}
               </div>
 
               <div className="grid grid-cols-4 gap-2 mb-4">
@@ -870,6 +981,65 @@ export default function Dashboard({
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Edit / delete */}
+              {editingMeal ? (
+                <div className="mt-4 border-t border-surface-line pt-4 space-y-3">
+                  <input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    maxLength={120}
+                    aria-label="Meal name"
+                    className="w-full bg-surface-muted rounded-[14px] px-4 py-2.5 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
+                  />
+                  <div>
+                    <div className="text-[10px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-2">Portion eaten</div>
+                    <div className="flex gap-1.5">
+                      {[0.5, 0.75, 1, 1.5, 2].map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setEditScale(k)}
+                          className={`flex-1 py-2 rounded-full text-xs font-bold border transition-all ${editScale === k ? 'border-brand bg-brand/5 text-brand' : 'border-surface-line bg-surface-muted text-ink'}`}
+                        >
+                          {k === 1 ? 'As logged' : `${k}×`}
+                        </button>
+                      ))}
+                    </div>
+                    {editScale !== 1 && (
+                      <p className="text-xs font-medium text-ink-soft mt-2">
+                        New total: <b className="text-ink">{Math.round(selectedMealForDetails.totalCalories * editScale)} kcal</b>
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <button onClick={() => setEditingMeal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-surface-muted text-ink-soft">Cancel</button>
+                    <button onClick={saveMealEdit} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-brand text-white">Save</button>
+                  </div>
+                </div>
+              ) : confirmingDelete ? (
+                <div className="mt-4 border-t border-surface-line pt-4">
+                  <p className="text-sm font-medium text-ink mb-3">Delete this meal from your log?</p>
+                  <div className="flex gap-2">
+                    <button onClick={() => setConfirmingDelete(false)} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-surface-muted text-ink-soft">Keep</button>
+                    <button onClick={deleteSelectedMeal} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-red-500 text-white">Delete</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 border-t border-surface-line pt-4 flex gap-2">
+                  {(!selectedMealForDetails.pending || selectedMealForDetails.items?.length > 0) && !selectedMealForDetails.photoQueued && (
+                    <button
+                      onClick={() => { setEditName(selectedMealForDetails.summary || ''); setEditScale(1); setEditingMeal(true); }}
+                      className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-surface-muted text-ink"
+                    >
+                      Edit
+                    </button>
+                  )}
+                  <button onClick={() => setConfirmingDelete(true)} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-red-50 text-red-500">
+                    Delete
+                  </button>
                 </div>
               )}
             </motion.div>

@@ -10,8 +10,17 @@ export function showToast(message: string) {
 }
 
 const label = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-const describe = (op: OfflineSyncState["ops"][number]) =>
-  op.kind === "meal_photo" ? "Photo meal" : op.meal?.name || "Meal";
+const describe = (op: OfflineSyncState["ops"][number]) => {
+  switch (op.kind) {
+    case "meal_photo": return "Photo meal";
+    case "meal_text": return op.text ? `“${op.text.slice(0, 40)}”` : "Described meal";
+    case "meal_barcode": return `Barcode ${op.barcode ?? ""}`.trim();
+    case "meal_delete": return "Delete a meal";
+    case "meal_edit": return "Meal change";
+    case "fridge_photo": return "Fridge photo";
+    default: return op.meal?.name || "Meal";
+  }
+};
 
 export default function OfflineStatusBar({ sync }: { sync: OfflineSyncState }) {
   const { pending, failed, online, syncing, justSynced } = sync;

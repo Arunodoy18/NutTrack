@@ -137,10 +137,11 @@ async function putOp(op: OutboxOp) {
 }
 
 export async function enqueueOp(
-  input: Pick<OutboxOp, "userId" | "ownerId" | "kind" | "eatenAt" | "meal" | "image">
+  input: Pick<OutboxOp, "userId" | "ownerId" | "kind" | "eatenAt" | "meal" | "image" | "text" | "barcode" | "mealId" | "scale" | "newName" | "expectedCalories">
 ): Promise<OutboxOp> {
-  if (input.kind === "meal_photo") {
-    const photos = (await listOps(input.ownerId ?? input.userId)).filter((o) => o.kind === "meal_photo").length;
+  if (input.image) {
+    // Photos are the heavy items (~150 KB each): cap them to protect device storage.
+    const photos = (await listOps(input.ownerId ?? input.userId)).filter((o) => !!o.image).length;
     if (photos >= MAX_QUEUED_PHOTOS) {
       throw new Error(`You already have ${MAX_QUEUED_PHOTOS} photos waiting. Reconnect to sync them first.`);
     }

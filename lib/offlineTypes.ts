@@ -12,7 +12,14 @@ export interface ManualMeal {
   totalFiber: number;
 }
 
-export type OutboxKind = "meal_manual" | "meal_photo";
+export type OutboxKind =
+  | "meal_manual"
+  | "meal_photo"
+  | "meal_text" // typed description, AI estimates once online
+  | "meal_barcode" // scanned offline, looked up once online
+  | "meal_delete" // remove an already-saved meal
+  | "meal_edit" // rename / change portion of an already-saved meal
+  | "fridge_photo"; // recipes generated once online
 
 export interface OutboxOp {
   /** Client-generated id — also the idempotency key. */
@@ -32,12 +39,25 @@ export interface OutboxOp {
   meal?: ManualMeal;
   /** Compressed JPEG data URL for queued photo scans. */
   image?: string;
+  /** meal_text: what the person ate, in their own words. */
+  text?: string;
+  /** meal_barcode: EAN/UPC digits. */
+  barcode?: string;
+  /** meal_delete / meal_edit: the saved meal this applies to. */
+  mealId?: string;
+  /** meal_edit: portion multiplier (0.25–4) and/or new title. */
+  scale?: number;
+  newName?: string;
+  /** meal_edit precondition: the meal's calories when the edit was queued. Makes retries idempotent. */
+  expectedCalories?: number;
 }
 
 export type SyncStatus = "ok" | "duplicate" | "retry" | "invalid" | "wrong_user" | "unauthorized";
 export interface SyncResponse {
   status: SyncStatus;
   error?: string;
+  /** Payload for results the person needs to see (e.g. fridge recipes). */
+  result?: unknown;
 }
 
 /** Time-of-day default for a meal session. */

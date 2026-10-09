@@ -6,6 +6,10 @@ import GroceryListModal from '@/components/GroceryListModal';
 import { Camera, Refrigerator, Upload, RefreshCw, AlertTriangle, ChevronDown, ChevronUp, Sparkles, Utensils } from 'lucide-react';
 import { analyzeFridgeImageAction, addIngredientsToGroceryListAction } from "@/app/actions";
 import { compressImageFile } from "@/lib/imageCompress";
+import { enqueueOp } from "@/lib/offlineQueue";
+import { useOfflineSync, useOnline } from "@/lib/useOfflineSync";
+import OfflineStatusBar, { showToast } from "@/components/OfflineStatusBar";
+import { loadFridgeResult, clearFridgeResult } from "@/lib/fridgeResults";
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Recipe {
@@ -27,7 +31,11 @@ interface Recipe {
   ingredients_used: string[];
 }
 
-export default function FridgeClient() {
+export default function FridgeClient({ userId, accountUserId }: { userId: string; accountUserId: string }) {
+  const online = useOnline();
+  const offlineSync = useOfflineSync(accountUserId);
+  const [fromBackground, setFromBackground] = useState(false);
+  const waitingPhotos = offlineSync.pending.filter((o) => o.kind === "fridge_photo" && o.userId === userId).length;
   const [step, setStep] = useState<0 | 1 | 2>(0);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
@@ -53,6 +61,35 @@ export default function FridgeClient() {
       return () => clearInterval(interval);
     }
   }, [step, coachMessages.length]);
+
+  // Recipes generated in the background (photo taken offline) wait on the device until opened.
+  const showSavedResult = React.useCallback(() => {
+    const saved = loadFridgeResult(userId);
+    if (saved) {
+      setResult(saved.result as any);
+      setFromBackground(true);
+      setError(null);
+      setStep(2);
+    }
+  }, [userId]);
+  React.useEffect(() => {
+    showSavedResult();
+    window.addEventListener("nura:fridge-ready", showSavedResult);
+    return () => window.removeEventListener("nura:fridge-ready", showSavedResult);
+  }, [showSavedResult]);
+
+  const queueFridgePhoto = async () => {
+    if (!base64Image) return;
+    try {
+      await enqueueOp({ userId, ownerId: accountUserId, kind: "fridge_photo", eatenAt: Date.now(), image: base64Image });
+      showToast("Photo saved — recipes will be ready when you're back online");
+      setSelectedImage(null);
+      setBase64Image(null);
+    } catch (e: any) {
+      setError(e?.message || "Couldn't save the photo on this device.");
+      setStep(2);
+    }
+  };
 
   const handleAddGrocery = async (idx: number, ingredients: string[]) => {
     if (!ingredients || ingredients.length === 0) return;
@@ -118,6 +155,7 @@ export default function FridgeClient() {
 
   return (
     <div className="min-h-screen bg-surface text-ink font-sans pb-40">
+      <OfflineStatusBar sync={offlineSync} />
       <div className="pt-16 px-6 max-w-lg mx-auto space-y-8">
         
         {/* Header Section */}
@@ -181,6 +219,11 @@ export default function FridgeClient() {
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
           
           {/* STEP 0: Upload */}
+          {step === 0 && waitingPhotos > 0 && (
+            <div className="mb-4 rounded-2xl bg-sky-50 border border-sky-200 text-sky-800 px-4 py-3 text-sm font-medium">
+              {waitingPhotos === 1 ? "1 fridge photo is" : `${waitingPhotos} fridge photos are`} waiting. Recipes will appear here as soon as you&apos;re back online.
+            </div>
+          )}
           {step === 0 && (
             <div className="space-y-6 max-w-2xl mx-auto py-4">
               {!selectedImage ? (
@@ -231,11 +274,12 @@ export default function FridgeClient() {
                     <p className="text-xs text-ink-soft">Ready to raid your fridge.</p>
                   </div>
                   <button
-                    onClick={handleStartAnalysis}
-                    className="px-8 py-4 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-brand-600/30 flex items-center gap-2 w-full md:w-auto justify-center text-lg"
+                    onClick={online ? handleStartAnalysis : queueFridgePhoto}
+                    disabled={!base64Image}
+                    className="px-8 py-4 bg-brand-600 hover:bg-brand-500 disabled:opacity-60 text-white font-bold rounded-2xl transition-all shadow-lg shadow-brand-600/30 flex items-center gap-2 w-full md:w-auto justify-center text-lg"
                   >
                     <Sparkles className="w-5 h-5" />
-                    Generate Recipes
+                    {online ? "Generate Recipes" : "Save for when I'm online"}
                   </button>
                 </motion.div>
               )}
@@ -288,6 +332,17 @@ export default function FridgeClient() {
                 </div>
               ) : result ? (
                 <div className="space-y-8">
+                  {fromBackground && (
+                    <div className="rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 text-sm font-medium flex items-center justify-between gap-3">
+                      <span>Made from the photo you saved while offline.</span>
+                      <button
+                        onClick={() => { clearFridgeResult(userId); setFromBackground(false); setResult(null); setSelectedImage(null); setBase64Image(null); setStep(0); }}
+                        className="shrink-0 font-bold underline"
+                      >
+                        Scan again
+                      </button>
+                    </div>
+                  )}
                   
                   {/* Ingredients Bar */}
                   <div className="bg-white border border-surface-line rounded-[24px] p-5 flex flex-col md:flex-row gap-4 items-center shadow-sm">

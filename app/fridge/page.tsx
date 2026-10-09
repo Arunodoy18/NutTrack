@@ -18,12 +18,13 @@ export default async function FridgePage() {
   }
 
   // Gate: force profile setup for incomplete profiles
+  const activeId = await getActiveProfileId(session.user.id);
   const currentUser = await db.query.users.findFirst({
-    where: eq(users.id, await getActiveProfileId(session.user.id))
+    where: eq(users.id, activeId)
   });
   if (!currentUser?.profileComplete) {
     redirect("/setup");
   }
 
-  return <FridgeClient />;
+  return <FridgeClient userId={activeId} accountUserId={session.user.id} />;
 }

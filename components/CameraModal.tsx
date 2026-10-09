@@ -64,6 +64,7 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
   const [activeModalMode, setActiveModalMode] = useState<'camera' | 'speak' | 'barcode' | 'manual'>('camera');
   const online = useOnline();
   const [networkFailed, setNetworkFailed] = useState(false);
+  const [manualMode, setManualMode] = useState<'numbers' | 'describe'>('numbers');
   const [uploadStep, setUploadStep] = useState<number>(0); 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
@@ -241,6 +242,20 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
   const handleBarcodeSuccess = async (barcode: string) => {
     // Only run if not already analyzing to prevent duplicate scans
     if (isAnalyzing || uploadStep !== 0) return;
+
+    // Offline: the code was read on the phone; save it and look the product up once back online.
+    if (typeof navigator !== 'undefined' && !navigator.onLine && localUserId) {
+      try {
+        await enqueueOp({ userId: localUserId, ownerId: accountUserId ?? localUserId, kind: 'meal_barcode', eatenAt: Date.now(), barcode });
+        showToast("Barcode saved — Nura will look it up and log it when you're online");
+        onClose();
+        setActiveModalMode('camera');
+      } catch (e: any) {
+        setAnalysisError(e?.message || "Couldn't save that barcode.");
+        setUploadStep(2);
+      }
+      return;
+    }
     
     setIsAnalyzing(true);
     setAnalysisError(null);
@@ -396,6 +411,7 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
                     <ManualMealForm
                       userId={localUserId}
                       accountUserId={accountUserId}
+                      defaultMode={manualMode}
                       onSaved={(name) => {
                         showToast(online ? `Logged "${name}"` : `Saved "${name}" — will sync when you're online`);
                         onClose();
@@ -403,14 +419,14 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
                       }}
                     />
                   )}
-                  {(activeModalMode === 'barcode' || activeModalMode === 'speak') && !online && (
+                  {activeModalMode === 'speak' && !online && (
                     <div className="absolute inset-0 z-20 bg-black/85 flex flex-col items-center justify-center text-center px-8 text-white">
-                      <p className="text-lg font-black mb-2">This needs a connection</p>
+                      <p className="text-lg font-black mb-2">Voice needs a connection</p>
                       <p className="text-sm text-white/60 font-medium mb-5">
-                        {activeModalMode === 'barcode' ? 'Barcode lookups' : 'Voice logging'} use the internet. You can still take a photo or log a meal manually.
+                        Type what you ate instead — Nura&apos;s AI will work out the nutrition and log it as soon as you&apos;re back online.
                       </p>
-                      <button onClick={() => setActiveModalMode('manual')} className="px-6 py-3 rounded-full bg-white text-black font-bold text-sm">
-                        Log manually
+                      <button onClick={() => { setManualMode('describe'); setActiveModalMode('manual'); }} className="px-6 py-3 rounded-full bg-white text-black font-bold text-sm">
+                        Describe my meal
                       </button>
                     </div>
                   )}
