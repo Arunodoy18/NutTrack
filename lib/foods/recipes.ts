@@ -95,3 +95,31 @@ export function scaledIngredients(r: Recipe, servings: number) {
     return { foodId: i.food, name: food.name, grams: Math.round(i.grams * k * 10) / 10 };
   });
 }
+
+import type { MealItemInput, ManualMeal } from "@/lib/offlineTypes";
+
+/** A recipe (at `scale` servings) as a loggable meal: itemised foods whose totals are the sum of the lines. */
+export function mealFromRecipe(r: Recipe, scale: number, mealSession: ManualMeal["mealSession"]): ManualMeal {
+  const items: MealItemInput[] = r.ingredients.map((ing) => {
+    const food = getFood(ing.food)!;
+    const g = (ing.grams / r.servings) * scale;
+    const p = portionOf(food, g);
+    const grams = Math.round(g * 10) / 10;
+    return {
+      name: food.name.slice(0, 100), quantity: `${grams} g`,
+      calories: p.kcal, protein: p.protein, fat: p.fat, carbs: p.carbs, fiber: p.fiber,
+      sodium: p.sodium, iron: p.iron, calcium: p.calcium, vitaminC: p.vitaminC, potassium: p.potassium,
+    };
+  });
+  const sum = (k: keyof MealItemInput) => items.reduce((a, i) => a + ((i[k] as number) ?? 0), 0);
+  return {
+    name: scale === 1 ? r.name : `${r.name} (${scale}×)`.slice(0, 100),
+    mealSession,
+    items,
+    totalCalories: Math.round(sum("calories")),
+    totalProtein: Math.round(sum("protein")),
+    totalFat: Math.round(sum("fat")),
+    totalCarbs: Math.round(sum("carbs")),
+    totalFiber: Math.round(sum("fiber")),
+  };
+}

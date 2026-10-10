@@ -766,6 +766,20 @@ export default function Dashboard({
           onDiscardPending={(opId) => offlineSync.discard(opId)}
         />
 
+        {/* Discover: plan + recipes */}
+        <div className="grid grid-cols-2 gap-3">
+          <a href="/plan" className="rounded-[24px] bg-white border border-surface-line shadow-sm p-4 active:scale-[0.98] transition-transform">
+            <div className="text-2xl mb-1" aria-hidden>🗓️</div>
+            <div className="font-black text-ink leading-tight">Meal plan</div>
+            <div className="text-[11px] font-medium text-ink-soft">7 days, built for you</div>
+          </a>
+          <a href="/recipes" className="rounded-[24px] bg-white border border-surface-line shadow-sm p-4 active:scale-[0.98] transition-transform">
+            <div className="text-2xl mb-1" aria-hidden>🍳</div>
+            <div className="font-black text-ink leading-tight">Recipes</div>
+            <div className="text-[11px] font-medium text-ink-soft">Cook it, log it</div>
+          </a>
+        </div>
+
         {/* Today's Meals Header */}
         <div 
           className="flex justify-between items-center px-1 cursor-pointer hover:opacity-80 transition-opacity" 

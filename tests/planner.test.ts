@@ -176,3 +176,17 @@ test("fuzz: 400 random people × seeds — no plan EVER violates diet, allergy o
   // With many allergens at once some slots can legitimately be empty, but it must be the exception.
   assert.ok(emptySlots < 400 * 3 * 4 * 0.2, `too many empty slots: ${emptySlots}`);
 });
+
+import { mealFromRecipe } from "../lib/foods/recipes";
+
+test("a recipe becomes a loggable meal whose totals equal the sum of its lines, and portions scale", () => {
+  const r = getRecipe("dal_rice_thali")!;
+  const one = mealFromRecipe(r, 1, "Lunch");
+  const half = mealFromRecipe(r, 0.5, "Lunch");
+  assert.equal(one.items!.length, r.ingredients.length);
+  assert.equal(one.totalCalories, Math.round(one.items!.reduce((a, i) => a + i.calories, 0)));
+  assert.ok(Math.abs(one.totalCalories - r.perServing.kcal) <= 6, `${one.totalCalories} vs ${r.perServing.kcal}`);
+  assert.ok(Math.abs(half.totalCalories - one.totalCalories / 2) <= 6);
+  assert.ok(half.name.includes("0.5×"));
+  assert.equal(one.mealSession, "Lunch");
+});
