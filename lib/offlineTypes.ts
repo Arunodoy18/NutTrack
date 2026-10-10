@@ -2,7 +2,26 @@
 export const MEAL_SESSIONS = ["Breakfast", "Lunch", "Dinner", "Snack"] as const;
 export type MealSession = (typeof MEAL_SESSIONS)[number];
 
+/** One food inside a meal built from the food database or a recipe. */
+export interface MealItemInput {
+  name: string;
+  /** Free-text amount shown on the meal ("150 g", "1 katori (150 g)"). */
+  quantity: string;
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  fiber: number;
+  sodium?: number;
+  iron?: number;
+  calcium?: number;
+  vitaminC?: number;
+  potassium?: number;
+}
+
 export interface ManualMeal {
+  /** When present the meal is stored with these itemised foods (totals must match the sum). */
+  items?: MealItemInput[];
   name: string;
   mealSession: MealSession;
   totalCalories: number;

@@ -66,7 +66,7 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
   const [activeModalMode, setActiveModalMode] = useState<'camera' | 'speak' | 'barcode' | 'manual'>('camera');
   const online = useOnline();
   const [networkFailed, setNetworkFailed] = useState(false);
-  const [manualMode, setManualMode] = useState<'numbers' | 'describe'>('numbers');
+  const [manualMode, setManualMode] = useState<'search' | 'numbers' | 'describe'>('search');
   // The scanner reports the same code on every frame (10/s): act on the first one only.
   const barcodeLock = useRef(false);
   // Ignore misreads: a code needs a valid check digit and two consecutive sightings.
@@ -467,7 +467,7 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
                     {(['camera', 'barcode', 'speak', 'manual'] as const).map(mode => (
                       <button
                         key={mode}
-                        onClick={() => setActiveModalMode(mode)}
+                        onClick={() => { if (mode === 'manual') setManualMode('search'); setActiveModalMode(mode); }}
                         className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-full transition-all ${
                           activeModalMode === mode 
                             ? 'bg-white text-black shadow-md' 

@@ -2,6 +2,10 @@
 
 import React, { useState } from "react";
 import { Check, PenLine } from "lucide-react";
+import dynamic from "next/dynamic";
+
+// The food database is large; load it only when the Search tab is opened.
+const FoodLogger = dynamic(() => import("@/components/FoodLogger"), { ssr: false, loading: () => <p className="text-sm font-medium text-white/50">Loading foods…</p> });
 import { enqueueOp } from "@/lib/offlineQueue";
 import { MEAL_SESSIONS, guessMealSession, type MealSession } from "@/lib/offlineTypes";
 
@@ -12,7 +16,7 @@ interface Props {
   accountUserId?: string;
   /** Called after the meal is safely stored on this device. */
   onSaved: (name: string) => void;
-  defaultMode?: "numbers" | "describe";
+  defaultMode?: "search" | "numbers" | "describe";
 }
 
 const field =
@@ -22,8 +26,8 @@ const field =
  * Log a meal by typing it in. Works with no connection: the meal goes into the
  * on-device outbox (shows up instantly) and syncs automatically later.
  */
-export default function ManualMealForm({ userId, accountUserId, onSaved, defaultMode = "numbers" }: Props) {
-  const [mode, setMode] = useState<"numbers" | "describe">(defaultMode);
+export default function ManualMealForm({ userId, accountUserId, onSaved, defaultMode = "search" }: Props) {
+  const [mode, setMode] = useState<"search" | "numbers" | "describe">(defaultMode);
   const [description, setDescription] = useState("");
   const [name, setName] = useState("");
   const [calories, setCalories] = useState("");
@@ -97,7 +101,7 @@ export default function ManualMealForm({ userId, accountUserId, onSaved, default
       </div>
 
       <div className="flex p-1 bg-white/10 rounded-full mb-4" role="tablist">
-        {([["numbers", "I know the numbers"], ["describe", "Describe it"]] as const).map(([m, label]) => (
+        {([["search", "Search foods"], ["numbers", "I know the numbers"], ["describe", "Describe it"]] as const).map(([m, label]) => (
           <button
             key={m}
             type="button"
@@ -111,7 +115,9 @@ export default function ManualMealForm({ userId, accountUserId, onSaved, default
         ))}
       </div>
 
-      {mode === "describe" ? (
+      {mode === "search" ? (
+        <FoodLogger userId={userId} accountUserId={accountUserId} onSaved={onSaved} />
+      ) : mode === "describe" ? (
         <div className="space-y-3">
           <textarea
             className={`${field} min-h-[120px] resize-none`}

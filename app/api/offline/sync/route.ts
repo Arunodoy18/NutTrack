@@ -109,11 +109,42 @@ export async function POST(req: NextRequest) {
       };
       if (Object.values(totals).some(Number.isNaN)) return json({ status: "invalid", error: "Nutrition values must be numbers." }, 400);
       const sess = MEAL_SESSIONS.includes(m.mealSession) ? m.mealSession : guessMealSession(eatenAt);
+
+      // Itemised meal (built from the food database / a recipe): validate every line, and recompute the
+      // totals from the lines so a tampered client can't make the meal's total disagree with its contents.
+      let items: any[] | null = null;
+      if (Array.isArray(m.items) && m.items.length > 0) {
+        if (m.items.length > 30) return json({ status: "invalid", error: "Too many items in one meal." }, 400);
+        items = [];
+        for (const it of m.items) {
+          const nm = typeof it?.name === "string" ? it.name.trim().slice(0, 100) : "";
+          if (!nm) return json({ status: "invalid", error: "Every food needs a name." }, 400);
+          const line = {
+            name: nm,
+            estimatedQuantity: typeof it.quantity === "string" ? it.quantity.slice(0, 50) : "1 serving",
+            calories: num(it.calories, 5000), protein: num(it.protein, 500), fat: num(it.fat, 500), carbs: num(it.carbs, 500), fiber: num(it.fiber, 100),
+            sodium: num(it.sodium, 5000), iron: num(it.iron, 100), calcium: num(it.calcium, 5000), vitaminC: num(it.vitaminC, 2000), potassium: num(it.potassium, 5000),
+          };
+          if (Object.values(line).some((v) => typeof v === "number" && Number.isNaN(v))) return json({ status: "invalid", error: "Nutrition values must be numbers." }, 400);
+          items.push(line);
+        }
+        const sum = (k: string) => items!.reduce((a, i) => a + (i[k] ?? 0), 0);
+        totals.totalCalories = Math.min(20000, sum("calories"));
+        totals.totalProtein = Math.min(1000, sum("protein"));
+        totals.totalFat = Math.min(1000, sum("fat"));
+        totals.totalCarbs = Math.min(1000, sum("carbs"));
+        totals.totalFiber = Math.min(200, sum("fiber"));
+      }
       const result = await saveMealAction(
         userId,
         {
           summary: name, name, mealSession: sess, ...totals,
-          items: [{ name, calories: totals.totalCalories, protein: totals.totalProtein, fat: totals.totalFat, carbs: totals.totalCarbs, fiber: totals.totalFiber, estimatedQuantity: "1 serving" }],
+          totalSodium: items ? Math.min(10000, items.reduce((a, i) => a + i.sodium, 0)) : undefined,
+          totalIron: items ? Math.min(100, items.reduce((a, i) => a + i.iron, 0)) : undefined,
+          totalCalcium: items ? Math.min(5000, items.reduce((a, i) => a + i.calcium, 0)) : undefined,
+          totalVitaminC: items ? Math.min(2000, items.reduce((a, i) => a + i.vitaminC, 0)) : undefined,
+          totalPotassium: items ? Math.min(15000, items.reduce((a, i) => a + i.potassium, 0)) : undefined,
+          items: items ?? [{ name, calories: totals.totalCalories, protein: totals.totalProtein, fat: totals.totalFat, carbs: totals.totalCarbs, fiber: totals.totalFiber, estimatedQuantity: "1 serving" }],
         },
         true,
         { id, timestamp }
