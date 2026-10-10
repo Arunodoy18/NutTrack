@@ -7,6 +7,7 @@ import { compressImageFile, compressDataUrl } from '@/lib/imageCompress';
 import ManualMealForm from '@/components/ManualMealForm';
 import { showToast } from '@/components/OfflineStatusBar';
 import { enqueueOp } from '@/lib/offlineQueue';
+import { createStableReader } from '@/lib/barcode';
 import { useOnline } from '@/lib/useOfflineSync';
 import { Camera, Upload, X, Mic, MicOff, Barcode, Maximize, User, RefreshCw, AlertTriangle, Check, Sparkles } from 'lucide-react';
 import ComingSoon from "@/components/ComingSoon";
@@ -68,6 +69,9 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
   const [manualMode, setManualMode] = useState<'numbers' | 'describe'>('numbers');
   // The scanner reports the same code on every frame (10/s): act on the first one only.
   const barcodeLock = useRef(false);
+  // Ignore misreads: a code needs a valid check digit and two consecutive sightings.
+  const stableRead = useRef(createStableReader());
+  useEffect(() => { stableRead.current = createStableReader(); }, [isOpen, activeModalMode]);
   const [uploadStep, setUploadStep] = useState<number>(0); 
   useEffect(() => { barcodeLock.current = false; }, [activeModalMode, isOpen, uploadStep]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -246,6 +250,7 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
   const handleBarcodeSuccess = async (barcode: string) => {
     // Only run if not already analyzing to prevent duplicate scans
     if (isAnalyzing || uploadStep !== 0) return;
+    if (!stableRead.current(barcode)) return;
     if (barcodeLock.current) return;
     barcodeLock.current = true;
 

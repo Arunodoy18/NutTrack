@@ -10,6 +10,7 @@ import { canAccessProfile, ownerOf, getActiveProfileId } from "@/lib/access";
 import { getUserTz } from "@/lib/tzServer";
 import { startOfDayInTz, startOfDayDaysAgo, dateKeyInTz, weekdayInTz } from "@/lib/tz";
 import { dailyWaterGoalMl } from "@/lib/hydration";
+import { mapOffProduct } from "@/lib/openfoodfacts";
 import { eq, and, gte, lte } from "drizzle-orm";
 import OpenAI from "openai";
 import { GoogleGenAI } from "@google/genai";
@@ -1048,47 +1049,31 @@ export async function verifyManualPaymentAction(utr: string) {
 
 export async function lookupBarcodeAction(barcode: string) {
   try {
-    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
-    const data = await res.json();
+    const code = String(barcode ?? "").trim();
+    if (!/^\d{8,14}$/.test(code)) return { success: false, error: "That doesn't look like a product barcode." };
 
-    if (data.status !== 1) {
-      return { success: false, error: "Product not found in OpenFoodFacts database." };
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    let data: any;
+    try {
+      const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${code}.json`, {
+        signal: ctrl.signal,
+        headers: { "User-Agent": "Nura/1.0 (nutrition tracker; contact: support@nura.app)" },
+      });
+      data = await res.json();
+    } finally {
+      clearTimeout(timer);
     }
 
-    const p = data.product;
-    const name = p.product_name || "Unknown Product";
-    const nutriments = p.nutriments || {};
-    
-    // We try to get per 100g, or serving, default to 0
-    const calories = Math.round(nutriments['energy-kcal_100g'] || nutriments['energy-kcal'] || 0);
-    const protein = Math.round(nutriments['proteins_100g'] || nutriments['proteins'] || 0);
-    const fat = Math.round(nutriments['fat_100g'] || nutriments['fat'] || 0);
-    const carbs = Math.round(nutriments['carbohydrates_100g'] || nutriments['carbohydrates'] || 0);
-    const fiber = Math.round(nutriments['fiber_100g'] || nutriments['fiber'] || 0);
-
-    const analysis = {
-      name,
-      totalCalories: calories,
-      totalProtein: protein,
-      totalFat: fat,
-      totalCarbs: carbs,
-      totalFiber: fiber,
-      items: [
-        {
-          name,
-          calories,
-          protein,
-          fat,
-          carbs,
-          fiber,
-        }
-      ]
-    };
-
+    if (data?.status !== 1 || !data.product) {
+      return { success: false, error: "Product not found in OpenFoodFacts database." };
+    }
+    const analysis = mapOffProduct(data.product);
+    if (!analysis) return { success: false, error: "Product not found in OpenFoodFacts database." };
     return { success: true, analysis };
   } catch (err: any) {
     console.error("Barcode lookup error:", err);
-    return { success: false, error: err.message || "Failed to lookup barcode" };
+    return { success: false, error: err?.name === "AbortError" ? "The food database is slow right now. Try again." : err.message || "Failed to lookup barcode" };
   }
 }
 

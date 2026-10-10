@@ -53,7 +53,7 @@ export default function ProfileSwitcher({ profiles, activeId }: { profiles: Prof
 
       {open && (
         <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)}>
-          <div className="w-full sm:max-w-sm bg-white rounded-t-[32px] sm:rounded-[32px] p-5 pb-8 shadow-2xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Choose who to track">
+          <div className="w-full sm:max-w-sm max-h-[88vh] overflow-y-auto bg-white rounded-t-[32px] sm:rounded-[32px] p-5 pb-8 shadow-2xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Choose who to track">
             <h2 className="font-display text-2xl font-black tracking-tight text-ink mb-1 px-1">Who are you tracking?</h2>
             <p className="text-xs font-medium text-ink-soft mb-4 px-1">Each person gets their own targets, meals and insights.</p>
 
