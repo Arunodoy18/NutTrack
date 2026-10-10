@@ -27,11 +27,21 @@ export async function GET(req: NextRequest) {
 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 7000);
+  const headers = { "User-Agent": "Nura/1.0 (nutrition tracker; contact: support@nura.app)" };
   try {
-    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=12&fields=code,product_name,generic_name,brands,serving_size,serving_quantity,nutriments&sort_by=unique_scans_n`;
-    const res = await fetch(url, { signal: ctrl.signal, headers: { "User-Agent": "Nura/1.0 (nutrition tracker; contact: support@nura.app)" } });
-    if (!res.ok) throw new Error(`OFF ${res.status}`);
-    const json = await res.json();
+    // Primary: OpenFoodFacts' search service built for apps. Fallback: the older CGI search.
+    let products: any[] = [];
+    try {
+      const res = await fetch(`https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&page_size=24&fields=code,product_name,generic_name,brands,serving_size,serving_quantity,nutriments`, { signal: ctrl.signal, headers });
+      if (!res.ok) throw new Error(`OFF search ${res.status}`);
+      const j = await res.json();
+      products = (j.hits ?? []).map((h: any) => ({ ...h, brands: Array.isArray(h.brands) ? h.brands.join(", ") : h.brands }));
+    } catch {
+      const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=24&fields=code,product_name,generic_name,brands,serving_size,serving_quantity,nutriments`, { signal: ctrl.signal, headers });
+      if (!res.ok) throw new Error(`OFF cgi ${res.status}`);
+      products = (await res.json()).products ?? [];
+    }
+    const json = { products };
     const results = (json.products ?? [])
       .map((p: any) => ({ p, mapped: mapOffProduct(p) }))
       .filter((x: any) => x.mapped && x.mapped.totalCalories > 0)
