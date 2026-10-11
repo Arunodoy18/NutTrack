@@ -60,19 +60,26 @@ public class MainActivity extends Activity {
         web = new WebView(this);
         web.setBackgroundColor(Color.WHITE);
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
+        // Brand-coloured strip behind the status bar (edge-to-edge draws the app under it).
+        final View statusBg = new View(this);
+        statusBg.setBackgroundColor(Color.parseColor("#FC4C02"));
+        root.addView(statusBg, new FrameLayout.LayoutParams(-1, 0, android.view.Gravity.TOP));
         setContentView(root);
         // Android 15+ draws edge-to-edge: pad for the status bar, nav bar and keyboard ourselves.
         root.setOnApplyWindowInsetsListener((v, insets) -> {
+            int l, t, r, bt;
             if (Build.VERSION.SDK_INT >= 30) {
                 android.graphics.Insets i = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.ime() | WindowInsets.Type.displayCutout());
-                v.setPadding(i.left, i.top, i.right, i.bottom);
+                l = i.left; t = i.top; r = i.right; bt = i.bottom;
             } else {
-                v.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(), insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
+                l = insets.getSystemWindowInsetLeft(); t = insets.getSystemWindowInsetTop(); r = insets.getSystemWindowInsetRight(); bt = insets.getSystemWindowInsetBottom();
             }
+            FrameLayout.LayoutParams wp = (FrameLayout.LayoutParams) web.getLayoutParams();
+            wp.setMargins(l, t, r, bt); web.setLayoutParams(wp);
+            FrameLayout.LayoutParams sp = (FrameLayout.LayoutParams) statusBg.getLayoutParams();
+            sp.height = t; statusBg.setLayoutParams(sp);
             return WindowInsets.CONSUMED;
         });
-        root.setBackgroundColor(Color.parseColor("#FC4C02")); // status-bar area matches the brand; web content paints white below
-        web.setBackgroundColor(Color.WHITE);
         configure();
         handleIntent(getIntent(), true);
     }
