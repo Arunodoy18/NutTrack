@@ -4,3 +4,5 @@
 -dontwarn com.google.errorprone.annotations.**
 -keep class tech.buildc3.nura.HealthSyncWorker { *; }
 -keep class tech.buildc3.nura.ReminderWorker { *; }
+-keepclassmembers class tech.buildc3.nura.NativeBridge { @android.webkit.JavascriptInterface <methods>; }
+-keepattributes JavascriptInterface

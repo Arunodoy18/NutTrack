@@ -26,7 +26,7 @@ export default function DownloadPage() {
         <a href={`/${r.file}`} download className="mt-8 w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-brand text-white font-bold py-4 text-lg shadow-lg shadow-brand/30 active:scale-[0.99]">
           <Download className="w-5 h-5" /> Download for Android
         </a>
-        <p className="mt-2 text-xs text-ink-soft">{r.version ? `Version ${r.version} · ${r.sizeMb} MB · ` : ""}Android 8 or newer</p>
+        <p className="mt-2 text-xs text-ink-soft">{r.version ? `Version ${r.version} · ${r.sizeMb} MB · ` : ""}Android 10 or newer</p>
 
         <ul className="mt-8 w-full grid gap-3 text-left">
           {[[ScanLine, "Scan food and barcodes", "Photo, barcode or search; works offline too."], [Users, "Whole-family profiles", "Child-safe targets for every age."], [Droplets, "Water, weight and reminders", "Gentle nudges that never nag."]].map(([Icon, t, d]: any) => (
