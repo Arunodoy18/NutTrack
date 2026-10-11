@@ -6,6 +6,9 @@ import { useState, useEffect, useCallback } from 'react';
 declare global {
   interface Window {
     SpeechRecognition: any;
+    /** Present only inside the installed Android app (its web view has no built-in speech recognition). */
+    NuraNative?: { startSpeech: () => void; stopSpeech: () => void };
+    __nuraSpeech?: (e: { type: 'result' | 'end' | 'error'; text?: string; message?: string }) => void;
     webkitSpeechRecognition: any;
   }
 }
@@ -19,6 +22,16 @@ export function useSpeech() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const native = window.NuraNative;
+      if (!SpeechRecognition && native?.startSpeech) {
+        window.__nuraSpeech = (e) => {
+          if (e.type === 'result') setTranscript(e.text ?? '');
+          else if (e.type === 'error') { setError(e.message ?? 'Speech recognition failed'); setIsListening(false); }
+          else setIsListening(false);
+        };
+        setRecognition({ start: () => native.startSpeech(), stop: () => native.stopSpeech() });
+        return () => { window.__nuraSpeech = undefined; };
+      }
       if (SpeechRecognition) {
         const rec = new SpeechRecognition();
         rec.continuous = true;
