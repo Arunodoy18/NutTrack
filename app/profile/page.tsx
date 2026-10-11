@@ -250,12 +250,10 @@ export default async function ProfilePage() {
             <span className="text-sm font-medium text-ink">Activity &amp; connected apps</span>
             <ChevronRight className="w-5 h-5 text-ink-soft" />
           </Link>
-          <ComingSoon>
-            <div className="flex justify-between items-center p-5 cursor-pointer hover:bg-surface-muted transition-colors">
-              <span className="text-sm font-medium text-ink">Units &amp; measurements</span>
-              <ChevronRight className="w-5 h-5 text-ink-soft" />
-            </div>
-          </ComingSoon>
+          <Link href="/units" className="flex justify-between items-center p-5 hover:bg-surface-muted transition-colors">
+            <span className="text-sm font-medium text-ink">Units &amp; measurements</span>
+            <ChevronRight className="w-5 h-5 text-ink-soft" />
+          </Link>
         </div>
 
         <WeightTracker

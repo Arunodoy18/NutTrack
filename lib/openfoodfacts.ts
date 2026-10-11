@@ -54,3 +54,19 @@ export function mapOffProduct(p: OffProduct): BarcodeAnalysis | null {
     items: [{ name, calories, protein, fat, carbs, fiber, estimatedQuantity }],
   };
 }
+
+/** Scale a scanned product by a portion multiplier (e.g. 0.5 = half a serving). Quantities are scaled too. */
+export function scaleAnalysis(a: BarcodeAnalysis, f: number): BarcodeAnalysis {
+  const k = Math.min(10, Math.max(0.1, f));
+  const r = (x: number) => Math.round(x * k);
+  const qty = (q: string) => {
+    const m = /^\s*(\d+(?:\.\d+)?)\s*(g|ml|gm|grams?)\b(.*)$/i.exec(q || "");
+    if (m) return `${Math.round(Number(m[1]) * k * 10) / 10} ${m[2].toLowerCase().startsWith("g") ? "g" : "ml"}${m[3]}`.trim();
+    return k === 1 ? q : `${k}× ${q || "serving"}`;
+  };
+  return {
+    ...a,
+    totalCalories: r(a.totalCalories), totalProtein: r(a.totalProtein), totalFat: r(a.totalFat), totalCarbs: r(a.totalCarbs), totalFiber: r(a.totalFiber),
+    items: a.items.map((i) => ({ ...i, calories: r(i.calories), protein: r(i.protein), fat: r(i.fat), carbs: r(i.carbs), fiber: r(i.fiber), estimatedQuantity: qty(i.estimatedQuantity) })),
+  };
+}

@@ -11,7 +11,7 @@
   "navigationDividerColor": "#FFFFFF",
   "navigationDividerColorDark": "#FFFFFF",
   "backgroundColor": "#FFFFFF",
-  "enableNotifications": false,
+  "enableNotifications": true,
   "startUrl": "/launch",
   "iconUrl": "https://dietbuddy.buildc3.tech/icon.png",
   "maskableIconUrl": "https://dietbuddy.buildc3.tech/icon-maskable.png",

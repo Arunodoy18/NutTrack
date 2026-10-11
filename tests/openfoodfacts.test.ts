@@ -29,3 +29,13 @@ test("junk values become zero, absurd serving sizes fall back to 100 g, brand is
   assert.equal(a.items[0].estimatedQuantity, "100 g");
   assert.equal(a.name, "Amul Butter");
 });
+
+import { scaleAnalysis } from "../lib/openfoodfacts";
+test("scaleAnalysis scales nutrients and gram quantities, keeps 1x identical", () => {
+  const a = { name: "Biscuit", totalCalories: 100, totalProtein: 2, totalFat: 4, totalCarbs: 14, totalFiber: 1, items: [{ name: "Biscuit", calories: 100, protein: 2, fat: 4, carbs: 14, fiber: 1, estimatedQuantity: "30 g" }] };
+  assert.deepEqual(scaleAnalysis(a, 1), a);
+  const h = scaleAnalysis(a, 0.5);
+  assert.equal(h.totalCalories, 50); assert.equal(h.items[0].calories, 50); assert.equal(h.items[0].estimatedQuantity, "15 g");
+  assert.equal(scaleAnalysis({ ...a, items: [{ ...a.items[0], estimatedQuantity: "1 bar" }] }, 2).items[0].estimatedQuantity, "2× 1 bar");
+  assert.equal(scaleAnalysis(a, 99).totalCalories, 1000, "clamped to 10x");
+});

@@ -38,7 +38,15 @@ export default function BarcodeScanner({ onScanSuccess, onScanError }: BarcodeSc
     scanner
       .start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 260, height: 140 } },
+        {
+          fps: 10,
+          // html5-qrcode only decodes inside this box, so make it wide: real EAN-13 packs are ~4:1 and
+          // were being cropped by the old fixed 260x140 box. Scales with the viewfinder.
+          qrbox: (vw: number, vh: number) => {
+            const width = Math.floor(Math.min(vw, 560) * 0.92);
+            return { width, height: Math.max(110, Math.min(Math.floor(vh * 0.5), Math.floor(width * 0.5))) };
+          },
+        },
         (decodedText) => {
           if (active) onSuccessRef.current(decodedText);
         },

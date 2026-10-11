@@ -1,5 +1,6 @@
 "use client";
 
+import { useWeightUnit, showWeight, showWeightDelta, toKg } from "@/lib/units";
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Scale, X, TrendingDown, TrendingUp, Minus } from "lucide-react";
@@ -59,17 +60,19 @@ export default function WeightTracker({ userId, accountUserId, logs, profileWeig
     return [...saved, ...queued].sort((a, b) => b.at - a.at);
   }, [logs, mine, removed]);
 
+  const unit = useWeightUnit();
   const current = points[0]?.kg ?? profileWeightKg;
   const d7 = changeOver(points, 7), d30 = changeOver(points, 30);
-  const kg = Number(value);
-  const valid = Number.isFinite(kg) && kg >= 8 && kg <= 400;
+  const typed = Number(value);
+  const kg = toKg(typed, unit);
+  const valid = value.trim() !== "" && Number.isFinite(typed) && kg >= 8 && kg <= 400;
 
   const save = async () => {
     if (!valid || busy) return;
     setBusy(true);
     try {
-      await enqueueOp({ userId, ownerId: accountUserId, kind: "weight_log", eatenAt: Date.now(), weightKg: Math.round(kg * 10) / 10 });
-      showToast(`Logged ${Math.round(kg * 10) / 10} kg`);
+      await enqueueOp({ userId, ownerId: accountUserId, kind: "weight_log", eatenAt: Date.now(), weightKg: kg });
+      showToast(`Logged ${showWeight(kg, unit)} ${unit}`);
       setValue("");
     } catch (e: any) {
       showToast(e?.message || "Couldn't save that weight");
@@ -92,7 +95,7 @@ export default function WeightTracker({ userId, accountUserId, logs, profileWeig
       <div className="text-[9px] font-mono font-bold tracking-[0.15em] text-ink-soft uppercase mb-1">{label}</div>
       <div className="flex items-center justify-center gap-1 font-black text-ink">
         {v === null ? <Minus className="w-4 h-4 text-ink-faint" /> : v < 0 ? <TrendingDown className="w-4 h-4 text-emerald-500" /> : v > 0 ? <TrendingUp className="w-4 h-4 text-amber-500" /> : <Minus className="w-4 h-4" />}
-        <span>{v === null ? "—" : `${v > 0 ? "+" : ""}${v} kg`}</span>
+        <span>{v === null ? "—" : `${v > 0 ? "+" : ""}${showWeightDelta(v, unit)} ${unit}`}</span>
       </div>
     </div>
   );
@@ -103,7 +106,7 @@ export default function WeightTracker({ userId, accountUserId, logs, profileWeig
         <div className="w-11 h-11 rounded-2xl bg-violet-50 text-violet-500 flex items-center justify-center"><Scale className="w-6 h-6" /></div>
         <div className="flex-1">
           <h3 className="font-display text-lg font-black text-ink leading-tight">{isChild ? `${name}'s growth` : "Weight"}</h3>
-          <p className="text-xs font-medium text-ink-soft">{current != null ? <>Now <b className="text-ink">{current} kg</b></> : "No weigh-ins yet"}</p>
+          <p className="text-xs font-medium text-ink-soft">{current != null ? <>Now <b className="text-ink">{showWeight(current, unit)} {unit}</b></> : "No weigh-ins yet"}</p>
         </div>
       </div>
 
@@ -131,12 +134,12 @@ export default function WeightTracker({ userId, accountUserId, logs, profileWeig
       <div className="flex gap-2 mb-1">
         <div className="relative flex-1">
           <input
-            type="number" inputMode="decimal" step="0.1" min={8} max={400} value={value}
+            type="number" inputMode="decimal" step="0.1" min={unit === "lb" ? 18 : 8} max={unit === "lb" ? 880 : 400} value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder={current != null ? `e.g. ${current}` : "e.g. 62.5"} aria-label="Today's weight in kilograms"
+            placeholder={current != null ? `e.g. ${showWeight(current, unit)}` : unit === "lb" ? "e.g. 138" : "e.g. 62.5"} aria-label={`Today's weight in ${unit === "lb" ? "pounds" : "kilograms"}`}
             className="w-full bg-surface-muted rounded-[16px] px-4 py-3 pr-10 text-sm font-bold text-ink outline-none focus:ring-2 focus:ring-brand"
           />
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">kg</span>
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-soft">{unit}</span>
         </div>
         <button onClick={save} disabled={!valid || busy} className="px-5 rounded-[16px] bg-brand text-white font-bold text-sm disabled:opacity-40">
           Log
@@ -147,10 +150,10 @@ export default function WeightTracker({ userId, accountUserId, logs, profileWeig
         <ul className="mt-3 space-y-1.5">
           {points.slice(0, 5).map((p) => (
             <li key={p.id} className="flex items-center justify-between text-sm px-1">
-              <span className="font-bold text-ink">{p.kg} kg{p.pending && <span className="ml-2 text-[10px] font-bold text-sky-600">saved on this phone</span>}</span>
+              <span className="font-bold text-ink">{showWeight(p.kg, unit)} {unit}{p.pending && <span className="ml-2 text-[10px] font-bold text-sky-600">saved on this phone</span>}</span>
               <span className="flex items-center gap-2 text-xs font-medium text-ink-soft">
                 {new Date(p.at).toLocaleDateString([], { day: "numeric", month: "short" })}
-                <button onClick={() => remove(p)} className="p-1 rounded-full text-ink-faint hover:text-red-500" aria-label={`Remove ${p.kg} kg entry`}><X className="w-3.5 h-3.5" /></button>
+                <button onClick={() => remove(p)} className="p-1 rounded-full text-ink-faint hover:text-red-500" aria-label={`Remove ${showWeight(p.kg, unit)} ${unit} entry`}><X className="w-3.5 h-3.5" /></button>
               </span>
             </li>
           ))}

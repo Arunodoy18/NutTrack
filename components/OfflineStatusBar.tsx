@@ -18,6 +18,7 @@ const describe = (op: OfflineSyncState["ops"][number]) => {
     case "meal_delete": return "Delete a meal";
     case "meal_edit": return "Meal change";
     case "fridge_photo": return "Fridge photo";
+    case "grocery_add": return `Grocery list (${op.groceryItems?.length ?? 0} items)`;
     default: return op.meal?.name || "Meal";
   }
 };

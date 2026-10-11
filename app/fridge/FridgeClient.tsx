@@ -47,16 +47,28 @@ export default function FridgeClient({ userId, accountUserId }: { userId: string
   const [addingGrocery, setAddingGrocery] = useState<number | null>(null);
   const [fCoachIdx, setFCoachIdx] = useState(0);
 
-  const coachMessages = [
-    "Your protein is low today. I've flagged a few high-protein options for you.",
-    "Remember to watch your sodium levels!",
-    "Looking for a quick snack? Check the vegetarian bowl."
-  ];
+  // Tips come from the recipes actually generated for this fridge — never canned text.
+  const coachMessages = React.useMemo(() => {
+    const rs = (result?.recipes ?? []).filter((r) => r && typeof r.name === "string");
+    const out: string[] = [];
+    const top = (f: (r: Recipe) => number, dir: 1 | -1) => rs.length > 1 ? [...rs].sort((x, y) => dir * (f(x) - f(y)))[0] : null;
+    const hp = top((r) => r.protein || 0, -1);
+    if (hp && hp.protein > 0) out.push(`Most protein: ${hp.name} (${Math.round(hp.protein)} g).`);
+    const lc = top((r) => r.calories || 0, 1);
+    if (lc && lc.calories > 0 && lc !== hp) out.push(`Lightest option: ${lc.name} (${Math.round(lc.calories)} kcal).`);
+    const hf = top((r) => r.fiber || 0, -1);
+    if (hf && hf.fiber > 0) out.push(`Most fibre to keep you full: ${hf.name} (${Math.round(hf.fiber)} g).`);
+    const low = rs.filter((r) => !r.sodiumHigh);
+    if (rs.length > 1 && low.length < rs.length && low.length > 0) out.push(`Go easy on salt: ${low[0].name} is a lower-sodium pick.`);
+    if (out.length === 0) out.push("Tap a recipe to see the steps and add what's missing to your grocery list.");
+    return out;
+  }, [result]);
+
 
   React.useEffect(() => {
     if (step === 2) {
       const interval = setInterval(() => {
-        setFCoachIdx((prev) => (prev + 1) % coachMessages.length);
+        setFCoachIdx((prev) => (prev + 1) % Math.max(1, coachMessages.length));
       }, 4200);
       return () => clearInterval(interval);
     }
@@ -382,7 +394,7 @@ export default function FridgeClient({ userId, accountUserId }: { userId: string
                             transition={{ duration: 0.3 }}
                             className="text-sm font-medium text-ink-soft leading-tight"
                           >
-                            {coachMessages[fCoachIdx]}
+                            {coachMessages[fCoachIdx % coachMessages.length]}
                           </motion.div>
                         </AnimatePresence>
                       </div>

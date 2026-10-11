@@ -42,7 +42,8 @@ export type OutboxKind =
   | "water_add" // a drink
   | "water_delete" // undo a drink
   | "weight_log" // a weigh-in
-  | "weight_delete"; // remove a weigh-in
+  | "weight_delete" // remove a weigh-in
+  | "grocery_add"; // ingredients to put on the account's grocery list
 
 export interface OutboxOp {
   /** Client-generated id — also the idempotency key. */
@@ -71,6 +72,8 @@ export interface OutboxOp {
   /** meal_edit: portion multiplier (0.25–4) and/or new title. */
   scale?: number;
   newName?: string;
+  /** grocery_add: ingredient lines such as "Paneer (200 g)". */
+  groceryItems?: string[];
   /** water_add: millilitres. */
   amountMl?: number;
   /** weight_log: kilograms (one decimal). */

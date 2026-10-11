@@ -7,7 +7,7 @@ import { RECIPES, filterRecipes, mealFromRecipe, scaledIngredients, type MealTyp
 import type { Allergen, Diet } from "@/lib/foods";
 import { enqueueOp } from "@/lib/offlineQueue";
 import { showToast } from "@/components/OfflineStatusBar";
-import { addIngredientsToGroceryListAction } from "@/app/actions";
+import { addToGrocery, groceryToast } from "@/lib/groceryClient";
 import { guessMealSession, type MealSession } from "@/lib/offlineTypes";
 
 interface Props { userId: string; accountUserId: string; name: string; age: number; eats: "any" | Diet; avoid: Allergen[] }
@@ -107,10 +107,9 @@ function RecipeSheet({ recipe: r, userId, accountUserId, onClose }: { recipe: Re
     setBusy(false);
   };
   const toGrocery = async () => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) { showToast("The grocery list needs a connection"); return; }
     setBusy(true);
-    const res = await addIngredientsToGroceryListAction(ings.map((i) => `${i.name} (${Math.round(i.grams)} g)`));
-    showToast(res.success ? ((res.added ?? 0) > 0 ? `Added ${res.added} items to your grocery list` : "Already on your grocery list") : "Couldn't update the grocery list");
+    try { showToast(groceryToast(await addToGrocery(userId, accountUserId, ings.map((i) => `${i.name} (${Math.round(i.grams)} g)`)))); }
+    catch (e: any) { showToast(e?.message || "Couldn't update the grocery list"); }
     setBusy(false);
   };
 

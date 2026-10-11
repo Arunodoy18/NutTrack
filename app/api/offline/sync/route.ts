@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth/next";
 import { and, eq } from "drizzle-orm";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { meals, mealItems, users, waterLogs, weightLogs } from "@/lib/db/schema";
+import { meals, mealItems, users, waterLogs, weightLogs, groceryList } from "@/lib/db/schema";
 import { and as andOp, desc, gte, sql } from "drizzle-orm";
 import { MIN_DRINK_ML, MAX_DRINK_ML, MAX_DAILY_WATER_ML } from "@/lib/hydration";
 import { applyWeightToProfile } from "@/lib/profileService";
@@ -242,6 +242,17 @@ export async function POST(req: NextRequest) {
         }
       }
       return json({ status: "ok" });
+    }
+
+    /* ── Grocery list (belongs to the account; names already on the list are skipped, so retries are safe) ── */
+    if (kind === "grocery_add") {
+      const raw = Array.isArray(op.groceryItems) ? op.groceryItems : [];
+      const wanted = Array.from(new Set(raw.filter((x: unknown) => typeof x === "string").map((x: string) => x.trim().slice(0, 120)).filter(Boolean))).slice(0, 80) as string[];
+      if (wanted.length === 0) return json({ status: "invalid", error: "Nothing to add." }, 400);
+      const have = new Set((await db.select({ n: groceryList.ingredientName }).from(groceryList).where(eq(groceryList.userId, accountId))).map((r) => r.n.toLowerCase()));
+      const fresh = wanted.filter((w) => !have.has(w.toLowerCase()));
+      if (fresh.length) await db.insert(groceryList).values(fresh.map((ingredientName) => ({ userId: accountId, ingredientName, isPurchased: false })));
+      return json({ status: fresh.length ? "ok" : "duplicate" });
     }
 
     /* ── Water ── */

@@ -8,7 +8,7 @@ import { generatePlan, groceryForPlan, type PlanDay, type PlannedMeal } from "@/
 import type { Allergen, Diet } from "@/lib/foods";
 import { enqueueOp } from "@/lib/offlineQueue";
 import { showToast } from "@/components/OfflineStatusBar";
-import { addIngredientsToGroceryListAction } from "@/app/actions";
+import { addToGrocery, groceryToast } from "@/lib/groceryClient";
 import type { MealSession } from "@/lib/offlineTypes";
 
 interface Props { userId: string; accountUserId: string; name: string; age: number; calories: number; protein: number; eats: "any" | Diet; avoid: Allergen[] }
@@ -125,7 +125,7 @@ export default function PlanClient({ userId, accountUserId, name, age, calories,
           onPick={(id) => { setSaved((s) => ({ ...s, pinned: { ...s.pinned, [`${swap.day}:${swap.slot}`]: id }, logged: { ...s.logged, [`${swap.day}:${swap.slot}`]: undefined as never } })); setSwap(null); }}
           onClose={() => setSwap(null)} />
       )}
-      {shopping && <ShoppingSheet plan={plan} onClose={() => setShopping(false)} />}
+      {shopping && <ShoppingSheet plan={plan} userId={userId} accountUserId={accountUserId} onClose={() => setShopping(false)} />}
     </div>
   );
 }
@@ -147,15 +147,14 @@ function SwapSheet({ slot, current, eats, avoid, age, onPick, onClose }: { slot:
   );
 }
 
-function ShoppingSheet({ plan, onClose }: { plan: PlanDay[]; onClose: () => void }) {
+function ShoppingSheet({ plan, userId, accountUserId, onClose }: { plan: PlanDay[]; userId: string; accountUserId: string; onClose: () => void }) {
   const list = useMemo(() => groceryForPlan(plan), [plan]);
   const groups = useMemo(() => { const g = new Map<string, typeof list>(); for (const i of list) g.set(i.category, [...(g.get(i.category) ?? []), i]); return Array.from(g.entries()); }, [list]);
   const [busy, setBusy] = useState(false);
   const addAll = async () => {
-    if (typeof navigator !== "undefined" && !navigator.onLine) { showToast("The grocery list needs a connection"); return; }
     setBusy(true);
-    const res = await addIngredientsToGroceryListAction(list.map((i) => `${i.name} (${i.grams} g)`));
-    showToast(res.success ? ((res.added ?? 0) > 0 ? `Added ${res.added} items to your grocery list` : "Already on your grocery list") : "Couldn't update the grocery list");
+    try { showToast(groceryToast(await addToGrocery(userId, accountUserId, list.map((i) => `${i.name} (${i.grams} g)`)))); }
+    catch (e: any) { showToast(e?.message || "Couldn't update the grocery list"); }
     setBusy(false);
   };
   return (

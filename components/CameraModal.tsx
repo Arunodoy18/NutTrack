@@ -8,6 +8,7 @@ import ManualMealForm from '@/components/ManualMealForm';
 import { showToast } from '@/components/OfflineStatusBar';
 import { enqueueOp } from '@/lib/offlineQueue';
 import { createStableReader } from '@/lib/barcode';
+import { scaleAnalysis } from '@/lib/openfoodfacts';
 import { useOnline } from '@/lib/useOfflineSync';
 import { Camera, Upload, X, Mic, MicOff, Barcode, Maximize, User, RefreshCw, AlertTriangle, Check, Sparkles } from 'lucide-react';
 import ComingSoon from "@/components/ComingSoon";
@@ -94,6 +95,11 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
   const [analyzeMsg, setAnalyzeMsg] = useState("");
 
   const [customMealName, setCustomMealName] = useState("");
+  // Scanned products: the pack's own serving, scaled by what was actually eaten.
+  const [barcodeBase, setBarcodeBase] = useState<any>(null);
+  const [portion, setPortion] = useState(1);
+  const choosePortion = (f: number) => { setPortion(f); if (barcodeBase) setActiveAnalysis(scaleAnalysis(barcodeBase, f)); };
+  useEffect(() => { if (uploadStep === 0) { setBarcodeBase(null); setPortion(1); } }, [uploadStep]);
   const [isSavingMeal, setIsSavingMeal] = useState(false);
   const [mealSaveError, setMealSaveError] = useState<string | null>(null);
 
@@ -284,6 +290,8 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
       setIsAnalyzing(false);
 
       if (res.success && res.analysis) {
+        setBarcodeBase(res.analysis);
+        setPortion(1);
         setActiveAnalysis(res.analysis);
         setCustomMealName(res.analysis.name || "Scanned Product");
         setUploadStep(2);
@@ -631,6 +639,18 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
                             placeholder="Name your meal..."
                           />
                         </div>
+
+                        {barcodeBase && (
+                          <div>
+                            <label className="text-[10px] font-black text-ink-faint uppercase tracking-widest block mb-2">How much did you have? <span className="normal-case font-semibold">(pack serving: {barcodeBase.items?.[0]?.estimatedQuantity})</span></label>
+                            <div className="flex flex-wrap gap-2" role="group" aria-label="Portion">
+                              {[0.5, 1, 1.5, 2, 3].map((f) => (
+                                <button key={f} type="button" onClick={() => choosePortion(f)} aria-pressed={portion === f}
+                                  className={`px-4 py-2 rounded-full text-sm font-bold border ${portion === f ? 'bg-brand text-white border-brand' : 'bg-white text-ink border-surface-line'}`}>{f}×</button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
                         {/* Macro Grid */}
                         <div className="grid grid-cols-3 gap-3">
