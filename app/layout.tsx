@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Script from "next/script";
 import { PwaRegistry } from "@/components/PwaRegistry";
-import InstallPrompt from "@/components/InstallPrompt";
+import AppLinker from "@/components/AppLinker";
 import TimezoneCookie from "@/components/TimezoneCookie";
 
 export const metadata: Metadata = {
   title: "Nura - Intelligent Nutrition Tracking",
   description: "Track your meals effortlessly with Nura AI",
-  manifest: "/manifest.json",
   formatDetection: { telephone: false, email: false, address: false },
   appleWebApp: {
     capable: true,
@@ -33,9 +32,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-surface-muted text-ink antialiased">
+        <Script id="app-gate" strategy="beforeInteractive">{`try{if(!/NuraApp\\/\\d+\\.\\d+\\.\\d+/.test(navigator.userAgent)&&!/^\\/(download|privacy|terms)\\/?$/.test(location.pathname))location.replace("/download")}catch(e){}`}</Script>
         <PwaRegistry />
         <TimezoneCookie />
-        <InstallPrompt />
+        <AppLinker />
         {children}
       </body>
     </html>

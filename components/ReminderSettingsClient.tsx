@@ -46,16 +46,20 @@ export default function ReminderSettingsClient() {
   const timer = useRef<ReturnType<typeof setTimeout>>();
   const dirty = useRef(false);
 
-  const supported = typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
+  // Inside the installed Android app notifications are native (the app polls /api/device/due); no web push.
+  const inApp = typeof navigator !== "undefined" && /NuraApp\/\d/.test(navigator.userAgent);
+  const appLinked = inApp && /\blinked\b/.test(navigator.userAgent);
+  const supported = inApp || typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
   const refreshDevice = useCallback(async () => {
+    if (inApp) { setPerm("granted"); setThisDeviceOn(appLinked); return; }
     if (!supported) { setPerm("unsupported"); return; }
     setPerm(Notification.permission);
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       setThisDeviceOn(!!(await reg?.pushManager.getSubscription()));
     } catch { setThisDeviceOn(false); }
-  }, [supported]);
+  }, [supported, inApp, appLinked]);
 
   useEffect(() => {
     (async () => {
@@ -118,7 +122,8 @@ export default function ReminderSettingsClient() {
   const toggleMaster = async (on: boolean) => {
     setBusy(true);
     setMsg("");
-    if (on && pushConfigured && !thisDeviceOn) {
+    if (on && inApp) { window.location.href = "nura://notifications"; }
+    else if (on && pushConfigured && !thisDeviceOn) {
       const ok = await subscribeThisDevice();
       if (!ok) { setBusy(false); return; }
     }
@@ -129,6 +134,7 @@ export default function ReminderSettingsClient() {
 
   const sendTest = async () => {
     setBusy(true); setMsg("");
+    if (inApp) { window.location.href = "nura://test"; setMsg("A test notification should appear in a moment. If not, allow notifications for Nura in your phone's settings."); setBusy(false); return; }
     try {
       if (!thisDeviceOn) await subscribeThisDevice();
       const res = await fetch("/api/push/test", { method: "POST" });
@@ -178,7 +184,7 @@ export default function ReminderSettingsClient() {
               : "This phone isn't connected yet — turn on Notifications above."}
           </span>
         </div>
-        {!pushConfigured && (
+        {!pushConfigured && !inApp && (
           <p className="mt-3 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
             Your times are saved, but notifications aren&apos;t switched on for the app yet. They&apos;ll start arriving as soon as that&apos;s done on the server.
           </p>

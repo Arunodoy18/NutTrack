@@ -1,6 +1,6 @@
-import { and, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like, lte, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { meals, pushSubscriptions, reminderSent, reminderSettings, users, waterLogs, weightLogs } from "@/lib/db/schema";
+import { deviceTokens, meals, pushSubscriptions, reminderSent, reminderSettings, users, waterLogs, weightLogs } from "@/lib/db/schema";
 import { dueReminders, sanitizeSettings } from "@/lib/reminders";
 import { dailyWaterGoalMl } from "@/lib/hydration";
 import { sendPush } from "@/lib/push";
@@ -18,6 +18,51 @@ export interface RunSummary {
 
 const minutesAgo = (d: Date | null | undefined, now: Date) => (d ? Math.max(0, (now.getTime() - d.getTime()) / 60_000) : Infinity);
 
+type SettingsRow = typeof reminderSettings.$inferSelect;
+
+/** Which reminders are due right now for this account (pure read; nothing is claimed or sent). */
+async function computeDue(row: SettingsRow, now: Date) {
+  const tz = row.timezone;
+  const settings = sanitizeSettings(row.settings);
+  const owner = await db.query.users.findFirst({ where: eq(users.id, row.ownerId) });
+  if (!owner) return [];
+  // Family members' meals count: if anyone just ate and logged it, don't nag.
+  const family = await db.query.users.findMany({ where: or(eq(users.id, row.ownerId), eq(users.parentId, row.ownerId)), columns: { id: true } });
+  const ids = family.map((f) => f.id);
+  const dayStart = startOfDayInTz(tz, now);
+  const [lastMeal] = await db.select({ t: meals.timestamp }).from(meals).where(inArray(meals.userId, ids)).orderBy(desc(meals.timestamp)).limit(1);
+  const [lastDrink] = await db.select({ t: waterLogs.timestamp }).from(waterLogs).where(eq(waterLogs.userId, row.ownerId)).orderBy(desc(waterLogs.timestamp)).limit(1);
+  const [lastWeigh] = await db.select({ t: weightLogs.timestamp }).from(weightLogs).where(eq(weightLogs.userId, row.ownerId)).orderBy(desc(weightLogs.timestamp)).limit(1);
+  const [{ total }] = await db
+    .select({ total: sql<number>`coalesce(sum(${waterLogs.amountMl}), 0)::int` })
+    .from(waterLogs)
+    .where(and(eq(waterLogs.userId, row.ownerId), gte(waterLogs.timestamp, dayStart), lte(waterLogs.timestamp, now)));
+  return dueReminders(settings, {
+    now, tz,
+    minutesSinceMeal: minutesAgo(lastMeal?.t, now),
+    minutesSinceDrink: minutesAgo(lastDrink?.t, now),
+    waterTotalMl: total,
+    waterGoalMl: dailyWaterGoalMl(owner.age ?? 30, owner.gender ?? "Male", owner.activityLevel),
+    minutesSinceWeighIn: minutesAgo(lastWeigh?.t, now),
+  });
+}
+
+/**
+ * For the installed Android app: hand over what is due for this account and mark it delivered.
+ * Keys are claimed first, so two phones (or two polls) can never show the same reminder twice.
+ */
+export async function claimDueForOwner(ownerId: string, now = new Date()) {
+  const row = await db.query.reminderSettings.findFirst({ where: and(eq(reminderSettings.ownerId, ownerId), eq(reminderSettings.enabled, true)) });
+  if (!row) return [];
+  const due = await computeDue(row, now);
+  const out: typeof due = [];
+  for (const r of due) {
+    const claimed = await db.insert(reminderSent).values({ ownerId, key: r.key }).onConflictDoNothing().returning({ k: reminderSent.key });
+    if (claimed.length) out.push(r);
+  }
+  return out;
+}
+
 /**
  * Evaluate every account with reminders on and at least one subscribed device, and send what is due.
  * Safe to run as often as you like: a reminder key is claimed in `reminder_sent` BEFORE sending, so two
@@ -30,36 +75,14 @@ export async function runReminders(opts: { now?: Date; dryRun?: boolean } = {}):
 
   const rows = await db.query.reminderSettings.findMany({ where: eq(reminderSettings.enabled, true) });
   for (const row of rows) {
+    // Owners with the installed app are served by the app's own polling (claimDueForOwner), not web push.
+    const app = await db.query.deviceTokens.findFirst({ where: and(eq(deviceTokens.ownerId, row.ownerId), eq(deviceTokens.revoked, false), like(deviceTokens.label, "app:%")), columns: { id: true } });
+    if (app) continue;
     const subs = await db.query.pushSubscriptions.findMany({ where: eq(pushSubscriptions.ownerId, row.ownerId) });
     if (subs.length === 0) continue;
     summary.owners++;
 
-    const tz = row.timezone;
-    const settings = sanitizeSettings(row.settings);
-    const owner = await db.query.users.findFirst({ where: eq(users.id, row.ownerId) });
-    if (!owner) continue;
-
-    // Family members' meals count: if anyone just ate and logged it, don't nag.
-    const family = await db.query.users.findMany({ where: or(eq(users.id, row.ownerId), eq(users.parentId, row.ownerId)), columns: { id: true } });
-    const ids = family.map((f) => f.id);
-    const dayStart = startOfDayInTz(tz, now);
-
-    const [lastMeal] = await db.select({ t: meals.timestamp }).from(meals).where(inArray(meals.userId, ids)).orderBy(desc(meals.timestamp)).limit(1);
-    const [lastDrink] = await db.select({ t: waterLogs.timestamp }).from(waterLogs).where(eq(waterLogs.userId, row.ownerId)).orderBy(desc(waterLogs.timestamp)).limit(1);
-    const [lastWeigh] = await db.select({ t: weightLogs.timestamp }).from(weightLogs).where(eq(weightLogs.userId, row.ownerId)).orderBy(desc(weightLogs.timestamp)).limit(1);
-    const [{ total }] = await db
-      .select({ total: sql<number>`coalesce(sum(${waterLogs.amountMl}), 0)::int` })
-      .from(waterLogs)
-      .where(and(eq(waterLogs.userId, row.ownerId), gte(waterLogs.timestamp, dayStart), lte(waterLogs.timestamp, now)));
-
-    const due = dueReminders(settings, {
-      now, tz,
-      minutesSinceMeal: minutesAgo(lastMeal?.t, now),
-      minutesSinceDrink: minutesAgo(lastDrink?.t, now),
-      waterTotalMl: total,
-      waterGoalMl: dailyWaterGoalMl(owner.age ?? 30, owner.gender ?? "Male", owner.activityLevel),
-      minutesSinceWeighIn: minutesAgo(lastWeigh?.t, now),
-    });
+    const due = await computeDue(row, now);
     summary.due += due.length;
     if (due.length) summary.details!.push({ owner: row.ownerId.slice(0, 8), keys: due.map((d) => d.key) });
     if (dryRun) continue;

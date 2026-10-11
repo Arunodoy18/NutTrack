@@ -19,6 +19,14 @@ export default function ExportSection({ profiles, activeId }: { profiles: Profil
       const q = new URLSearchParams({ format, range });
       if (scope !== "family") { q.set("scope", "profile"); q.set("profile", scope); }
       if (photos && format === "zip") q.set("photos", "1");
+      if (/NuraApp\/\d/.test(navigator.userAgent)) {
+        // Installed app: let the app's download manager save the file (blob downloads aren't supported in its web view).
+        if (!navigator.onLine) throw new Error("Failed to fetch");
+        window.location.href = `/api/export?${q}`;
+        setMsg({ ok: true, text: "Your download has started. You'll see it in your notifications and in Downloads." });
+        setBusy(false);
+        return;
+      }
       const res = await fetch(`/api/export?${q}`, { credentials: "same-origin" });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Couldn't build your export.");
       const blob = await res.blob();

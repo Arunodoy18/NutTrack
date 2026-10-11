@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull, not, like, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { deviceTokens, pairingCodes, users } from "@/lib/db/schema";
 import { getSessionUserId } from "@/lib/access";
@@ -20,7 +20,8 @@ export async function POST(req: Request) {
   if (!row || row.expiresAt.getTime() < Date.now()) return NextResponse.json({ error: "Invalid or expired code." }, { status: 400 });
   const token = newDeviceToken();
   const label = typeof body?.label === "string" ? body.label.trim().slice(0, 60) || null : null;
-  await db.insert(deviceTokens).values({ ownerId: row.ownerId, profileId: row.profileId, tokenHash: sha256(token), label });
+  const forApp = body?.purpose === "app"; // the installed app's own link (reminders): bound to the account, not a chosen profile
+  await db.insert(deviceTokens).values({ ownerId: row.ownerId, profileId: forApp ? row.ownerId : row.profileId, tokenHash: sha256(token), label: forApp ? `app:${label ?? "Nura app"}`.slice(0, 64) : label });
   const p = await db.query.users.findFirst({ where: eq(users.id, row.profileId), columns: { name: true } });
   return NextResponse.json({ token, profileName: p?.name ?? null }, { headers: NO_STORE });
 }
@@ -30,7 +31,7 @@ export async function GET() {
   const uid = await getSessionUserId();
   if (!uid) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const rows = await db.select({ id: deviceTokens.id, label: deviceTokens.label, profileId: deviceTokens.profileId, createdAt: deviceTokens.createdAt, lastSeenAt: deviceTokens.lastSeenAt })
-    .from(deviceTokens).where(and(eq(deviceTokens.ownerId, uid), eq(deviceTokens.revoked, false)));
+    .from(deviceTokens).where(and(eq(deviceTokens.ownerId, uid), eq(deviceTokens.revoked, false), or(isNull(deviceTokens.label), not(like(deviceTokens.label, "app:%")))));
   return NextResponse.json({ devices: rows }, { headers: NO_STORE });
 }
 
