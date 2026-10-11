@@ -179,12 +179,15 @@ final class HealthSync {
     }
 
     /** Swap a pairing code for a device token. Returns the profile name. */
-    static String pair(Context ctx, String code) throws Exception {
+    static String pair(Context ctx, String code) throws Exception { return pair(ctx, code, false); }
+
+    /** @param forApp true = the app's own account link (reminders); false = Health Connect for a chosen profile */
+    static String pair(Context ctx, String code, boolean forApp) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(HealthStore.BASE_URL + "/api/sync/device").openConnection();
         c.setRequestMethod("POST"); c.setConnectTimeout(15000); c.setReadTimeout(30000); c.setDoOutput(true);
         c.setRequestProperty("Content-Type", "application/json");
         String label = (Build.MANUFACTURER + " " + Build.MODEL).trim();
-        try (OutputStream os = c.getOutputStream()) { os.write(new JSONObject().put("code", code).put("label", label).toString().getBytes(StandardCharsets.UTF_8)); }
+        try (OutputStream os = c.getOutputStream()) { os.write(new JSONObject().put("code", code).put("label", label).put("purpose", forApp ? "app" : "health").toString().getBytes(StandardCharsets.UTF_8)); }
         int status = c.getResponseCode();
         StringBuilder sb = new StringBuilder();
         try (InputStream is = status >= 400 ? c.getErrorStream() : c.getInputStream()) {
@@ -194,7 +197,8 @@ final class HealthSync {
         JSONObject j = new JSONObject(sb.toString());
         if (status != 200 || !j.has("token")) throw new Exception(j.optString("error", "Pairing failed"));
         String name = j.optString("profileName", "");
-        new HealthStore(ctx).savePairing(j.getString("token"), name);
+        HealthStore st = new HealthStore(ctx);
+        if (forApp) st.saveReminderToken(j.getString("token")); else st.savePairing(j.getString("token"), name);
         return name;
     }
 }

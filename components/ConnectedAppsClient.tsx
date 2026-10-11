@@ -92,7 +92,7 @@ export default function ConnectedAppsClient({ name, age, profiles }: { name: str
           <div className="mt-3 rounded-2xl bg-surface border border-surface-line p-4 text-center">
             <div className="font-mono text-3xl font-black tracking-[0.3em]" aria-label="Pairing code">{code}</div>
             <p className="mt-1 text-[11px] text-ink-soft">Valid for 10 minutes · one use</p>
-            <a href={`intent://pair?code=${code}#Intent;scheme=nura;package=tech.buildc3.nura;end`} className="mt-3 inline-block rounded-xl bg-brand text-white text-sm font-bold px-4 py-2">Connect in the Nura app</a>
+            <a href={`nura://pair?code=${code}`} className="mt-3 inline-block rounded-xl bg-brand text-white text-sm font-bold px-4 py-2">Connect in the Nura app</a>
           </div>
         ) : (
           <button onClick={makeCode} disabled={busy} className="mt-3 w-full rounded-2xl border-2 border-brand text-brand font-bold py-3 flex items-center justify-center gap-2 disabled:opacity-60"><Link2 className="w-4 h-4" /> Create pairing code for {name}</button>

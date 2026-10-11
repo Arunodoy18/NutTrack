@@ -34,5 +34,11 @@ final class HealthStore {
         if (ok) e.putLong("last_sync", System.currentTimeMillis());
         e.apply();
     }
-    void clear() { prefs.edit().clear().apply(); }
+    /** Health Connect pairing only. */
+    void clear() { prefs.edit().remove("token").remove("profile").remove("last_sync").remove("last_status").apply(); }
+
+    /** The app's own link to the account (reminder polling). Separate from the Health Connect pairing. */
+    String reminderToken() { return prefs.getString("rtoken", null); }
+    void saveReminderToken(String t) { prefs.edit().putString("rtoken", t).apply(); }
+    void clearReminderToken() { prefs.edit().remove("rtoken").apply(); }
 }

@@ -9,6 +9,7 @@ export default function LogoutButton() {
   return (
     <button 
       onClick={async () => {
+        if (/NuraApp\/\d/.test(navigator.userAgent)) window.location.href = "nura://unlink"; // stop this phone's reminders
         clearLocalUserData();
         await clearOfflineCaches();
         signOut({ callbackUrl: "/auth/login" });
