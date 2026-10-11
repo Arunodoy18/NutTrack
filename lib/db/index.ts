@@ -2,12 +2,12 @@ import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import * as schema from './schema';
 
-// We fall back to the provided Neon PostgreSQL connection string if the environment variable is not defined
-const connectionString = 
-  process.env.DATABASE_URL || 
-  "postgresql://neondb_owner:npg_NKsVZpE0Lc9S@ep-bold-thunder-aqhni6ut-pooler.c-8.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+// No fallback credentials in source. A missing URL only fails when a query actually runs (keeps `next build` working).
+const connectionString = process.env.DATABASE_URL || "postgresql://missing:missing@localhost/missing";
 
-const sql = neon(connectionString);
+// Next.js 14 caches fetch() results; the Neon driver talks over fetch, so without this identical queries
+// (e.g. "is this device token revoked?") could be answered from a stale cache. Always hit the database.
+const sql = neon(connectionString, { fetchOptions: { cache: "no-store" } });
 
 /**
  * Main database connection pool configured for Neon HTTP serverless clients
