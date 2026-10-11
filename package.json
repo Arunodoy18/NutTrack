@@ -20,6 +20,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.30.10",
+    "fflate": "^0.8.2",
     "framer-motion": "^11.1.7",
     "html5-qrcode": "^2.3.8",
     "jose": "^6.2.3",

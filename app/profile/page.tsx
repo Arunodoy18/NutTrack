@@ -18,6 +18,7 @@ import { getActiveProfileId, listProfiles } from "@/lib/access";
 import { getUserTz } from "@/lib/tzServer";
 import FamilySection from "@/components/FamilySection";
 import WeightTracker from "@/components/WeightTracker";
+import ExportSection from "@/components/ExportSection";
 
 export const dynamic = "force-dynamic";
 
@@ -266,6 +267,8 @@ export default async function ProfilePage() {
         />
 
         <FamilySection profiles={profiles} activeId={userId} />
+
+        <ExportSection profiles={profiles} activeId={userId} />
 
         {/* Logout Button */}
         <LogoutButton />
