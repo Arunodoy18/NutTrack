@@ -270,3 +270,57 @@ export const reminderSent = pgTable(
   },
   (t) => ({ pk: primaryKey({ columns: [t.ownerId, t.key] }) })
 );
+
+
+/* ─── Activity & connected devices ─── */
+
+/** One day of movement for a profile from one source (health app, watch, manual). Local calendar day. */
+export const activityDays = pgTable(
+  "activity_days",
+  {
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    day: text("day").notNull(), // YYYY-MM-DD in the device's local time zone
+    source: text("source").notNull(),
+    steps: integer("steps").notNull().default(0),
+    activeKcal: integer("active_kcal").notNull().default(0),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => ({ pk: primaryKey({ columns: [t.userId, t.day, t.source] }) })
+);
+
+export const workouts = pgTable("workouts", {
+  id: text("id").primaryKey(), // deterministic per (profile, source, external id) → imports are idempotent
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  startedAt: timestamp("started_at").notNull(),
+  minutes: integer("minutes").notNull(),
+  kcal: integer("kcal").notNull().default(0),
+  kind: text("kind").notNull().default("other"),
+  title: text("title"),
+  source: text("source").notNull(),
+});
+
+/** A phone/watch app paired to an ACCOUNT, syncing data for one PROFILE. Only the token's hash is stored. */
+export const deviceTokens = pgTable("device_tokens", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  profileId: text("profile_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(),
+  label: text("label"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  lastSeenAt: timestamp("last_seen_at"),
+  revoked: boolean("revoked").notNull().default(false),
+});
+
+/** Short-lived, single-use code the signed-in web app shows so the native app can pair itself. */
+export const pairingCodes = pgTable("pairing_codes", {
+  codeHash: text("code_hash").primaryKey(),
+  ownerId: text("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  profileId: text("profile_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+export const activitySettings = pgTable("activity_settings", {
+  userId: text("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  creditEnabled: boolean("credit_enabled").notNull().default(false),
+  creditPct: integer("credit_pct").notNull().default(50),
+});
