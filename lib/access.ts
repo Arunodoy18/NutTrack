@@ -68,6 +68,27 @@ export async function listProfiles(sessionUserId: string): Promise<ProfileSummar
   return mapped.sort((a, b) => Number(b.isOwner) - Number(a.isOwner));
 }
 
+/** Everything the dashboard needs about the family in ONE query (was 3 sequential round trips). */
+export async function loadFamilyForDashboard(sessionUserId: string) {
+  const rows = await db.query.users.findMany({
+    where: or(eq(users.id, sessionUserId), eq(users.parentId, sessionUserId)),
+    columns: { id: true, name: true, avatar: true, relation: true, age: true, gender: true, activityLevel: true, parentId: true, profileComplete: true, createdAt: true },
+    orderBy: (u, { asc }) => [asc(u.createdAt)],
+  });
+  const owner = rows.find((r) => r.id === sessionUserId);
+  if (!owner) return null; // the account no longer exists
+  let activeId = sessionUserId;
+  try {
+    const wanted = cookies().get(ACTIVE_PROFILE_COOKIE)?.value;
+    if (wanted && rows.some((r) => r.id === wanted)) activeId = wanted; // validated against the account's own rows
+  } catch { /* cookies() unavailable outside a request */ }
+  const active = rows.find((r) => r.id === activeId)!;
+  const profiles: ProfileSummary[] = rows
+    .map((r) => ({ id: r.id, name: (r.name || "").trim() || "Me", avatar: r.avatar, relation: r.relation, age: r.age, isOwner: r.id === sessionUserId, profileComplete: !!r.profileComplete }))
+    .sort((x, y) => Number(y.isOwner) - Number(x.isOwner));
+  return { activeId, active, profiles };
+}
+
 /**
  * Which profile is the app showing right now? Reads the cookie but never trusts it:
  * it must be the account holder or one of their own managed profiles.

@@ -37,6 +37,10 @@ import android.widget.Toast;
 
 import androidx.core.content.FileProvider;
 
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,13 +48,15 @@ import java.util.List;
 /** Nura's one screen: the app's UI rendered in a locked-down WebView, plus the native pieces the web can't do. */
 public class MainActivity extends Activity {
     private static final String HOST = "dietbuddy.buildc3.tech";
-    private static final int REQ_FILE = 11, REQ_PERMS = 12, REQ_NOTIF = 13, REQ_CAPTURE = 14;
+    private static final int REQ_FILE = 11, REQ_PERMS = 12, REQ_NOTIF = 13, REQ_CAPTURE = 14, REQ_MIC = 15;
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private ValueCallback<Uri[]> fileCallback;
     private Uri captureUri;
     private PermissionRequest pendingWebPermission;
+    private SpeechRecognizer recognizer;
+    private boolean wantSpeech;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -109,6 +115,7 @@ public class MainActivity extends Activity {
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
         cm.setAcceptThirdPartyCookies(web, false);
+        web.addJavascriptInterface(new NativeBridge(this), "NuraNative");
 
         web.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) { return route(r.getUrl()); }
@@ -207,7 +214,7 @@ public class MainActivity extends Activity {
             case "notifications": askNotificationPermission(); return;
             case "test": Notifier.show(this, "Nura", "Reminders are working 🎉", "/dashboard", "test"); return;
             case "pair": startActivity(new Intent(this, HealthSyncActivity.class).setData(u)); return;
-            case "retry": web.loadUrl(HealthStore.BASE_URL + "/launch"); return;
+            case "retry": web.loadUrl(HealthStore.BASE_URL + "/dashboard"); return;
             default:
         }
     }
@@ -264,8 +271,58 @@ public class MainActivity extends Activity {
         if (ok.isEmpty()) req.deny(); else req.grant(ok.toArray(new String[0]));
     }
 
+    /* ── voice input (called from NativeBridge, only for our own site) ── */
+    private boolean fromOurSite() {
+        String u = web.getUrl();
+        return u != null && Uri.parse(u).getHost() != null && HOST.equals(Uri.parse(u).getHost());
+    }
+
+    void speechStart() {
+        ui.post(() -> {
+            if (!fromOurSite()) return;
+            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) { wantSpeech = true; requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, REQ_MIC); return; }
+            beginSpeech();
+        });
+    }
+
+    void speechStop() { ui.post(() -> { if (recognizer != null) recognizer.stopListening(); }); }
+
+    private void speechEvent(String type, String key, String value) {
+        try {
+            org.json.JSONObject o = new org.json.JSONObject().put("type", type);
+            if (key != null) o.put(key, value);
+            web.evaluateJavascript("window.__nuraSpeech&&window.__nuraSpeech(" + o + ")", null);
+        } catch (Exception ignore) { /* page gone */ }
+    }
+
+    private void beginSpeech() {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) { speechEvent("error", "message", "Voice input isn't available on this phone. Type what you ate instead."); return; }
+        if (recognizer != null) recognizer.destroy();
+        recognizer = SpeechRecognizer.createSpeechRecognizer(this);
+        recognizer.setRecognitionListener(new RecognitionListener() {
+            @Override public void onReadyForSpeech(Bundle p) { }
+            @Override public void onBeginningOfSpeech() { }
+            @Override public void onRmsChanged(float v) { }
+            @Override public void onBufferReceived(byte[] b) { }
+            @Override public void onEndOfSpeech() { }
+            @Override public void onEvent(int t, Bundle p) { }
+            @Override public void onError(int e) { speechEvent(e == SpeechRecognizer.ERROR_NO_MATCH || e == SpeechRecognizer.ERROR_SPEECH_TIMEOUT ? "end" : "error", "message", "Couldn't hear that. Try again."); }
+            @Override public void onPartialResults(Bundle b) { push(b, false); }
+            @Override public void onResults(Bundle b) { push(b, true); }
+            private void push(Bundle b, boolean last) {
+                ArrayList<String> r = b.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                if (r != null && !r.isEmpty()) speechEvent("result", "text", r.get(0));
+                if (last) speechEvent("end", null, null);
+            }
+        });
+        Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true).putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN");
+        recognizer.startListening(i);
+    }
+
     @Override public void onRequestPermissionsResult(int code, String[] perms, int[] res) {
         super.onRequestPermissionsResult(code, perms, res);
+        if (code == REQ_MIC) { boolean ok = res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED; if (wantSpeech && ok) beginSpeech(); else if (wantSpeech) speechEvent("error", "message", "Allow the microphone for Nura to use voice input."); wantSpeech = false; return; }
         if (code == REQ_PERMS && pendingWebPermission != null) { grantAllowed(pendingWebPermission); pendingWebPermission = null; }
     }
 
@@ -308,11 +365,11 @@ public class MainActivity extends Activity {
     private void handleIntent(Intent i, boolean first) {
         String path = i == null ? null : i.getStringExtra("path");
         if (path != null && path.startsWith("/") && !path.startsWith("//")) { web.loadUrl(HealthStore.BASE_URL + path); return; }
-        if (first && web.getUrl() == null) web.loadUrl(HealthStore.BASE_URL + "/launch");
+        if (first && web.getUrl() == null) web.loadUrl(HealthStore.BASE_URL + "/dashboard");
     }
 
     @Override public void onBackPressed() { if (web.canGoBack()) web.goBack(); else super.onBackPressed(); }
     @Override protected void onResume() { super.onResume(); web.onResume(); }
     @Override protected void onPause() { CookieManager.getInstance().flush(); web.onPause(); super.onPause(); }
-    @Override protected void onDestroy() { if (web != null) { ((FrameLayout) web.getParent()).removeView(web); web.destroy(); } super.onDestroy(); }
+    @Override protected void onDestroy() { if (recognizer != null) recognizer.destroy(); if (web != null) { ((FrameLayout) web.getParent()).removeView(web); web.destroy(); } super.onDestroy(); }
 }
