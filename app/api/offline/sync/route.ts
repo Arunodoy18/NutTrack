@@ -247,7 +247,16 @@ export async function POST(req: NextRequest) {
     /* ── Grocery list (belongs to the account; names already on the list are skipped, so retries are safe) ── */
     if (kind === "grocery_add") {
       const raw = Array.isArray(op.groceryItems) ? op.groceryItems : [];
-      const wanted = Array.from(new Set(raw.filter((x: unknown) => typeof x === "string").map((x: string) => x.trim().slice(0, 120)).filter(Boolean))).slice(0, 80) as string[];
+      const seen = new Set<string>();
+      const wanted: string[] = [];
+      for (const x of raw) {
+        if (typeof x !== "string") continue;
+        const t = x.trim().slice(0, 120);
+        if (!t || seen.has(t.toLowerCase())) continue;
+        seen.add(t.toLowerCase());
+        wanted.push(t);
+        if (wanted.length >= 80) break;
+      }
       if (wanted.length === 0) return json({ status: "invalid", error: "Nothing to add." }, 400);
       const have = new Set((await db.select({ n: groceryList.ingredientName }).from(groceryList).where(eq(groceryList.userId, accountId))).map((r) => r.n.toLowerCase()));
       const fresh = wanted.filter((w) => !have.has(w.toLowerCase()));
