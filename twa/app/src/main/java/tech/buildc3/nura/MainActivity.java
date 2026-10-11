@@ -103,8 +103,8 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
         s.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
-        s.setSupportMultipleWindows(false);
-        s.setJavaScriptCanOpenWindowsAutomatically(false);
+        s.setSupportMultipleWindows(true);   // payment pages (3-D Secure, netbanking) open pop-ups
+        s.setJavaScriptCanOpenWindowsAutomatically(true);
         s.setBuiltInZoomControls(false);
         s.setSupportZoom(false);
         boolean linked = false;
@@ -114,7 +114,7 @@ public class MainActivity extends Activity {
         if ((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) WebView.setWebContentsDebuggingEnabled(true);
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
-        cm.setAcceptThirdPartyCookies(web, false);
+        cm.setAcceptThirdPartyCookies(web, true); // Razorpay checkout runs in an iframe that needs its own storage
         web.addJavascriptInterface(new NativeBridge(this), "NuraNative");
 
         web.setWebViewClient(new WebViewClient() {
@@ -132,6 +132,10 @@ public class MainActivity extends Activity {
         });
         web.setWebChromeClient(new WebChromeClient() {
             @Override public void onPermissionRequest(PermissionRequest req) { runOnUiThread(() -> handleWebPermission(req)); }
+            @Override public boolean onCreateWindow(WebView v, boolean isDialog, boolean userGesture, android.os.Message resultMsg) {
+                if (!userGesture && !HOST.equals(Uri.parse(String.valueOf(v.getUrl())).getHost())) return false;
+                return openPopup(resultMsg);
+            }
             @Override public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> cb, FileChooserParams params) { return openChooser(cb, params); }
             @Override public boolean onJsAlert(WebView v, String url, String msg, JsResult r) {
                 new AlertDialog.Builder(MainActivity.this).setMessage(msg).setPositiveButton("OK", (d, w) -> r.confirm()).setOnCancelListener(d -> r.cancel()).show();
@@ -157,6 +161,44 @@ public class MainActivity extends Activity {
                 Toast.makeText(this, "Downloading " + name, Toast.LENGTH_SHORT).show();
             } catch (Exception e) { Toast.makeText(this, "Couldn't start the download", Toast.LENGTH_LONG).show(); }
         });
+    }
+
+    private android.app.Dialog popupDialog;
+    private WebView popupWeb;
+
+    /** A pop-up (e.g. the bank's 3-D Secure page) in its own full-screen layer, without the app's JS bridge. */
+    private boolean openPopup(android.os.Message resultMsg) {
+        closePopup();
+        popupWeb = new WebView(this);
+        WebSettings ps = popupWeb.getSettings();
+        ps.setJavaScriptEnabled(true); ps.setDomStorageEnabled(true);
+        ps.setAllowFileAccess(false); ps.setAllowContentAccess(false);
+        ps.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        ps.setUserAgentString(web.getSettings().getUserAgentString());
+        CookieManager.getInstance().setAcceptThirdPartyCookies(popupWeb, true);
+        popupWeb.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
+                String sc = r.getUrl().getScheme() == null ? "" : r.getUrl().getScheme();
+                if (sc.equals("https")) return false;
+                if (sc.equals("http") || sc.equals("nura") || sc.equals("file") || sc.equals("javascript") || sc.equals("data")) return true;
+                return route(r.getUrl()); // upi:, intent: … hand off to the right app
+            }
+            @Override public void onReceivedSslError(WebView v, android.webkit.SslErrorHandler h, android.net.http.SslError e) { h.cancel(); }
+        });
+        popupWeb.setWebChromeClient(new WebChromeClient() { @Override public void onCloseWindow(WebView w) { closePopup(); } });
+        popupDialog = new android.app.Dialog(this, android.R.style.Theme_Material_Light_NoActionBar);
+        popupDialog.setContentView(popupWeb);
+        popupDialog.setOnKeyListener((d, k, e) -> { if (k == android.view.KeyEvent.KEYCODE_BACK && e.getAction() == android.view.KeyEvent.ACTION_UP) { if (popupWeb != null && popupWeb.canGoBack()) popupWeb.goBack(); else closePopup(); return true; } return false; });
+        popupDialog.show();
+        WebView.WebViewTransport t = (WebView.WebViewTransport) resultMsg.obj;
+        t.setWebView(popupWeb); resultMsg.sendToTarget();
+        return true;
+    }
+
+    private void closePopup() {
+        try { if (popupDialog != null) popupDialog.dismiss(); } catch (Exception ignore) { /* already gone */ }
+        if (popupWeb != null) { popupWeb.destroy(); popupWeb = null; }
+        popupDialog = null;
     }
 
     private String offlineHtml() {
@@ -369,7 +411,10 @@ public class MainActivity extends Activity {
     }
 
     @Override public void onBackPressed() { if (web.canGoBack()) web.goBack(); else super.onBackPressed(); }
-    @Override protected void onResume() { super.onResume(); web.onResume(); }
+    @Override protected void onResume() {
+        super.onResume(); web.onResume();
+        try { if (new HealthStore(this).reminderToken() != null) ReminderWorker.runNow(this); } catch (Exception ignore) { /* secure storage unavailable */ }
+    }
     @Override protected void onPause() { CookieManager.getInstance().flush(); web.onPause(); super.onPause(); }
-    @Override protected void onDestroy() { if (recognizer != null) recognizer.destroy(); if (web != null) { ((FrameLayout) web.getParent()).removeView(web); web.destroy(); } super.onDestroy(); }
+    @Override protected void onDestroy() { closePopup(); if (recognizer != null) recognizer.destroy(); if (web != null) { ((FrameLayout) web.getParent()).removeView(web); web.destroy(); } super.onDestroy(); }
 }

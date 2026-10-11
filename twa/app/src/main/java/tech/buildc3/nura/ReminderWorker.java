@@ -6,11 +6,13 @@ import androidx.annotation.NonNull;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -28,14 +30,16 @@ public class ReminderWorker extends Worker {
 
     @NonNull @Override
     public Result doWork() {
+        Log.i("NuraReminder", "doWork");
         try {
             HealthStore store = new HealthStore(getApplicationContext());
             String token = store.reminderToken();
-            if (token == null) return Result.success();
+            if (token == null) { Log.i("NuraReminder", "no token"); return Result.success(); }
             HttpURLConnection c = (HttpURLConnection) new URL(HealthStore.BASE_URL + "/api/device/due").openConnection();
             c.setConnectTimeout(15000); c.setReadTimeout(30000);
             c.setRequestProperty("Authorization", "Bearer " + token);
             int code = c.getResponseCode();
+            Log.i("NuraReminder", "poll -> " + code);
             if (code == 401) { store.clearReminderToken(); cancel(getApplicationContext()); c.disconnect(); return Result.success(); }
             if (code != 200) { c.disconnect(); return Result.retry(); }
             StringBuilder sb = new StringBuilder();
@@ -48,6 +52,7 @@ public class ReminderWorker extends Worker {
             }
             return Result.success();
         } catch (Exception e) {
+            Log.w("NuraReminder", "poll failed: " + e);
             return Result.retry();
         }
     }
@@ -56,6 +61,11 @@ public class ReminderWorker extends Worker {
         PeriodicWorkRequest req = new PeriodicWorkRequest.Builder(ReminderWorker.class, 15, TimeUnit.MINUTES)
                 .setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()).build();
         WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(NAME, ExistingPeriodicWorkPolicy.UPDATE, req);
+    }
+    /** Poll right now (used when the app is opened, so anything due appears immediately). */
+    static void runNow(Context ctx) {
+        WorkManager.getInstance(ctx).enqueueUniqueWork(NAME + "_now", androidx.work.ExistingWorkPolicy.REPLACE,
+                new OneTimeWorkRequest.Builder(ReminderWorker.class).setConstraints(new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()).build());
     }
     static void cancel(Context ctx) { WorkManager.getInstance(ctx).cancelUniqueWork(NAME); }
 }
