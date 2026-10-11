@@ -42,6 +42,7 @@ import OfflineStatusBar from '@/components/OfflineStatusBar';
 import type { OutboxOp } from '@/lib/offlineTypes';
 import ProfileSwitcher from '@/components/ProfileSwitcher';
 import WaterCard, { type WaterEntry } from '@/components/WaterCard';
+import ActivityCard from '@/components/ActivityCard';
 import { showToast } from '@/components/OfflineStatusBar';
 import { enqueueOp, updateOp } from '@/lib/offlineQueue';
 import type { ProfileSummary } from '@/lib/access';
@@ -765,6 +766,8 @@ export default function Dashboard({
           name={profiles.find((p) => p.id === userId)?.name}
           onDiscardPending={(opId) => offlineSync.discard(opId)}
         />
+
+        <ActivityCard userId={userId} age={userAge} />
 
         {/* Discover: plan + recipes */}
         <div className="grid grid-cols-2 gap-3">
