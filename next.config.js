@@ -26,6 +26,8 @@ const nextConfig = {
   },
   async headers() {
     return [
+      // API answers depend on who is asking (cookie / Bearer token): never let an edge cache reuse one.
+      { source: "/api/:path*", headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }, { key: "Vary", value: "Authorization, Cookie" }] },
       {
         source: "/(.*)",
         headers: [
