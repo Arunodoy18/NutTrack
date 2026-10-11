@@ -1129,7 +1129,7 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
 
     // Date precomputations
     // "Today" is the USER's day (the server runs in UTC, which made totals reset at 5:30 AM in India).
-    const tz = getUserTz();
+    const tz = await getUserTz();
     const startOfDay = startOfDayInTz(tz);
     const endOfDay = new Date(startOfDay.getTime() + 86_400_000 - 1);
     const sevenDaysAgo = startOfDayDaysAgo(tz, 7);

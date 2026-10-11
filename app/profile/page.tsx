@@ -72,7 +72,7 @@ export default async function ProfilePage() {
     orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
   });
   
-  const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp), getUserTz());
+  const activeStreak = calculateActiveStreak(allUserMealTimestamps.map(m => m.timestamp), await getUserTz());
   const totalMeals = allUserMealTimestamps.length;
   
   // Calculate "On Goal" percentage (mock metric based on recent streak)

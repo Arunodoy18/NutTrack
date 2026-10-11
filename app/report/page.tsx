@@ -8,12 +8,13 @@ import PrintButton from "@/components/PrintButton";
 export const dynamic = "force-dynamic";
 
 /** A one-page summary people can print or "Save as PDF" and hand to a doctor or dietitian. */
-export default async function ReportPage({ searchParams }: { searchParams: { days?: string; profile?: string } }) {
+export default async function ReportPage(props: { searchParams: Promise<{ days?: string; profile?: string }> }) {
+  const searchParams = await props.searchParams;
   const actor = await getActor();
   if (!actor) redirect("/auth/login");
   const days = searchParams.days === "90" ? 90 : searchParams.days === "7" ? 7 : 30;
   const wanted = searchParams.profile && (await canAccessProfile(actor.sessionUserId, searchParams.profile)) ? searchParams.profile : actor.activeId;
-  const tz = getUserTz();
+  const tz = await getUserTz();
   const b = await collectExport({ accountId: actor.sessionUserId, profileId: wanted, rangeDays: days, timezone: tz });
   const person = b.profiles[0];
   if (!person) redirect("/profile");

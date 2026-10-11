@@ -5,7 +5,8 @@ import { users } from "@/lib/db/schema";
 import { ACTIVE_PROFILE_COOKIE, getSessionUserId } from "@/lib/access";
 
 /** Remove a family member and everything logged for them. The account holder can't be removed here. */
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const me = await getSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (params.id === me) return NextResponse.json({ error: "Use Delete Account to remove your own account." }, { status: 400 });

@@ -8,7 +8,8 @@ import { getActor } from "@/lib/access";
 
 export const dynamic = "force-dynamic";
 
-export default async function SetupPage({ searchParams }: { searchParams: { edit?: string } }) {
+export default async function SetupPage(props: { searchParams: Promise<{ edit?: string }> }) {
+  const searchParams = await props.searchParams;
   const actor = await getActor();
   if (!actor) {
     redirect("/auth/login");

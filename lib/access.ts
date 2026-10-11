@@ -79,7 +79,7 @@ export async function loadFamilyForDashboard(sessionUserId: string) {
   if (!owner) return null; // the account no longer exists
   let activeId = sessionUserId;
   try {
-    const wanted = cookies().get(ACTIVE_PROFILE_COOKIE)?.value;
+    const wanted = (await cookies()).get(ACTIVE_PROFILE_COOKIE)?.value;
     if (wanted && rows.some((r) => r.id === wanted)) activeId = wanted; // validated against the account's own rows
   } catch { /* cookies() unavailable outside a request */ }
   const active = rows.find((r) => r.id === activeId)!;
@@ -95,7 +95,7 @@ export async function loadFamilyForDashboard(sessionUserId: string) {
  */
 export async function getActiveProfileId(sessionUserId: string): Promise<string> {
   try {
-    const wanted = cookies().get(ACTIVE_PROFILE_COOKIE)?.value;
+    const wanted = (await cookies()).get(ACTIVE_PROFILE_COOKIE)?.value;
     if (wanted && wanted !== sessionUserId && (await canAccessProfile(sessionUserId, wanted))) return wanted;
   } catch {
     /* cookies() is unavailable outside a request */

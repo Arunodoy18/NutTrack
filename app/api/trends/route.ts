@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     };
 
     // 2. Fetch meals for the last `validRange` days
-    const tz = getUserTz();
+    const tz = await getUserTz();
     const today = new Date(startOfDayInTz(tz).getTime() + 86_400_000 - 1); // end of the user's day
     const pastDate = startOfDayDaysAgo(tz, validRange - 1);
 

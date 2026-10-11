@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const bundle = await collectExport({ accountId: me, profileId, rangeDays, timezone: getUserTz(), includePhotos: wantPhotos });
+    const bundle = await collectExport({ accountId: me, profileId, rangeDays, timezone: await getUserTz(), includePhotos: wantPhotos });
     if (wantPhotos) {
       let total = 0, n = 0;
       for (const m of bundle.meals) {

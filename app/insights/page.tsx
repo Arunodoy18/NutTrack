@@ -15,17 +15,18 @@ import { computeFullProfile, mapProfileGoalToLabel } from "@/lib/nutritionEngine
 
 export const dynamic = "force-dynamic";
 
-export default async function InsightsPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+export default async function InsightsPage(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  }
+) {
+  const searchParams = await props.searchParams;
   const session = await getServerSession(authOptions);
-  
+
   if (!session?.user?.id) {
     redirect("/auth/login");
   }
-  
+
   const userId = await getActiveProfileId(session.user.id);
 
   // Gate: force profile setup for incomplete profiles
@@ -55,7 +56,7 @@ export default async function InsightsPage({
   }
 
   // 2. Fetch meals for the last 7 days (the USER's days, not the server's UTC days)
-  const tz = getUserTz();
+  const tz = await getUserTz();
   const sevenDaysAgo = startOfDayDaysAgo(tz, 6);
   const today = new Date(startOfDayInTz(tz).getTime() + 86_400_000 - 1);
 
