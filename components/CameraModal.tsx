@@ -381,7 +381,7 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
           <div className="w-full h-full sm:max-w-[420px] sm:h-[85vh] bg-black sm:rounded-[40px] overflow-hidden flex flex-col relative shadow-[0_0_50px_rgba(0,0,0,0.5)] border-surface-line sm:border">
             
             {/* Header - Floating Top */}
-            <div className="absolute top-0 inset-x-0 z-50 flex items-center justify-between p-6 bg-gradient-to-b from-black/70 via-black/40 to-transparent">
+            <div className={`absolute top-0 inset-x-0 z-50 flex items-center justify-between p-6 ${activeModalMode === 'manual' ? 'bg-black' : 'bg-gradient-to-b from-black/70 via-black/40 to-transparent'}`}>
               <h3 className="font-display text-white text-lg font-bold drop-shadow-md tracking-wide">
                 {uploadStep === 0 ? "Scanner" : uploadStep === 1 ? "Analyzing" : "Results"}
               </h3>

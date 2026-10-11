@@ -89,7 +89,7 @@ export default function ManualMealForm({ userId, accountUserId, onSaved, default
   };
 
   return (
-    <div className="absolute inset-0 overflow-y-auto px-6 pt-24 pb-6 text-white">
+    <div className="absolute inset-0 overflow-y-auto px-6 pt-28 pb-8 text-white">
       <div className="flex items-center gap-3 mb-5">
         <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center">
           <PenLine className="w-5 h-5" />

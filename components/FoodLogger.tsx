@@ -78,8 +78,8 @@ export default function FoodLogger({ userId, accountUserId, onSaved }: Props) {
   const total = useMemo(() => sumPortions(lines.map((l) => l.portion)), [lines]);
   const mealName = useMemo(() => {
     if (lines.length === 0) return "";
-    const names = lines.slice(0, 2).map((l) => l.food.name.split(",")[0]);
-    return (names.join(", ") + (lines.length > 2 ? ` +${lines.length - 2} more` : "")).slice(0, 100);
+    const names = lines.slice(0, 2).map((l) => l.food.name.split(",")[0].replace(/\s*\(.*\)$/, ""));
+    return (names.join(" + ") + (lines.length > 2 ? ` + ${lines.length - 2} more` : "")).slice(0, 100);
   }, [lines]);
 
   const save = async () => {
