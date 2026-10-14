@@ -1085,65 +1085,24 @@ export async function lookupBarcodeAction(barcode: string) {
 
 export async function getDashboardDataAction(userId: string, bypassSessionCheck: boolean = false) {
   try {
-    if (!bypassSessionCheck) {
-      const session = await getServerSession(authOptions);
-      if (!session?.user?.id || !(await canAccessProfile(session.user.id, userId))) return { success: false, error: "Unauthorized" };
-    }
-
-    const currentUser = await db.query.users.findFirst({
-      where: eq(users.id, userId)
-    });
-
-    if (!currentUser) return { success: false, error: "User not found" };
-
-    // Premium Check (family members share the account holder's plan)
-    const ownerRecord = currentUser.parentId
-      ? await db.query.users.findFirst({ where: eq(users.id, currentUser.parentId) })
-      : currentUser;
-    const { isPremium } = computePremium(ownerRecord);
-
-    // Goals Check
-    let currentGoals = await db.query.dailyGoals.findFirst({
-      where: eq(dailyGoals.userId, userId),
-      orderBy: (goals, { desc }) => [desc(goals.createdAt)]
-    });
-
-    if (!currentGoals) {
-      // Return defaults if none exist
-      currentGoals = {
-        id: "fallback",
-        userId: userId,
-        calories: 2000,
-        protein: 80,
-        fat: 65,
-        carbs: 250,
-        fiber: 30,
-        sodium: 2300,
-        iron: 18,
-        calcium: 1000,
-        vitaminC: 90,
-        potassium: 4700,
-        vitaminE: 15,
-        vitaminB12: 2,
-        createdAt: new Date()
-      };
-    }
-
-    // Date precomputations
     // "Today" is the USER's day (the server runs in UTC, which made totals reset at 5:30 AM in India).
     const tz = await getUserTz();
     const startOfDay = startOfDayInTz(tz);
     const endOfDay = new Date(startOfDay.getTime() + 86_400_000 - 1);
     const sevenDaysAgo = startOfDayDaysAgo(tz, 7);
 
-    // Parallel DB fetch
-    const [rawTodayMeals, allUserMealTimestamps, recentMealsForChart] = await Promise.all([
+    // Everything below only depends on `userId`, so fetch it all at once instead of one round trip after another.
+    // (Nothing is returned unless the access check passes.)
+    const [authorised, currentUser, goalsRow, rawTodayMeals, allUserMealTimestamps, recentMealsForChart, waterRows] = await Promise.all([
+      (async () => {
+        if (bypassSessionCheck) return true;
+        const session = await getServerSession(authOptions);
+        return !!session?.user?.id && (await canAccessProfile(session.user.id, userId));
+      })(),
+      db.query.users.findFirst({ where: eq(users.id, userId) }),
+      db.query.dailyGoals.findFirst({ where: eq(dailyGoals.userId, userId), orderBy: (goals, { desc }) => [desc(goals.createdAt)] }),
       db.query.meals.findMany({
-        where: and(
-          eq(meals.userId, userId),
-          gte(meals.timestamp, startOfDay),
-          lte(meals.timestamp, endOfDay)
-        ),
+        where: and(eq(meals.userId, userId), gte(meals.timestamp, startOfDay), lte(meals.timestamp, endOfDay)),
         with: { items: true },
         orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
       }),
@@ -1153,18 +1112,27 @@ export async function getDashboardDataAction(userId: string, bypassSessionCheck:
         orderBy: (mealsTable, { desc }) => [desc(mealsTable.timestamp)]
       }),
       db.query.meals.findMany({
-        where: and(
-          eq(meals.userId, userId),
-          gte(meals.timestamp, sevenDaysAgo)
-        ),
+        where: and(eq(meals.userId, userId), gte(meals.timestamp, sevenDaysAgo)),
         columns: { timestamp: true, totalCalories: true, totalProtein: true, totalFat: true, totalCarbs: true, totalFiber: true }
       }),
+      db.query.waterLogs.findMany({
+        where: and(eq(waterLogs.userId, userId), gte(waterLogs.timestamp, startOfDay), lte(waterLogs.timestamp, endOfDay)),
+        orderBy: (t, { desc }) => [desc(t.timestamp)],
+      }),
     ]);
+    if (!authorised) return { success: false, error: "Unauthorized" };
+    if (!currentUser) return { success: false, error: "User not found" };
 
-    const waterRows = await db.query.waterLogs.findMany({
-      where: and(eq(waterLogs.userId, userId), gte(waterLogs.timestamp, startOfDay), lte(waterLogs.timestamp, endOfDay)),
-      orderBy: (t, { desc }) => [desc(t.timestamp)],
-    });
+    // Premium Check (family members share the account holder's plan)
+    const ownerRecord = currentUser.parentId
+      ? await db.query.users.findFirst({ where: eq(users.id, currentUser.parentId) })
+      : currentUser;
+    const { isPremium } = computePremium(ownerRecord);
+
+    const currentGoals = goalsRow ?? {
+      id: "fallback", userId: userId, calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30, sodium: 2300,
+      iron: 18, calcium: 1000, vitaminC: 90, potassium: 4700, vitaminE: 15, vitaminB12: 2, createdAt: new Date(),
+    };
 
     // Map today meals
     const mappedTodayMeals = rawTodayMeals.map((meal) => {

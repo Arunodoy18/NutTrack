@@ -88,6 +88,7 @@ export default function ConnectedAppsClient({ name, age, profiles }: { name: str
       <section className="bg-white rounded-[32px] p-5 shadow-sm border border-surface-line">
         <h2 className="font-black text-ink flex items-center gap-2"><Smartphone className="w-5 h-5 text-sky-600" /> Health Connect (Android)</h2>
         <p className="mt-1 text-xs text-ink-soft leading-relaxed">Pull steps, active calories, workouts and weight from your watch or fitness app (Fitbit, Samsung Health, Mi Fitness, Google Fit…) via Health Connect. Pair this phone with a one-time code.</p>
+        <p className="mt-1 text-[11px] text-ink-soft leading-relaxed">Android 14 or newer has Health Connect built in. On Android 9–13 you also need the free <b>Health Connect</b> app from Google Play — Nura will point you to it.</p>
         {code ? (
           <div className="mt-3 rounded-2xl bg-surface border border-surface-line p-4 text-center">
             <div className="font-mono text-3xl font-black tracking-[0.3em]" aria-label="Pairing code">{code}</div>
