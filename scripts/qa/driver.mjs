@@ -44,3 +44,23 @@ export async function connect(want = "dietbuddy") {
   };
   return api;
 }
+
+/** Replace the camera with a canvas that shows a still photo (so AI scans are repeatable and no personal scene is captured). */
+export function fakeCameraJs(base64Jpeg) {
+  return `(()=>{const c=document.createElement('canvas');c.width=640;c.height=640;const x=c.getContext('2d');const im=new Image();im.src='data:image/jpeg;base64,${base64Jpeg}';
+  const draw=()=>{x.fillStyle='#888';x.fillRect(0,0,640,640);if(im.complete&&im.naturalWidth){const s=Math.max(640/im.naturalWidth,640/im.naturalHeight);x.drawImage(im,(640-im.naturalWidth*s)/2,(640-im.naturalHeight*s)/2,im.naturalWidth*s,im.naturalHeight*s)}};
+  setInterval(draw,66);draw();const orig=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia=async(k)=>{if(k&&k.video){return c.captureStream(15)}return orig(k)};return 'fake camera installed'})()`;
+}
+
+/** Camera feed that shows an EAN-13 barcode (valid check digit supplied by the caller). */
+export function fakeBarcodeJs(ean13) {
+  return `(()=>{const code='${ean13}';const L=['0001101','0011001','0010011','0111101','0100011','0110001','0101111','0111011','0110111','0001011'];
+  const G=['0100111','0110011','0011011','0100001','0011101','0111001','0000101','0010001','0001001','0010111'];const R=['1110010','1100110','1101100','1000010','1011100','1001110','1010000','1000100','1001000','1110100'];
+  const P=['LLLLLL','LLGLGG','LLGGLG','LLGGGL','LGLLGG','LGGLLG','LGGGLL','LGLGLG','LGLGGL','LGGLGL'];const d=code.split('').map(Number);let bits='101';const pat=P[d[0]];
+  for(let i=0;i<6;i++)bits+=(pat[i]==='L'?L:G)[d[i+1]];bits+='01010';for(let i=0;i<6;i++)bits+=R[d[i+7]];bits+='101';
+  const c=document.createElement('canvas');c.width=640;c.height=480;const x=c.getContext('2d');const w=5,off=(640-bits.length*w)/2;
+  const draw=()=>{x.fillStyle='#fff';x.fillRect(0,0,640,480);x.fillStyle='#000';for(let i=0;i<bits.length;i++)if(bits[i]==='1')x.fillRect(off+i*w,140,w,200);x.font='24px monospace';x.fillText(code,off+20,380)};
+  setInterval(draw,66);draw();const orig=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia=async(k)=>{if(k&&k.video){return c.captureStream(15)}return orig(k)};return 'fake barcode camera installed'})()`;
+}

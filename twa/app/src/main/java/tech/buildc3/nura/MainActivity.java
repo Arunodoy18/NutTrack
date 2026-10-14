@@ -250,7 +250,13 @@ public class MainActivity extends Activity {
                     try {
                         HealthSync.pair(this, code, true);
                         ReminderWorker.schedule(this);
-                        ui.post(this::askNotificationPermission);
+                        ui.post(() -> {
+                            // The page asks "is this phone linked?": answer now, and in the user agent for later loads.
+                            WebSettings ws = web.getSettings();
+                            if (!ws.getUserAgentString().contains(" linked")) ws.setUserAgentString(ws.getUserAgentString() + " linked");
+                            web.evaluateJavascript("window.__nuraLinked=true;window.dispatchEvent(new Event('nura:linked'))", null);
+                            askNotificationPermission();
+                        });
                     } catch (Exception ignore) { /* retried next launch */ }
                 }).start();
                 return;
