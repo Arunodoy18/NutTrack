@@ -13,7 +13,8 @@ export default function AppLinker() {
     const attempt = () => {
       try {
         const ua = navigator.userAgent;
-        if (!/NuraApp\/\d/.test(ua) || /\blinked\b/.test(ua) || (window as any).__nuraLinked || busy) return;
+        const linked = typeof (window as any).__nuraLinked === "boolean" ? (window as any).__nuraLinked : /\blinked\b/.test(ua); // the app tells us when it changes
+        if (!/NuraApp\/\d/.test(ua) || linked || busy) return;
         if (/^\/(auth|download|privacy|terms|setup|onboarding)/.test(location.pathname)) return;
         const last = Number(sessionStorage.getItem("nura_link_at") || 0);
         if (Date.now() - last < 15_000) return; // no hammering

@@ -48,9 +48,9 @@ export default function ReminderSettingsClient() {
 
   // Inside the installed Android app notifications are native (the app polls /api/device/due); no web push.
   const inApp = typeof navigator !== "undefined" && /NuraApp\/\d/.test(navigator.userAgent);
-  const [linkedNow, setLinkedNow] = useState(typeof window !== "undefined" && !!(window as any).__nuraLinked);
+  const [linkedNow, setLinkedNow] = useState(typeof window !== "undefined" && (window as any).__nuraLinked === true);
   useEffect(() => { const f = () => setLinkedNow(true); window.addEventListener("nura:linked", f); return () => window.removeEventListener("nura:linked", f); }, []);
-  const appLinked = inApp && (linkedNow || /\blinked\b/.test(navigator.userAgent));
+  const appLinked = inApp && (typeof window !== "undefined" && typeof (window as any).__nuraLinked === "boolean" ? (window as any).__nuraLinked || linkedNow : linkedNow || /\blinked\b/.test(navigator.userAgent));
   const supported = inApp || typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
   const refreshDevice = useCallback(async () => {

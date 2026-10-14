@@ -276,6 +276,11 @@ public class MainActivity extends Activity {
             final String t = st.reminderToken();
             st.clearReminderToken();
             ReminderWorker.cancel(this);
+            ui.post(() -> { // this phone is no longer linked: the page and later loads must know
+                WebSettings ws = web.getSettings();
+                ws.setUserAgentString(ws.getUserAgentString().replace(" linked", ""));
+                web.evaluateJavascript("window.__nuraLinked=false", null);
+            });
             if (t != null) new Thread(() -> {
                 try {
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(HealthStore.BASE_URL + "/api/device/unlink").openConnection();
