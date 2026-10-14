@@ -114,6 +114,9 @@ public class MainActivity extends Activity {
         if ((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0) WebView.setWebContentsDebuggingEnabled(true);
         CookieManager cm = CookieManager.getInstance();
         cm.setAcceptCookie(true);
+        // Marker for the website: service-worker requests lack the user-agent suffix but do send cookies.
+        cm.setCookie(HealthStore.BASE_URL, "nura_app=" + version() + "; Max-Age=31536000; Path=/; Secure; SameSite=Lax");
+        cm.flush();
         cm.setAcceptThirdPartyCookies(web, true); // Razorpay checkout runs in an iframe that needs its own storage
         web.addJavascriptInterface(new NativeBridge(this), "NuraNative");
 

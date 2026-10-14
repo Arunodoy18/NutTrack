@@ -8,6 +8,7 @@ export function middleware(req: NextRequest) {
     accept: req.headers.get("accept"),
     ua: req.headers.get("user-agent"),
     path: req.nextUrl.pathname,
+    cookie: req.headers.get("cookie"),
   });
   const res = show ? NextResponse.rewrite(new URL("/download", req.url)) : NextResponse.next();
   res.headers.set("Vary", "User-Agent, Accept");

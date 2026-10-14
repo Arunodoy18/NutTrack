@@ -107,9 +107,6 @@ export default function InsightsClient({
               : 'bg-brand/5 border-brand/10 hover:border-brand/20'
           }`}
         >
-          <span className="absolute top-3 right-3 text-[8px] font-black tracking-widest text-brand bg-brand/10 px-2 py-0.5 rounded-full uppercase">
-            Pro
-          </span>
           <div className="flex items-center gap-2 mb-1">
             <Zap className="w-4 h-4 text-brand" />
             <span className="text-sm font-black text-ink">Analytics</span>

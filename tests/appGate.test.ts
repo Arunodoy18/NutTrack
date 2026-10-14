@@ -26,3 +26,14 @@ test("spoof-lookalikes don't count", () => {
   assert.equal(isAppUserAgent(null), false);
   assert.equal(isAppUserAgent("Mozilla/5.0 NuraApp/x.y.z"), false);
 });
+
+import { hasAppCookie } from "../lib/appGate";
+test("the app cookie also lets the app through (service-worker requests carry cookies, not the UA suffix)", () => {
+  assert.equal(hasAppCookie("a=b; nura_app=1.2.2; c=d"), true);
+  assert.equal(hasAppCookie("nura_app=1.2.2"), true);
+  assert.equal(hasAppCookie("nura_app=evil"), false);
+  assert.equal(hasAppCookie("xnura_app=1.2.2"), false);
+  assert.equal(hasAppCookie(null), false);
+  assert.equal(shouldShowDownload({ method: "GET", accept: html, ua: chrome, path: "/recipes", cookie: "nura_app=1.2.2" }), false);
+  assert.equal(shouldShowDownload({ method: "GET", accept: html, ua: chrome, path: "/recipes", cookie: "foo=bar" }), true);
+});

@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-surface-muted text-ink antialiased">
-        <Script id="app-gate" strategy="beforeInteractive">{`try{if(!/NuraApp\\/\\d+\\.\\d+\\.\\d+/.test(navigator.userAgent)&&!/^\\/(download|privacy|terms)\\/?$/.test(location.pathname))location.replace("/download")}catch(e){}`}</Script>
+        <Script id="app-gate" strategy="beforeInteractive">{`try{if(!/NuraApp\\/\\d+\\.\\d+\\.\\d+/.test(navigator.userAgent)&&!/(^|;\\s*)nura_app=\\d/.test(document.cookie)&&!/^\\/(download|privacy|terms)\\/?$/.test(location.pathname))location.replace("/download")}catch(e){}`}</Script>
         <PwaRegistry />
         <TimezoneCookie />
         <AppLinker />
