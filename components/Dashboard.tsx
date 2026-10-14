@@ -1,5 +1,6 @@
 "use client";
 
+import { FREE_FOR_ALL } from '@/lib/plan';
 import React, { useState } from 'react';
 import Image from 'next/image';
 import BottomNav from './BottomNav';
@@ -430,7 +431,7 @@ export default function Dashboard({
   
   // Real AI scanning & paywall states
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
-  const [isPremium, setIsPremium] = useState(false);
+  const [isPremium, setIsPremium] = useState(FREE_FOR_ALL);
 
   // Time hydration and Meal Details Modal
   const [mounted, setMounted] = useState(false);
@@ -445,13 +446,13 @@ export default function Dashboard({
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       // Check server prop first, fallback to local storage for guest compatibility
-      setIsPremium(isPremiumUser || localStorage.getItem("dietbuddy_premium") === "true");
+      setIsPremium(FREE_FOR_ALL || isPremiumUser || localStorage.getItem("dietbuddy_premium") === "true");
     }
   }, [isPremiumUser]);
 
   const checkScanLimit = () => {
     if (typeof window === "undefined") return false;
-    if (isPremium) return false;
+    if (FREE_FOR_ALL || isPremium) return false;
 
     const todayStr = new Date().toDateString();
     const lastScanDate = localStorage.getItem("dietbuddy_last_scan_date");

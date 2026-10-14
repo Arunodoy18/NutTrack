@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit, checkChatRateLimit } from "@/lib/rateLimit";
+import { FREE_FOR_ALL } from "@/lib/plan";
 import { canAccessProfile, ownerOf, getActiveProfileId } from "@/lib/access";
 import { getUserTz } from "@/lib/tzServer";
 import { startOfDayInTz, startOfDayDaysAgo, dateKeyInTz, weekdayInTz } from "@/lib/tz";
@@ -42,6 +43,7 @@ const GEMINI_VISION_MODEL = "gemini-3.6-flash";
 
 /** Premium state for an ACCOUNT (family members share their parent's plan and free trial). */
 function computePremium(owner?: { isPremium: boolean | null; createdAt: Date | null; premiumSince: Date | null } | null) {
+  if (FREE_FOR_ALL) return { isPremium: true, isTrialActive: false }; // free for everyone: fair-use limit only
   let isPremium = owner?.isPremium ?? false;
   let isTrialActive = false;
   if (owner?.createdAt) {
@@ -79,7 +81,7 @@ async function checkAiAccess(overrideUserId?: string) {
 
   if (!allowed) {
     if (isPremium) {
-      throw new Error("Premium rate limit exceeded (200 scans/day). Please try again later.");
+      throw new Error("You've reached today's fair-use limit of 200 AI scans. It resets tomorrow.");
     } else {
       throw new Error("Rate limit exceeded (5 scans/hour). Please upgrade to premium for more scans.");
     }

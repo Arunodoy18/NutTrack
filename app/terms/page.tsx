@@ -43,7 +43,7 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-xl font-bold mb-3">4. Subscription and Payments</h2>
-            <p>Certain features may require a premium subscription. All payments are processed securely via our third-party payment provider (Razorpay). Refunds are handled on a case-by-case basis as per our refund policy.</p>
+            <p>Nura is currently free to use. We apply a fair-use limit of 200 AI scans per account per day. If we introduce paid plans in future, we will tell you in the app before any charge, and nothing is charged without your explicit action.</p>
           </section>
 
           <section>

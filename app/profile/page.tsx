@@ -205,37 +205,12 @@ export default async function ProfilePage() {
         <div className="bg-gradient-to-br from-[#fc5c16] to-[#e63e00] rounded-[32px] p-6 text-white shadow-xl shadow-brand/20 mb-6 relative overflow-hidden">
           <div className="flex items-center gap-2 mb-3 relative z-10">
             <Zap className="w-4 h-4" fill="currentColor" />
-            <span className="text-[10px] font-black tracking-widest uppercase">Nura Premium</span>
+            <span className="text-[10px] font-black tracking-widest uppercase">Nura</span>
           </div>
-          <h2 className="text-2xl font-black mb-2 relative z-10">Unlimited AI scans</h2>
-          <p className="text-sm text-white/90 font-medium mb-6 relative z-10">
-            Deep insights, cloud sync & no daily limits.
+          <h2 className="text-2xl font-black mb-2 relative z-10">Free for everyone</h2>
+          <p className="text-sm text-white/90 font-medium relative z-10">
+            Every feature is included at no cost. Fair use: up to 200 AI scans a day.
           </p>
-          <div className="flex justify-between items-center relative z-10">
-            {isTrialActive ? (
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black tracking-tight text-white/90">Trial Active</span>
-                <span className="text-sm font-bold text-white/80">({trialDaysLeft} days left)</span>
-              </div>
-            ) : (
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-black text-white">₹199</span>
-                <span className="text-xs font-bold text-white/80">/ 3 months</span>
-              </div>
-            )}
-            {!isPremium && !isTrialActive ? (
-              <ComingSoon>
-                <button className="bg-white text-brand px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:scale-105 transition-transform">
-                  Upgrade
-                </button>
-              </ComingSoon>
-            ) : (
-              <button disabled className="bg-white/20 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm">
-                Active
-              </button>
-            )}
-          </div>
-          
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
           <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         </div>
