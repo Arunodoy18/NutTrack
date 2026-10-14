@@ -11,6 +11,9 @@ export function middleware(req: NextRequest) {
   });
   const res = show ? NextResponse.rewrite(new URL("/download", req.url)) : NextResponse.next();
   res.headers.set("Vary", "User-Agent, Accept");
+  // The same URL answers differently for the app and for a browser, so a shared cache must never keep it
+  // (a cached "download" page once got served to the app itself).
+  if (show) res.headers.set("Cache-Control", "private, no-store, max-age=0");
   return res;
 }
 

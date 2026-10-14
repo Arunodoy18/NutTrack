@@ -3,7 +3,7 @@ import path from "path";
 import { Download, ShieldCheck, Smartphone, Droplets, ScanLine, Users } from "lucide-react";
 
 export const metadata = { title: "Get the Nura app", description: "Nura is an Android app. Download and install it to start tracking your nutrition." };
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic"; // never statically cached: it is also served in place of other URLs
 
 function release(): { version: string; sizeMb: string; sha256: string; file: string } {
   try {
