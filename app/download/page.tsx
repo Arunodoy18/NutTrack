@@ -6,6 +6,7 @@ import {
   Activity, FileDown, ShieldCheck, Sparkles, Smartphone, Check, ChevronDown, Flame, HeartPulse, Lock, Camera,
 } from "lucide-react";
 import PlatformNotice from "@/components/landing/PlatformNotice";
+import LiveDemoLoader from "@/components/landing/LiveDemoLoader";
 
 const SITE = "https://dietbuddy.buildc3.tech";
 export const dynamic = "force-dynamic"; // also served in place of other URLs, so it must never be cached as a static page
@@ -118,6 +119,7 @@ export default async function DownloadPage() {
               </p>
               <div className="mt-6 flex flex-col items-center gap-2 md:items-start">
                 <Cta />
+                <a href="#try" className="text-sm font-bold text-brand underline underline-offset-4">Or try it right here, no install →</a>
                 <p className="text-xs font-medium text-ink-soft">{r.version ? `Version ${r.version} · ` : ""}{r.sizeMb ? `${r.sizeMb} MB · ` : ""}Android 10 or newer · Free</p>
               </div>
               <PlatformNotice qrSvg={qrSvg} />
@@ -135,6 +137,16 @@ export default async function DownloadPage() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* live demo */}
+        <section id="try" className="scroll-mt-16 border-y border-surface-line bg-white py-14" aria-labelledby="try-h">
+          <div className="mx-auto max-w-5xl px-5 text-center">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-brand">Try it live</span>
+            <h2 id="try-h" className="mt-3 font-display text-3xl font-black tracking-tight sm:text-4xl">Don&apos;t take our word for it. Tap around.</h2>
+            <p className="mx-auto mt-2 max-w-lg text-sm font-medium text-ink-soft">This is Nura&apos;s real food database, nutrition engine and meal planner running in your browser. Watch the tour, or take over.</p>
+          </div>
+          <div className="mt-8"><LiveDemoLoader /></div>
         </section>
 
         {/* how it works */}
