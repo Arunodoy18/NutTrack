@@ -1013,40 +1013,9 @@ OUTPUT FORMAT:
 // MANUAL PAYMENT ACTIONS
 // ==========================================
 
-export async function verifyManualPaymentAction(utr: string) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) return { success: false, error: "Unauthorized" };
-
-    const userId = session.user.id;
-
-    // MVP: Basic length validation for a UPI UTR (typically 12 digits)
-    if (!utr || utr.trim().length < 12) {
-      return { success: false, error: "Invalid Transaction ID. Please enter the full 12-digit UTR number." };
-    }
-
-    // 1. Record the manual payment as pending/verified
-    // Note: We use Razorpay's table but flag it differently since it's a manual entry
-    const dummyOrderId = `qr_order_${Date.now()}`;
-    await db.insert(payments).values({
-      userId,
-      razorpayOrderId: dummyOrderId,
-      razorpayPaymentId: utr,
-      razorpaySignature: "manual_qr_verified",
-      amount: 29900,
-      status: "paid", // MVP: trust the user input
-    });
-
-    // 2. Upgrade the user to Premium
-    await db.update(users)
-      .set({ isPremium: true, premiumSince: new Date() })
-      .where(eq(users.id, userId));
-
-    return { success: true };
-  } catch (error: any) {
-    console.error("Error verifying manual payment:", error);
-    return { success: false, error: error.message };
-  }
+/** Payments are switched off (Nura is free). The old version trusted any typed 12-character "UTR" and made the account Premium. */
+export async function verifyManualPaymentAction(_utr: string) {
+  return { success: false, error: "Payments are not available. Nura is free." };
 }
 
 export async function lookupBarcodeAction(barcode: string) {

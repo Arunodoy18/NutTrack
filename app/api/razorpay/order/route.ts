@@ -1,9 +1,11 @@
+import { FREE_FOR_ALL } from "@/lib/plan";
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export async function POST(req: Request) {
+  if (FREE_FOR_ALL) return NextResponse.json({ error: "Payments are disabled: Nura is free." }, { status: 410 });
   try {
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID || "dummy_key",

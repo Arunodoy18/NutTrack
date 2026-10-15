@@ -44,6 +44,8 @@ try {
   g = await get("/privacy", { ...html, ...ua("Mozilla/5.0 Chrome") }); check("gate: privacy page stays public", g.r.status === 200 && !/Download for Android/.test(g.t));
   const apk = await rf(B + "/nura.apk", { method: "HEAD" }); check("download: APK is served", apk.status === 200 && /android/.test(apk.headers.get("content-type") || ""), apk.headers.get("content-length"));
   const h = await rf(B + "/api/health"); check("health endpoint ok + never cached", h.status === 200 && /no-store/.test(h.headers.get("cache-control") || ""));
+  const csp = (await rf(B + "/download")).headers.get("content-security-policy") || "";
+  check("security: CSP no longer allows payment domains", csp.length > 0 && !/razorpay/i.test(csp));
   // ── auth ──
   for (const p of ["/api/activity", "/api/reminders", "/api/export", "/api/sync/device"]) check(`auth: ${p} requires sign-in`, (await rf(B + p)).status === 401);
   A = await newAccount("a"); Bb = await newAccount("b");
@@ -62,6 +64,8 @@ try {
   r = await op(A.c, { id: "reg-water-001", userId: kid, kind: "water_add", amountMl: 300 });
   check("child's water logged to the child", r.body.status === "ok" && (await q(`select count(*)::int c from water_logs where user_id=$1`, [kid]))[0].c === 1);
   check("sync: junk water amount rejected", (await op(A.c, { id: "reg-water-002", userId: A.id, kind: "water_add", amountMl: 99999 })).http === 400);
+  // ── payments are switched off ──
+  for (const p of ["/api/razorpay/order", "/api/razorpay/verify", "/api/payment/verify"]) check(`free: ${p} is disabled (410)`, (await A.c.post(p, {})).http === 410);
   // ── free-for-all ──
   check("free: nothing in the sync API mentions upgrade/limit for a brand-new account", !JSON.stringify((await op(A.c, { id: "reg-meal-0003", userId: A.id, kind: "meal_manual", meal: meal("Dinner") })).body).match(/upgrade|premium|limit/i));
   // ── activity + devices ──

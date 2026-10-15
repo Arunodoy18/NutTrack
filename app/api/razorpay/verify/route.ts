@@ -1,3 +1,4 @@
+import { FREE_FOR_ALL } from "@/lib/plan";
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { db } from "@/lib/db";
@@ -7,6 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { eq } from "drizzle-orm";
 
 export async function POST(req: Request) {
+  if (FREE_FOR_ALL) return NextResponse.json({ error: "Payments are disabled: Nura is free." }, { status: 410 });
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
