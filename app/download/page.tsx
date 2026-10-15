@@ -12,14 +12,16 @@ const SITE = "https://dietbuddy.buildc3.tech";
 export const dynamic = "force-dynamic"; // also served in place of other URLs, so it must never be cached as a static page
 
 export const metadata = {
+  metadataBase: new URL(SITE),
+  alternates: { canonical: "/download" },
   title: "Nura — free nutrition tracker for the whole family (Android app)",
   description: "Nura turns a photo, a barcode or a few words into calories and macros. Child-safe targets, offline logging, meal plans, reminders and Health Connect sync. Free Android app.",
   openGraph: {
     title: "Nura — nutrition tracking for the whole family",
     description: "Snap a meal, scan a barcode or just type it. Free Android app with child-safe targets and offline logging.",
-    url: SITE, siteName: "Nura", type: "website", images: [{ url: `${SITE}/icon.png`, width: 512, height: 512 }],
+    url: SITE, siteName: "Nura", type: "website", images: [{ url: `${SITE}/og.png`, width: 1200, height: 630, alt: "Nura: free nutrition tracker for the whole family" }],
   },
-  twitter: { card: "summary", title: "Nura — nutrition tracking for the whole family", description: "Free Android app: photo, barcode or text to calories and macros." },
+  twitter: { card: "summary_large_image", images: [`${SITE}/og.png`], title: "Nura — nutrition tracking for the whole family", description: "Free Android app: photo, barcode or text to calories and macros." },
 };
 
 function release() {
