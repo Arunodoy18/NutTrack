@@ -98,7 +98,7 @@ export default async function DownloadPage() {
       <header className="sticky top-0 z-30 border-b border-surface-line bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <a href="#top" className="flex items-center gap-2 font-display text-xl font-black tracking-tight">
-            <img src="/icon.png" alt="" width={32} height={32} className="h-8 w-8 rounded-xl" /> Nura
+            <img src="/icon-192.png" alt="" width={32} height={32} className="h-8 w-8 rounded-xl" /> Nura
           </a>
           <a href={apk} download className="rounded-full bg-brand px-4 py-2 text-sm font-bold text-white">Download</a>
         </div>
@@ -275,7 +275,7 @@ export default async function DownloadPage() {
         {/* final cta */}
         <section className="px-5 pb-16">
           <div className="mx-auto max-w-3xl rounded-[32px] bg-ink p-8 text-center text-white sm:p-10">
-            <img src="/icon.png" alt="" width={64} height={64} className="mx-auto h-16 w-16 rounded-2xl" />
+            <img src="/icon-192.png" alt="" width={64} height={64} className="mx-auto h-16 w-16 rounded-2xl" />
             <h2 className="mt-4 font-display text-3xl font-black tracking-tight">Start with your next meal</h2>
             <p className="mx-auto mt-2 max-w-sm text-sm font-medium text-white/70">Free, small and ready in a minute.</p>
             <div className="mt-6 flex justify-center"><Cta /></div>
