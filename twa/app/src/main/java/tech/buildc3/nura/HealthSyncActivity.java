@@ -88,8 +88,7 @@ public class HealthSyncActivity extends Activity {
         boolean paired = store.token() != null;
         StringBuilder s = new StringBuilder();
         if (headline != null) s.append(headline).append("\n\n");
-        if (!HealthSync.supported()) s.append("Health Connect sync needs Android 14 or newer.");
-        else if (!paired) s.append("Not connected. In Nura open Profile → Activity & connected apps and tap “Create pairing code”.");
+        if (!paired) s.append("Not connected. In Nura open Profile → Activity & connected apps and tap “Create pairing code”.");
         else {
             s.append("Connected").append(store.profileName() == null || store.profileName().isEmpty() ? "" : " for " + store.profileName()).append(".\n");
             long t = store.lastSync();
@@ -105,7 +104,7 @@ public class HealthSyncActivity extends Activity {
     }
 
     private void requestAccess() {
-        if (!HealthSync.supported()) return;
+        if (!HealthSync.builtIn()) { requestAccessJetpack(); return; }
         List<String> need = new ArrayList<>();
         for (String perm : HealthSync.READ_PERMISSIONS) if (checkSelfPermission(perm) != PackageManager.PERMISSION_GRANTED) need.add(perm);
         if (checkSelfPermission(HealthSync.BACKGROUND_PERMISSION) != PackageManager.PERMISSION_GRANTED) need.add(HealthSync.BACKGROUND_PERMISSION);
@@ -119,6 +118,37 @@ public class HealthSyncActivity extends Activity {
         boolean any = false;
         for (String perm : HealthSync.READ_PERMISSIONS) if (checkSelfPermission(perm) == PackageManager.PERMISSION_GRANTED) any = true;
         if (any) syncNow(); else refresh("No access granted. Tap “Sync now” to try again.");
+    }
+
+    /** Android 9-13: needs the Health Connect app from Google Play, then its own permission screen. */
+    private void requestAccessJetpack() {
+        int st = HcJetpack.status(this);
+        if (st != 3) {
+            refresh(st == 2 ? "Health Connect needs an update before Nura can read from it." : "Install Health Connect (a free Google app) so Nura can read your steps and workouts.");
+            primary.setVisibility(android.view.View.VISIBLE);
+            primary.setText(st == 2 ? "Update Health Connect" : "Get Health Connect");
+            primary.setOnClickListener(v -> { try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + HcJetpack.PROVIDER))); } catch (Exception e) { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=" + HcJetpack.PROVIDER))); } });
+            return;
+        }
+        new Thread(() -> {
+            boolean ok; try { ok = HcJetpack.hasPermissions(this); } catch (Exception e) { ok = false; }
+            final boolean granted = ok;
+            ui.post(() -> {
+                if (granted) { syncNow(); return; }
+                try { startActivityForResult(new Intent(HcJetpack.ACTION_REQUEST).setPackage(HcJetpack.PROVIDER).putExtra(HcJetpack.EXTRA_PERMS, HcJetpack.PERMISSIONS), REQ + 1); }
+                catch (Exception e) { refresh("Couldn't open Health Connect: " + e.getMessage()); }
+            });
+        }).start();
+    }
+
+    @Override protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req != REQ + 1) return;
+        new Thread(() -> {
+            boolean ok; try { ok = HcJetpack.hasPermissions(this); } catch (Exception e) { ok = false; }
+            final boolean granted = ok;
+            ui.post(() -> { if (granted) syncNow(); else refresh("No access granted. Tap “Sync now” to try again."); });
+        }).start();
     }
 
     private void syncNow() {

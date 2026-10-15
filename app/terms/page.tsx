@@ -6,9 +6,9 @@ export default function TermsOfServicePage() {
   return (
     <div className="select-text min-h-screen bg-surface p-6 pb-24 font-sans text-ink">
       <div className="max-w-3xl mx-auto">
-        <Link href="/profile" className="inline-flex items-center gap-2 text-ink-soft hover:text-ink transition-colors mb-8">
+        <Link href="/download" className="inline-flex items-center gap-2 text-ink-soft hover:text-ink transition-colors mb-8">
           <ArrowLeft className="w-5 h-5" />
-          <span className="font-bold text-sm">Back to Profile</span>
+          <span className="font-bold text-sm">Back</span>
         </Link>
         
         <h1 className="text-3xl font-black tracking-tight mb-4">Terms of Service</h1>

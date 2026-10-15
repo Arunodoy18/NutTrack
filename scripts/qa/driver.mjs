@@ -3,7 +3,7 @@ import fs from "node:fs";
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function connect(want = "dietbuddy") {
-  const list = await (await fetch("http://localhost:9222/json")).json();
+  const list = await (await fetch(`http://localhost:${process.env.CDP_PORT || 9222}/json`)).json();
   const page = list.find((t) => t.type === "page" && t.url.includes(want)) ?? list.find((t) => t.type === "page");
   if (!page) throw new Error("no page target");
   const ws = new WebSocket(page.webSocketDebuggerUrl);

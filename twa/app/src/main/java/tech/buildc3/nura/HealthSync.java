@@ -48,7 +48,8 @@ final class HealthSync {
     };
     static final String BACKGROUND_PERMISSION = "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND";
 
-    static boolean supported() { return Build.VERSION.SDK_INT >= 34; }
+    static boolean supported() { return true; }
+    static boolean builtIn() { return Build.VERSION.SDK_INT >= 34; }
 
     static final class Result {
         final boolean ok; final String message;
@@ -121,7 +122,12 @@ final class HealthSync {
         try { store = new HealthStore(ctx); } catch (Exception e) { return new Result(false, "Secure storage unavailable"); }
         String token = store.token();
         if (token == null) return new Result(false, "Not paired");
-        if (!supported()) return new Result(false, "Needs Android 14 or newer");
+        if (!builtIn()) {
+            // Android 9-13: the Health Connect app (Google Play) via the Jetpack client.
+            try { return upload(store, token, HcJetpack.read(ctx, daysBack)); }
+            catch (SecurityException e) { store.saveResult(false, "Permission needed"); return new Result(false, "Allow Nura in Health Connect to read your data"); }
+            catch (Exception e) { String m = e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage(); store.saveResult(false, m); return new Result(false, m); }
+        }
         try {
             HealthConnectManager m = (HealthConnectManager) ctx.getSystemService(Context.HEALTHCONNECT_SERVICE);
             if (m == null) return new Result(false, "Health Connect not available");
@@ -150,12 +156,7 @@ final class HealthSync {
                 weights.put(new JSONObject().put("at", w.getTime().toString()).put("kg", w.getWeight().getInGrams() / 1000.0));
             }
             JSONObject body = new JSONObject().put("source", "health-connect").put("days", days).put("workouts", workouts).put("weights", weights);
-            int code = post(store, token, body.toString());
-            if (code == 401) { store.clear(); return new Result(false, "This phone was disconnected. Pair again from Nura."); }
-            if (code != 200) { store.saveResult(false, "Server error " + code); return new Result(false, "Server error " + code); }
-            String msg = days.length() + " days, " + workouts.length() + " workouts, " + weights.length() + " weigh-ins";
-            store.saveResult(true, msg);
-            return new Result(true, msg);
+            return upload(store, token, body);
         } catch (SecurityException e) {
             store.saveResult(false, "Permission needed");
             return new Result(false, "Allow Nura in Health Connect to read your data");
@@ -164,6 +165,15 @@ final class HealthSync {
             store.saveResult(false, msg);
             return new Result(false, msg);
         }
+    }
+
+    private static Result upload(HealthStore store, String token, JSONObject body) throws Exception {
+        int code = post(store, token, body.toString());
+        if (code == 401) { store.clear(); return new Result(false, "This phone was disconnected. Pair again from Nura."); }
+        if (code != 200) { store.saveResult(false, "Server error " + code); return new Result(false, "Server error " + code); }
+        String msg = body.getJSONArray("days").length() + " days, " + body.getJSONArray("workouts").length() + " workouts, " + body.getJSONArray("weights").length() + " weigh-ins";
+        store.saveResult(true, msg);
+        return new Result(true, msg);
     }
 
     private static int post(HealthStore store, String token, String json) throws Exception {
