@@ -1,77 +1,56 @@
-# dietBuddy — Strava-style redesign · Production handoff
+# Nura — nutrition tracking for the whole family
 
-This folder contains **real Next.js + Tailwind files** that drop into your
-`NutTrack` repo. **No functional code was changed** — only the UI/styling.
-Commit them on github.com (pencil = edit, "Add file → Upload files" = new files),
-and Netlify auto-deploys to dietbuddy.buildc3.tech.
+Free Android app (photo / barcode / text logging, offline-first, child-safe targets, meal plans, reminders, Health Connect sync)
+with a Next.js backend.
 
----
+- **Website & download page:** https://dietbuddy.buildc3.tech (browsers see the landing page + live demo; the app itself only opens inside the Android app)
+- **Latest app file:** https://dietbuddy.buildc3.tech/nura.apk — version and SHA-256 are in [`public/app-release.json`](public/app-release.json)
+- **Health check:** https://dietbuddy.buildc3.tech/api/health → `{ ok, rateLimit, commit }` (which commit is live, and whether Redis rate limiting is connected)
 
-## Design tokens (the new look)
-- **Accent (Strava orange):** `#FC4C02` → in Tailwind use `brand` (`bg-brand`, `text-brand`, `brand-600` …)
-- **Surfaces:** app bg `#F4F4F6` (`surface-muted`), cards `#FFFFFF`, lines `#E7E7EB` (`surface-line`)
-- **Text:** `#242428` (`ink`), `#67676F` (`ink-soft`), `#9A9AA2` (`ink-faint`)
-- **Display font:** Barlow Semi Condensed → `font-display` (headlines + numbers)
-- **Body font:** Plus Jakarta Sans → `font-sans`
-- **Macros:** protein = emerald, fat = amber, fiber = blue (unchanged hues)
+## How it fits together
+| Part | Where | Notes |
+|---|---|---|
+| Web app + API | `app/`, `components/`, `lib/` | Next.js 16 (webpack build for `next-pwa`), React 18, Drizzle ORM → Neon Postgres, NextAuth (JWT). Deployed by Netlify on every push to `main`. |
+| Android app | `twa/` | Native WebView shell (Java + one Kotlin file), minSdk 29. Adds `NuraApp/<version>` to the user agent and sets a `nura_app` cookie: the website serves its screens only to that. Native extras: camera/mic, voice input bridge, downloads, alarm-based reminders, Health Connect sync. |
+| Gate | `middleware.ts`, `lib/appGate.ts` | Browsers get `/download`; the app (UA or cookie) gets the real screens. APIs are not gated (they require auth). |
+| Landing page | `app/download/`, `components/landing/` | Includes a live demo that runs the real food DB, nutrition engine and meal planner in the browser. |
+| Reminders | `lib/reminders.ts`, `app/api/device/*`, `twa/.../ReminderAlarms.java` | The server says when to wake the phone; Android alarms (not background jobs, which Android throttles for unopened apps) fetch what is due and show it. |
+| Rate limiting | `lib/rateLimit.ts` | Upstash Redis. Without it every limit fails open (check `/api/health`). |
+| Plans | `lib/plan.ts` | `FREE_FOR_ALL = true`: everything free, 200 AI scans/day fair use, payment endpoints return 410. |
 
----
+## Environment (names only, set in Netlify and `.env.local`)
+`DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `RESEND_API_KEY`,
+`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CRON_SECRET`, `VAPID_*` (legacy web push). `COMMIT_REF` is provided by Netlify.
 
-## BATCH 1 + 2 — included here (ready to commit) ✅
-Replace each file in your repo with the matching file from this folder:
+## Everyday commands
+```bash
+npm run dev            # next dev --webpack is needed because next-pwa uses webpack
+npm test               # unit tests (tsx --test tests/*.test.ts)
+npx tsc --noEmit       # type-check
+npm run build          # production build (uses --webpack)
+```
 
-| Repo path | What changed |
-|---|---|
-| `tailwind.config.ts` | added `brand`, `ink`, `surface` colors + `display`/`sans` fonts |
-| `app/globals.css` | light theme, accent var, loads Barlow + Plus Jakarta + JetBrains Mono |
-| `app/layout.tsx` | light `<body>`, `themeColor` white, removed `dark` class (PWA + SW untouched) |
-| `app/auth/login/page.tsx` | reskinned + **added working "Continue with Google"** (`signIn("google")`) |
-| `app/auth/signup/page.tsx` | reskinned + Google button (register + auto-login logic untouched) |
-| `app/auth/forgot-password/page.tsx` | reskinned OTP flow (send-otp / verify-otp logic untouched) |
-| `components/LandingPage.tsx` | full Strava-style marketing page (all `/auth` links intact) |
+## Test suites that run against production (disposable accounts, cleaned up after)
+```bash
+node scripts/qa/regression.mjs   # 33 end-to-end checks: gate, auth, privacy between accounts, sync, activity, reminders, export, payments off
+node scripts/qa/abuse.mjs        # 33 "how real users break it" checks: parallel taps, odd emails, hostile text, stale sessions, floods
+node scripts/qa/ratelimit.mjs    # proves rate limiting is on (burst of wrong pairing codes gets 429)
+node scripts/qa/cleanup.mjs      # deletes any leftover QA accounts
+```
+Heads-up: the limiter counts refused attempts too and weighs the previous 15-minute window, so wait ~15–30 minutes between
+back-to-back runs. Device testing helpers: `scripts/qa/driver.mjs` (DevTools driver), `attach.sh`, `mkuser.mjs`, `watch.mjs`,
+`db.mjs` (read SQL), `hcwriter/` (test-only Health Connect data writer, never shipped).
 
-**Commit these together.** Your Dashboard route still renders its current
-design (it sets its own background), so nothing looks half-finished — only the
-landing + auth + theme foundation flip to the new look.
+## Releasing a new Android build
+1. Bump `versionCode` / `versionName` in `twa/app/build.gradle`.
+2. `cd twa && ./gradlew assembleRelease bundleRelease` (JDK 17, Android SDK; `assembleQa` builds a minified-but-inspectable build for DevTools testing, never publish it).
+3. `zipalign -f 4 …/app-release-unsigned.apk aligned.apk`, then `apksigner sign --ks ~/nura-signing/nura-upload.jks --ks-key-alias nura --ks-pass env:KP --key-pass env:KP` (put the password in `KP`, never in the command line); sign the `.aab` with `jarsigner`.
+4. Copy the APK to `public/nura.apk`, write `public/app-release.json` (`version`, `sizeMb`, `sha256`, `file`), copy the bundle to `twa/app-release-bundle.aab` (git-ignored), commit and push. The landing page reads that JSON.
+5. Confirm: `curl https://dietbuddy.buildc3.tech/api/health` shows the new commit, and the downloaded file's `shasum -a 256` matches the JSON.
 
-### How to commit on github.com (no terminal needed)
-1. Open `Arunodoy18/NutTrack` on github.com.
-2. For an existing file (e.g. `app/layout.tsx`): open it → click the **pencil** →
-   select-all, paste the new contents → **Commit changes**.
-3. Repeat for each file above.
-4. Netlify builds automatically — watch the deploy, then check dietbuddy.buildc3.tech.
+The signing key lives in `~/nura-signing/` (outside the repo). **Back it up**: losing it means no more updates on Google Play.
 
-> Tip: commit `tailwind.config.ts`, `app/globals.css`, `app/layout.tsx` first
-> (the foundation), then the auth pages and `LandingPage.tsx`.
-
----
-
-## BATCH 3 — Dashboard + FridgeRaider ✅ (included)
-| Repo path | What changed |
-|---|---|
-| `components/Dashboard.tsx` | reskinned to light/Strava — **all logic untouched** (AI scanner, Razorpay, recharts, goals, streak, voice, paywall) |
-| `components/FridgeRaider.tsx` | reskinned to light/Strava — fridge scan + recipe logic untouched |
-
-Only `className` strings and inline chart/SVG colors changed:
-- page `bg-slate-900` → `bg-surface-muted` · cards `bg-slate-800/*` → `bg-white` (with their existing shadow for separation)
-- inner tiles `bg-slate-900/3x` → `bg-surface-muted` · borders → `border-surface-line`
-- headings/numbers `text-white` → `text-ink` **(kept white on orange buttons)** · `text-slate-300/400/500` → `text-ink-soft`/`text-ink-faint`
-- `indigo-*` → `brand-*` · cyan scan beam → `brand`
-- recharts/ring SVG: calorie `#6366f1` → `#FC4C02`, track `#334155` → `#E7E7EB`, tooltip dark → white; macro colors (emerald/amber/blue) unchanged
-- key titles + big numbers get `font-display` (Barlow)
-
-> Modal backdrops became `bg-black/50` scrims. Nothing here touches state,
-> effects, server actions, API routes, NextAuth, Razorpay, or DB code.
-
-**Plus two prototype touches on the Dashboard:**
-- **Single calorie ring** hero (the 4 concentric rings → one bold orange ring; protein/fat/fiber still shown as the cards below).
-- **Mobile sticky action bar** (`md:hidden`) with a center Log-Meal camera FAB + Fridge + Goals — it calls your *existing* handlers (`setIsUploadModalOpen`, `setIsFridgeRaiderOpen`, `setIsModalOpen`), so it's fully functional and adds nothing new. Desktop is unchanged.
-
-### Commit order (whole redesign)
-1. `tailwind.config.ts`, `app/globals.css`, `app/layout.tsx`
-2. `app/auth/login`, `signup`, `forgot-password`
-3. `components/LandingPage.tsx`
-4. `components/Dashboard.tsx`, `components/FridgeRaider.tsx`
-
-After all are committed, the entire app — landing → auth → dashboard → fridge →
-paywall — renders in the Strava skin, fully functional.
+## Not done yet
+- Freemium limits + RevenueCat / Play Billing (and an iOS app for the App Store) — see conversation notes; app is currently fully free.
+- Rotate the Neon database password (an old one is in git history); remove the unused `OPENAI_API_KEY`.
+- Build-time-only npm advisories in the `next-pwa`/workbox chain, and `drizzle-orm` (identifier-injection advisory, not reachable: user text is never used as a SQL identifier).
