@@ -135,7 +135,7 @@ public class HealthSyncActivity extends Activity {
             final boolean granted = ok;
             ui.post(() -> {
                 if (granted) { syncNow(); return; }
-                try { startActivityForResult(new Intent(HcJetpack.ACTION_REQUEST).setPackage(HcJetpack.PROVIDER).putExtra(HcJetpack.EXTRA_PERMS, HcJetpack.PERMISSIONS), REQ + 1); }
+                try { startActivityForResult(HcJetpack.permissionIntent(this), REQ + 1); }
                 catch (Exception e) { refresh("Couldn't open Health Connect: " + e.getMessage()); }
             });
         }).start();

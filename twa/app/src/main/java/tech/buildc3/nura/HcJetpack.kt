@@ -2,6 +2,7 @@ package tech.buildc3.nura
 
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
@@ -30,6 +31,11 @@ object HcJetpack {
         HealthPermission.getReadPermission(ExerciseSessionRecord::class),
         HealthPermission.getReadPermission(WeightRecord::class),
     )
+
+    /** The exact screen Health Connect expects for asking permission (built by Google's own contract, not hand-written). */
+    @JvmStatic
+    fun permissionIntent(ctx: Context): android.content.Intent =
+        PermissionController.createRequestPermissionResultContract(PROVIDER).createIntent(ctx, PERMISSIONS.toSet())
 
     /** 1 = no Health Connect on this phone, 2 = it needs an update, 3 = ready. */
     @JvmStatic
