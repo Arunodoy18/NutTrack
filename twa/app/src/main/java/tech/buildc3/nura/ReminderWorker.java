@@ -50,6 +50,7 @@ public class ReminderWorker extends Worker {
                 JSONObject r = arr.getJSONObject(i);
                 Notifier.show(getApplicationContext(), r.optString("title", "Nura"), r.optString("body", ""), r.optString("url", "/dashboard"), r.optString("tag", r.optString("key", "r")));
             }
+            ReminderAlarms.sync(getApplicationContext());
             return Result.success();
         } catch (Exception e) {
             Log.w("NuraReminder", "poll failed: " + e);

@@ -78,3 +78,34 @@ test("settings input is sanitised: junk is ignored, defaults fill in, ranges can
   assert.equal(s.weighIn.day, 0);
   assert.deepEqual(sanitizeSettings(null), DEFAULT_SETTINGS);
 });
+
+import { upcomingWakeups, DEFAULT_SETTINGS } from "../lib/reminders";
+test("upcomingWakeups: meal alarms land one minute after the chosen local time, in the right time zone", () => {
+  const s = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); s.water.enabled = false; s.weighIn.enabled = false;
+  s.meals = { breakfast: null, lunch: "13:00", snack: null, dinner: null };
+  const now = new Date("2026-10-23T05:00:00Z"); // 10:30 in Kolkata
+  const t = upcomingWakeups(s, "Asia/Kolkata", now, 30);
+  assert.equal(new Date(t[0]).toISOString(), "2026-10-23T07:31:00.000Z"); // 13:01 IST
+  assert.equal(new Date(t[1]).toISOString(), "2026-10-24T07:31:00.000Z"); // next day
+  assert.equal(t.length, 2);
+});
+test("upcomingWakeups: nothing in the past, nothing when everything is off, water follows the window", () => {
+  const off = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); off.meals = { breakfast: null, lunch: null, snack: null, dinner: null }; off.water.enabled = false; off.weighIn.enabled = false;
+  assert.deepEqual(upcomingWakeups(off, "Asia/Kolkata", new Date()), []);
+  const w = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); w.meals = { breakfast: null, lunch: null, snack: null, dinner: null }; w.weighIn.enabled = false;
+  w.water = { enabled: true, everyMin: 120, from: "09:00", to: "21:00" };
+  const now = new Date("2026-10-23T07:00:00Z"); // 12:30 IST
+  const t = upcomingWakeups(w, "Asia/Kolkata", now, 12);
+  const local = t.map((x) => new Date(x + 5.5 * 3600_000).toISOString().slice(11, 16));
+  assert.deepEqual(local, ["13:01", "15:01", "17:01", "19:01"]); // 09:00 + k*120 min, only after "now", before 21:00
+  assert.ok(t.every((x) => x > now.getTime()));
+});
+test("upcomingWakeups: weekly weigh-in only on its weekday and the list is capped", () => {
+  const g = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); g.meals = { breakfast: null, lunch: null, snack: null, dinner: null }; g.water.enabled = false;
+  g.weighIn = { enabled: true, day: 6, time: "08:00" }; // Saturday
+  const t = upcomingWakeups(g, "Asia/Kolkata", new Date("2026-10-23T05:00:00Z"), 72); // Fri 10:30 IST → Sat is in range
+  assert.equal(t.length, 1);
+  assert.equal(new Date(t[0] + 5.5 * 3600_000).toISOString().slice(0, 16), "2026-10-24T08:01");
+  const busy = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); busy.water = { enabled: true, everyMin: 60, from: "00:00", to: "23:59" };
+  assert.ok(upcomingWakeups(busy, "Asia/Kolkata", new Date(), 72, 40).length <= 40);
+});

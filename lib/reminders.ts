@@ -1,4 +1,4 @@
-import { dateKeyInTz, tzOffsetMs } from "@/lib/tz";
+import { dateKeyInTz, startOfDayInTz, tzOffsetMs } from "@/lib/tz";
 
 export type MealSlot = "breakfast" | "lunch" | "snack" | "dinner";
 export const MEAL_SLOTS: MealSlot[] = ["breakfast", "lunch", "snack", "dinner"];
@@ -128,4 +128,27 @@ export function dueReminders(settings: ReminderSettings, ctx: DueContext): DueRe
     due.push({ key: `weigh:${dateKey}`, title: "⚖️ Weekly weigh-in", body: "A quick weigh-in keeps your targets accurate.", url: "/profile", tag: "weigh-in" });
   }
   return due;
+}
+
+/**
+ * When should the phone wake up to check for reminders? Android throttles background jobs hard for apps that have not
+ * been opened for a while, but it still honours alarms, so the app sets one alarm per entry here. Each entry is
+ * one minute after a reminder's time (so it lands inside the reminder's window); the server's `/api/device/due` still
+ * decides whether anything is actually shown. Pure function.
+ */
+export function upcomingWakeups(settings: ReminderSettings, tz: string, now: Date, horizonHours = 36, max = 40): number[] {
+  const horizon = now.getTime() + horizonHours * 3_600_000;
+  const out = new Set<number>();
+  const add = (t: number) => { if (t > now.getTime() && t <= horizon) out.add(t); };
+  for (let d = 0; d <= Math.ceil(horizonHours / 24) + 1; d++) {
+    const dayStart = startOfDayInTz(tz, new Date(now.getTime() + d * 86_400_000)).getTime();
+    const weekday = new Date(dayStart + tzOffsetMs(tz, new Date(dayStart)) + 12 * 3_600_000).getUTCDay();
+    const at = (min: number) => add(dayStart + (min + 1) * 60_000);
+    for (const slot of MEAL_SLOTS) { const t = settings.meals[slot]; if (t) at(toMin(t)); }
+    const w = settings.water;
+    if (w.enabled) for (let m = toMin(w.from); m < toMin(w.to); m += w.everyMin) at(m);
+    const g = settings.weighIn;
+    if (g.enabled && weekday === g.day) at(toMin(g.time));
+  }
+  return Array.from(out).sort((a, b) => a - b).slice(0, max);
 }

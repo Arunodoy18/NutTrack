@@ -8,3 +8,4 @@
 -keepattributes JavascriptInterface
 -keep class tech.buildc3.nura.HcJetpack { *; }
 -dontwarn androidx.health.**
+-keep class tech.buildc3.nura.ReminderReceiver { *; }

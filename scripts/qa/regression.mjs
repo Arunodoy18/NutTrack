@@ -91,6 +91,9 @@ try {
   const due = (t) => rf(B + "/api/device/due", { headers: { authorization: `Bearer ${t}` } }).then(async (x) => ({ http: x.status, body: await x.json().catch(() => ({})) }));
   check("reminders: due reminder reaches the app once", (await due(app.token)).body.reminders?.length === 1);
   check("reminders: second poll is empty", (await due(app.token)).body.reminders?.length === 0);
+  const sched = await rf(B + "/api/device/schedule", { headers: { authorization: `Bearer ${app.token}` } }).then(async (x) => ({ http: x.status, body: await x.json().catch(() => ({})) }));
+  check("alarms: the app gets its wake-up schedule (future times only)", sched.http === 200 && Array.isArray(sched.body.times) && sched.body.times.length >= 1 && sched.body.times.every((t) => t > Date.now() - 5000), JSON.stringify(sched.body.times?.slice(0, 2)));
+  check("alarms: schedule needs a paired device", (await rf(B + "/api/device/schedule")).status === 401);
   await rf(B + "/api/device/unlink", { method: "POST", headers: { authorization: `Bearer ${app.token}` } });
   check("reminders: after sign-out the token is dead", (await due(app.token)).http === 401);
   // grocery

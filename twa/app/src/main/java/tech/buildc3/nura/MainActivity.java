@@ -250,6 +250,7 @@ public class MainActivity extends Activity {
                     try {
                         HealthSync.pair(this, code, true);
                         ReminderWorker.schedule(this);
+                        ReminderAlarms.sync(this);
                         ui.post(() -> {
                             // The page asks "is this phone linked?": answer now, and in the user agent for later loads.
                             WebSettings ws = web.getSettings();
@@ -276,6 +277,7 @@ public class MainActivity extends Activity {
             final String t = st.reminderToken();
             st.clearReminderToken();
             ReminderWorker.cancel(this);
+            ReminderAlarms.cancelAll(this);
             ui.post(() -> { // this phone is no longer linked: the page and later loads must know
                 WebSettings ws = web.getSettings();
                 ws.setUserAgentString(ws.getUserAgentString().replace(" linked", ""));
@@ -427,7 +429,7 @@ public class MainActivity extends Activity {
     @Override public void onBackPressed() { if (web.canGoBack()) web.goBack(); else super.onBackPressed(); }
     @Override protected void onResume() {
         super.onResume(); web.onResume();
-        try { if (new HealthStore(this).reminderToken() != null) ReminderWorker.runNow(this); } catch (Exception ignore) { /* secure storage unavailable */ }
+        try { if (new HealthStore(this).reminderToken() != null) { ReminderWorker.runNow(this); new Thread(() -> ReminderAlarms.sync(getApplicationContext())).start(); } } catch (Exception ignore) { /* secure storage unavailable */ }
     }
     @Override protected void onPause() { CookieManager.getInstance().flush(); web.onPause(); super.onPause(); }
     @Override protected void onDestroy() { closePopup(); if (recognizer != null) recognizer.destroy(); if (web != null) { ((FrameLayout) web.getParent()).removeView(web); web.destroy(); } super.onDestroy(); }
