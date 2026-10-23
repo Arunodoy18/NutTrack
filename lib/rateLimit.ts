@@ -79,3 +79,16 @@ export function clientIp(req: Request) {
     || req.headers.get("x-forwarded-for")?.split(",")[0].trim()
     || "unknown";
 }
+
+/** For the health endpoint: is the rate limiter really talking to Redis? Never returns keys, URLs or tokens. */
+export async function rateLimiterStatus(): Promise<"off" | "on" | `error:${string}`> {
+  if (!redis) return "off";
+  try {
+    await redis.ping();
+    return "on";
+  } catch (err) {
+    const m = String((err as Error)?.message ?? "");
+    const kind = /ENOTFOUND|getaddrinfo|fetch failed/i.test(m) ? "unreachable" : /unauthor|WRONGPASS|invalid token|401|403/i.test(m) ? "bad-token" : /parse|JSON|URL/i.test(m) ? "bad-url" : "other";
+    return `error:${kind}`;
+  }
+}

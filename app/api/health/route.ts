@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sql } from "drizzle-orm";
+import { rateLimiterStatus } from "@/lib/rateLimit";
 
 export const dynamic = "force-dynamic";
 
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     await db.execute(sql`select 1`);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, rateLimit: await rateLimiterStatus() });
   } catch {
     return NextResponse.json({ ok: false }, { status: 503 });
   }
