@@ -40,3 +40,9 @@ test("hasControlChars flags NUL, control codes and bidi overrides, not normal te
   assert.equal(hasControlChars("Asha 😀 Kumar-Singh"), false);
   assert.equal(hasControlChars("line\nbreak"), false);
 });
+
+test("readJson with clean:false leaves hidden characters visible so a route can refuse them", async () => {
+  const r = new Request("http://x", { method: "POST", body: '{"email":"x\\u0000@y.zz"}' });
+  const body = await readJson(r, { clean: false });
+  assert.ok(hasControlChars(body.email));
+});

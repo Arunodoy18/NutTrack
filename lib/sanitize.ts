@@ -33,10 +33,11 @@ export function normalizeEmail(v: unknown): string {
 export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Reads a JSON body. Broken or missing JSON becomes {} so the route's own validation answers with a clean 400, never a crash. */
-export async function readJson(req: Request): Promise<any> {
+export async function readJson(req: Request, opts: { clean?: boolean } = {}): Promise<any> {
   try {
     const v = await req.json();
-    return v && typeof v === "object" ? deepClean(v) : {};
+    if (!v || typeof v !== "object") return {};
+    return opts.clean === false ? v : deepClean(v); // clean:false lets a route see hidden characters and refuse them
   } catch {
     return {};
   }

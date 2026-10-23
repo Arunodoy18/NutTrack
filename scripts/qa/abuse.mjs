@@ -157,7 +157,7 @@ try {
   console.log("SUITE ERROR:", e);
   results.push(false);
 } finally {
-  const ids = (await q(`select id from "user" where lower(email) like $1`, [`nura.e2e.abuse.%${rand}@example.com`])).map((r) => r.id);
+  const ids = (await q(`select id from "user" where lower(email) like $1 or email in ('x@y.zz')`, [`nura.e2e.abuse.%${rand}@example.com`])).map((r) => r.id);
   await q(`delete from "user" where parent_id = any($1) or id = any($1)`, [ids]);
   const left = (await q(`select count(*)::int c from "user" where lower(email) like $1`, [`%${rand}@example.com`]))[0].c;
   const pass = results.filter(Boolean).length;

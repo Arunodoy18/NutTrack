@@ -8,7 +8,7 @@ import { cleanText, normalizeEmail, readJson, isUniqueViolation, hasControlChars
 
 export async function POST(req: Request) {
   try {
-    const body = await readJson(req);
+    const body = await readJson(req, { clean: false }); // raw, so a hidden character in the email is refused rather than silently removed
     const name = cleanText(body?.name, 100);
     const email = normalizeEmail(body?.email); // "Asha@Gmail.com" and "asha@gmail.com " are the same person
     const password = typeof body?.password === "string" ? body.password : "";
