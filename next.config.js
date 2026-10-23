@@ -11,6 +11,8 @@ const withPWA = require('next-pwa')({
 });
 
 const nextConfig = {
+  // Which commit is live (Netlify provides COMMIT_REF at build time); shown by /api/health.
+  env: { NEXT_PUBLIC_COMMIT: (process.env.COMMIT_REF || process.env.GITHUB_SHA || 'local').slice(0, 7) },
   reactStrictMode: true,
   // Type errors must fail the build (the legacy Android sources and the mobile/ folder are excluded in tsconfig).
   typescript: {

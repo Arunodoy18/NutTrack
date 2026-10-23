@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   try {
     await db.execute(sql`select 1`);
-    return NextResponse.json({ ok: true, rateLimit: await rateLimiterStatus() });
+    return NextResponse.json({ ok: true, rateLimit: await rateLimiterStatus(), commit: process.env.NEXT_PUBLIC_COMMIT });
   } catch {
     return NextResponse.json({ ok: false }, { status: 503 });
   }
