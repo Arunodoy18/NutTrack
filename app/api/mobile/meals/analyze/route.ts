@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { authenticateMobile, isAuthenticated } from "@/lib/mobileAuth";
 import { analyzeMealImageAction, analyzeMealTextAction } from "@/app/actions";
 
+import { readJson } from "@/lib/sanitize";
 export async function POST(req: Request) {
   try {
     const authResult = await authenticateMobile(req);
     if (!isAuthenticated(authResult)) return authResult;
 
     const userId = authResult.sub;
-    const body = await req.json();
+    const body = await readJson(req);
 
     if (body.type === "image") {
       const result = await analyzeMealImageAction(body.payload, userId);

@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { authenticateMobile, isAuthenticated } from "@/lib/mobileAuth";
 import { analyzeFridgeImageAction } from "@/app/actions";
 
+import { readJson } from "@/lib/sanitize";
 export async function POST(req: Request) {
   try {
     const authResult = await authenticateMobile(req);
     if (!isAuthenticated(authResult)) return authResult;
 
     const userId = authResult.sub;
-    const body = await req.json();
+    const body = await readJson(req);
 
     if (!body.image) {
       return NextResponse.json({ error: "No image provided" }, { status: 400 });

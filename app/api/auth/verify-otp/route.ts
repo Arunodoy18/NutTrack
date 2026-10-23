@@ -4,9 +4,10 @@ import { users, otpTokens } from "@/lib/db/schema";
 import { eq, and, gt, desc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
+import { readJson } from "@/lib/sanitize";
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await readJson(req);
     const email = typeof body?.email === "string" ? body.email.toLowerCase().trim() : "";
     const otp = typeof body?.otp === "string" ? body.otp.trim() : "";
     const type = body?.type;

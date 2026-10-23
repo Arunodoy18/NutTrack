@@ -6,6 +6,8 @@ import { users } from "@/lib/db/schema";
 import { ACTIVE_PROFILE_COOKIE, MAX_PROFILES, getSessionUserId, listProfiles } from "@/lib/access";
 import { AVATARS, RELATIONS } from "@/lib/profileService";
 
+import { readJson, cleanText } from "@/lib/sanitize";
+import { insertProfileWithinLimit } from "@/lib/db/atomic";
 const cookieOpts = { httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 365 };
 
 /** List everyone this account can track. */
@@ -24,36 +26,16 @@ export async function POST(req: NextRequest) {
   const owner = await db.query.users.findFirst({ where: eq(users.id, me), columns: { id: true, parentId: true } });
   if (!owner || owner.parentId) return NextResponse.json({ error: "Not allowed" }, { status: 403 });
 
-  let body: any;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-  }
-  const name = typeof body?.name === "string" ? body.name.trim().slice(0, 40) : "";
+  const body: any = await readJson(req);
+  const name = cleanText(body?.name, 40);
   if (!name) return NextResponse.json({ error: "Please enter a name." }, { status: 400 });
   const relation = RELATIONS.includes(body?.relation) && body.relation !== "self" ? body.relation : "child";
   const avatar = (AVATARS as readonly string[]).includes(body?.avatar) ? body.avatar : relation === "child" ? "🧒" : "🙂";
 
-  const [{ n }] = await db
-    .select({ n: count() })
-    .from(users)
-    .where(or(eq(users.id, me), eq(users.parentId, me)));
-  if (n >= MAX_PROFILES) {
-    return NextResponse.json({ error: `You can track up to ${MAX_PROFILES} people on one account.` }, { status: 400 });
-  }
-
   const id = randomUUID();
-  await db.insert(users).values({
-    id,
-    name,
-    // Managed profiles can't sign in: no password, and a reserved, undeliverable address.
-    email: `profile-${id}@family.invalid`,
-    parentId: me,
-    relation,
-    avatar,
-    isVerified: true,
-  });
+  // The limit is checked and the row inserted in one locked step, so a double tap can't squeeze in a 7th person.
+  const created = await insertProfileWithinLimit({ id, ownerId: me, name, email: `profile-${id}@family.invalid`, relation, avatar, max: MAX_PROFILES });
+  if (!created) return NextResponse.json({ error: `You can track up to ${MAX_PROFILES} people on one account.` }, { status: 400 });
 
   const res = NextResponse.json({ success: true, id });
   res.cookies.set(ACTIVE_PROFILE_COOKIE, id, cookieOpts);

@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { authenticateMobile, isAuthenticated } from "@/lib/mobileAuth";
 import { saveMealAction } from "@/app/actions";
 
+import { readJson } from "@/lib/sanitize";
 export async function POST(req: Request) {
   try {
     const authResult = await authenticateMobile(req);
     if (!isAuthenticated(authResult)) return authResult;
 
     const userId = authResult.sub;
-    const mealData = await req.json();
+    const mealData = await readJson(req);
 
     const result = await saveMealAction(userId, mealData, true);
 

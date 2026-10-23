@@ -7,6 +7,7 @@ import { randomInt } from "crypto";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
+import { readJson } from "@/lib/sanitize";
 const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key");
 
 // Safe initialization of Upstash Redis rate limiter to prevent local dev crashes
@@ -22,7 +23,7 @@ const ratelimit = redis ? new Ratelimit({
 
 export async function POST(req: Request) {
   try {
-    const { email, type } = await req.json(); // type: 'VERIFY_ACCOUNT' or 'RESET_PASSWORD'
+    const { email, type } = await readJson(req); // type: 'VERIFY_ACCOUNT' or 'RESET_PASSWORD'
 
     if (!email || !type) {
       return NextResponse.json({ error: "Email and type are required" }, { status: 400 });

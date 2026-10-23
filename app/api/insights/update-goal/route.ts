@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { users, dailyGoals } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { readJson } from "@/lib/sanitize";
 import {
   computeFullProfile,
   GOAL_ADJUSTMENTS,
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   let goal: string | undefined;
   try {
-    ({ goal } = await req.json());
+    ({ goal } = await readJson(req));
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }

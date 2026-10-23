@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ACTIVE_PROFILE_COOKIE, canAccessProfile, getSessionUserId } from "@/lib/access";
 
+import { readJson } from "@/lib/sanitize";
 export async function POST(req: NextRequest) {
   const me = await getSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   let id = "";
   try {
-    id = String((await req.json())?.id ?? "");
+    id = String((await readJson(req))?.id ?? "");
   } catch {
     /* fall through */
   }

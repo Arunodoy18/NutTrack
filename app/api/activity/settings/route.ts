@@ -4,12 +4,13 @@ import { db } from "@/lib/db";
 import { activitySettings, users } from "@/lib/db/schema";
 import { getActor } from "@/lib/access";
 
+import { readJson } from "@/lib/sanitize";
 export const dynamic = "force-dynamic";
 
 export async function PUT(req: Request) {
   const actor = await getActor();
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = await req.json().catch(() => null);
+  const body = await readJson(req);
   const enabled = body?.creditEnabled === true;
   const pct = Math.min(100, Math.max(0, Math.round(Number(body?.creditPct ?? 50))));
   if (!Number.isFinite(pct)) return NextResponse.json({ error: "Invalid percentage." }, { status: 400 });

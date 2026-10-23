@@ -3,7 +3,7 @@ import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { users } from "./db/schema";
 import bcrypt from "bcryptjs";
 
@@ -29,8 +29,9 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
+        const email = normalizeEmail(credentials.email); // phone keyboards capitalise; copy-paste adds spaces
         const user = await db.query.users.findFirst({
-          where: eq(users.email, credentials.email)
+          where: sql`lower(${users.email}) = ${email}`
         });
 
         if (!user || !user.password) {
@@ -69,5 +70,6 @@ export const authOptions: NextAuthOptions = {
 };
 
 import NextAuth from "next-auth";
+import { normalizeEmail } from "@/lib/sanitize";
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

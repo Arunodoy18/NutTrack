@@ -7,6 +7,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit, checkChatRateLimit } from "@/lib/rateLimit";
 import { FREE_FOR_ALL } from "@/lib/plan";
+import { cleanText } from "@/lib/sanitize";
 import { canAccessProfile, ownerOf, getActiveProfileId } from "@/lib/access";
 import { getUserTz } from "@/lib/tzServer";
 import { startOfDayInTz, startOfDayDaysAgo, dateKeyInTz, weekdayInTz } from "@/lib/tz";
@@ -727,7 +728,7 @@ export async function addIngredientsToGroceryListAction(ingredients: string[]) {
     });
     const existingNames = existing.map(e => e.ingredientName.toLowerCase());
     
-    const newIngredients = ingredients.filter(ing => !existingNames.includes(ing.toLowerCase()));
+    const newIngredients = Array.from(new Set((ingredients ?? []).map((x) => cleanText(x, 120)).filter(Boolean))).slice(0, 80).filter(ing => !existingNames.includes(ing.toLowerCase()));
     
     if (newIngredients.length > 0) {
       const inserts = newIngredients.map(ing => ({

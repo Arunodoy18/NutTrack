@@ -6,13 +6,14 @@ import { getSessionUserId } from "@/lib/access";
 import { newDeviceToken, normalizeCode, sha256 } from "@/lib/activity";
 import { checkAuthRateLimit, clientIp } from "@/lib/rateLimit";
 
+import { readJson } from "@/lib/sanitize";
 export const dynamic = "force-dynamic";
 const NO_STORE = { "Cache-Control": "no-store" };
 
 /** Native app (no session): exchange a pairing code for a long-lived device token. Returned once. */
 export async function POST(req: Request) {
   if (!(await checkAuthRateLimit(`pair:${clientIp(req)}`))) return NextResponse.json({ error: "Too many attempts. Try again later." }, { status: 429 });
-  const body = await req.json().catch(() => null);
+  const body = await readJson(req);
   const code = typeof body?.code === "string" ? normalizeCode(body.code) : "";
   if (code.length !== 8) return NextResponse.json({ error: "Invalid or expired code." }, { status: 400 });
   // Delete-and-return makes the code single use even under concurrent attempts.
@@ -39,7 +40,7 @@ export async function GET() {
 export async function DELETE(req: Request) {
   const uid = await getSessionUserId();
   if (!uid) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const body = await req.json().catch(() => null);
+  const body = await readJson(req);
   if (typeof body?.id !== "string") return NextResponse.json({ error: "Missing id." }, { status: 400 });
   const r = await db.update(deviceTokens).set({ revoked: true }).where(and(eq(deviceTokens.id, body.id), eq(deviceTokens.ownerId, uid))).returning({ id: deviceTokens.id });
   if (!r.length) return NextResponse.json({ error: "Not found." }, { status: 404 });

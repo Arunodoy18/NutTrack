@@ -7,6 +7,7 @@ import { pushConfig } from "@/lib/push";
 import { sanitizeSettings } from "@/lib/reminders";
 import { isValidTz, DEFAULT_TZ } from "@/lib/tz";
 
+import { readJson } from "@/lib/sanitize";
 async function load(ownerId: string) {
   const row = await db.query.reminderSettings.findFirst({ where: eq(reminderSettings.ownerId, ownerId) });
   const subs = await db.query.pushSubscriptions.findMany({ where: eq(pushSubscriptions.ownerId, ownerId), columns: { id: true } });
@@ -32,7 +33,7 @@ export async function PUT(req: NextRequest) {
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   let body: any;
   try {
-    body = await req.json();
+    body = await readJson(req);
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }

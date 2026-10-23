@@ -5,9 +5,10 @@ import { eq } from "drizzle-orm";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+import { readJson } from "@/lib/sanitize";
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = await readJson(req);
     let { userId, meals: clientMeals } = body;
 
     const session = await getServerSession(authOptions);

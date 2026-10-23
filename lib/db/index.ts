@@ -7,9 +7,9 @@ const connectionString = process.env.DATABASE_URL || "postgresql://missing:missi
 
 // Next.js 14 caches fetch() results; the Neon driver talks over fetch, so without this identical queries
 // (e.g. "is this device token revoked?") could be answered from a stale cache. Always hit the database.
-const sql = neon(connectionString, { fetchOptions: { cache: "no-store" } });
+export const neonSql = neon(connectionString, { fetchOptions: { cache: "no-store" } });
 
 /**
  * Main database connection pool configured for Neon HTTP serverless clients
  */
-export const db = drizzle(sql, { schema });
+export const db = drizzle(neonSql, { schema });

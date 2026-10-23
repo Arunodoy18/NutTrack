@@ -6,9 +6,10 @@ import bcrypt from "bcryptjs";
 import { signMobileJwt } from "@/lib/jwt";
 import { checkAuthRateLimit, clientIp } from "@/lib/rateLimit";
 
+import { readJson } from "@/lib/sanitize";
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await readJson(req);
     const email = typeof body?.email === "string" ? body.email.toLowerCase().trim() : "";
     const password = typeof body?.password === "string" ? body.password : "";
 

@@ -18,6 +18,8 @@ import {
 import { canAccessProfile } from "@/lib/access";
 import { MEAL_SESSIONS, guessMealSession, type SyncResponse } from "@/lib/offlineTypes";
 
+import { readJson } from "@/lib/sanitize";
+import { insertWaterWithinCap } from "@/lib/db/atomic";
 // AI analysis can take a while.
 export const maxDuration = 60;
 
@@ -60,7 +62,7 @@ export async function POST(req: NextRequest) {
 
   let op: any;
   try {
-    ({ op } = await req.json());
+    ({ op } = await readJson(req));
   } catch {
     return json({ status: "invalid", error: "Bad request." }, 400);
   }
@@ -270,14 +272,11 @@ export async function POST(req: NextRequest) {
       if (!Number.isFinite(ml) || ml < MIN_DRINK_ML || ml > MAX_DRINK_ML) {
         return json({ status: "invalid", error: `A drink must be between ${MIN_DRINK_ML} and ${MAX_DRINK_ML} ml.` }, 400);
       }
-      // Sanity cap on the day's total (typos / runaway taps).
-      const [{ total }] = await db
-        .select({ total: sql<number>`coalesce(sum(${waterLogs.amountMl}), 0)::int` })
-        .from(waterLogs)
-        .where(andOp(eq(waterLogs.userId, userId), gte(waterLogs.timestamp, new Date(timestamp.getTime() - 24 * 3600_000))));
-      if (total + ml > MAX_DAILY_WATER_ML) return json({ status: "invalid", error: "That's more water than is safe to log in a day." }, 400);
-      const ins = await db.insert(waterLogs).values({ id, userId, amountMl: ml, timestamp }).onConflictDoNothing().returning({ id: waterLogs.id });
-      return json({ status: ins.length ? "ok" : "duplicate" });
+      // Sanity cap on the day's total (typos / runaway taps). Checked and inserted in one locked transaction so several
+      // taps arriving together can't all pass the check.
+      const res = await insertWaterWithinCap({ id, userId, amountMl: ml, at: timestamp, windowStart: new Date(timestamp.getTime() - 24 * 3600_000), capMl: MAX_DAILY_WATER_ML });
+      if (res === "over") return json({ status: "invalid", error: "That's more water than is safe to log in a day." }, 400);
+      return json({ status: res === "ok" ? "ok" : "duplicate" });
     }
     if (kind === "water_delete") {
       const logId = String(op.logId ?? "");

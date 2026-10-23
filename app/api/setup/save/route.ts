@@ -6,6 +6,7 @@ import { getActor } from "@/lib/access";
 import { validateProfileInput } from "@/lib/profileValidation";
 import { saveProfileAndGoals } from "@/lib/profileService";
 
+import { readJson } from "@/lib/sanitize";
 /** Saves the profile of whoever is currently being tracked (the account holder or a family member). */
 export async function POST(req: NextRequest) {
   const actor = await getActor();
@@ -13,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   let body: unknown;
   try {
-    body = await req.json();
+    body = await readJson(req);
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }

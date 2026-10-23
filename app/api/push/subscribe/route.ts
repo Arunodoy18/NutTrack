@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { pushSubscriptions } from "@/lib/db/schema";
 import { getSessionUserId } from "@/lib/access";
 
+import { readJson } from "@/lib/sanitize";
 const MAX_DEVICES = 8;
 
 export async function POST(req: NextRequest) {
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   let body: any;
   try {
-    body = await req.json();
+    body = await readJson(req);
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
@@ -39,7 +40,7 @@ export async function DELETE(req: NextRequest) {
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   let endpoint = "";
   try {
-    endpoint = String((await req.json())?.endpoint ?? "");
+    endpoint = String((await readJson(req))?.endpoint ?? "");
   } catch {
     /* fall through */
   }

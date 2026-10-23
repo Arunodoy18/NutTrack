@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { dailyGoals } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
+import { readJson } from "@/lib/sanitize";
 export async function GET(req: Request) {
   try {
     const authResult = await authenticateMobile(req);
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
     if (!isAuthenticated(authResult)) return authResult;
 
     const userId = authResult.sub;
-    const body = await req.json();
+    const body = await readJson(req);
 
     const result = await saveDailyGoalsAction(userId, body, true);
 

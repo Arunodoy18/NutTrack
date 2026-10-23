@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { signMobileJwt } from "@/lib/jwt";
 import { checkAuthRateLimit, clientIp } from "@/lib/rateLimit";
+import { cleanText, normalizeEmail, readJson, isUniqueViolation, EMAIL_RE } from "@/lib/sanitize";
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+    if (!EMAIL_RE.test(email) || email.length > 254) {
       return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
     }
     if (password.length < 8 || password.length > 128) {
@@ -38,13 +39,14 @@ export async function POST(req: Request) {
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create the user
-    const [newUser] = await db.insert(users).values({
-      name: name || "",
-      email,
-      password: hashedPassword,
-      isVerified: false,
-    }).returning();
+    // Create the user. Two sign-ups racing for one email: the database's unique rule lets exactly one win.
+    let newUser;
+    try {
+      [newUser] = await db.insert(users).values({ name: name || "", email, password: hashedPassword, isVerified: false }).returning();
+    } catch (e) {
+      if (isUniqueViolation(e)) return NextResponse.json({ error: "User already exists with this email" }, { status: 400 });
+      throw e;
+    }
 
     // Sign JWT
     const token = await signMobileJwt({ sub: newUser.id, email: newUser.email });
