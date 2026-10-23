@@ -8,7 +8,8 @@ const rand = Math.random().toString(36).slice(2, 8), J = { "content-type": "appl
 const results = []; const check = (n, ok, x = "") => { results.push(!!ok); console.log(ok ? "PASS" : "FAIL", n, x); };
 const jar = {}; const abs = (r) => { for (const c of r.headers.getSetCookie()) { const [nv] = c.split(";"); const i = nv.indexOf("="); jar[nv.slice(0, i)] = nv.slice(i + 1); } };
 const ck = () => Object.entries(jar).map(([k, v]) => `${k}=${v}`).join("; ");
-const call = async (path, init = {}) => { const r = await fetch(B + path, { ...init, headers: { ...(init.body ? J : {}), cookie: ck(), ...(init.headers || {}) } }); abs(r); return { http: r.status, body: await r.json().catch(() => ({})) }; };
+const rfetch = async (...a) => { for (let i = 0; i < 5; i++) { try { return await fetch(...a); } catch (e) { if (i === 4) throw e; await new Promise((r) => setTimeout(r, 1500)); } } }; // my own network can blip; ops are idempotent so a retry is safe
+const call = async (path, init = {}) => { const r = await rfetch(B + path, { ...init, headers: { ...(init.body ? J : {}), cookie: ck(), ...(init.headers || {}) } }); abs(r); return { http: r.status, body: await r.json().catch(() => ({})) }; };
 const db = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const email = `nura.e2e.quota.${rand}@example.com`, password = "E2eTest!" + rand;
 try {
