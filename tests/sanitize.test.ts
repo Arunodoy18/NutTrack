@@ -32,3 +32,11 @@ test("isUniqueViolation recognises Postgres duplicate-key errors", () => {
   assert.ok(isUniqueViolation(new Error('duplicate key value violates unique constraint "user_email_unique"')));
   assert.equal(isUniqueViolation(new Error("connection reset")), false);
 });
+
+import { hasControlChars } from "../lib/sanitize";
+test("hasControlChars flags NUL, control codes and bidi overrides, not normal text or emoji", () => {
+  assert.ok(hasControlChars("a\u0000b"));
+  assert.ok(hasControlChars("x‮y"));
+  assert.equal(hasControlChars("Asha 😀 Kumar-Singh"), false);
+  assert.equal(hasControlChars("line\nbreak"), false);
+});

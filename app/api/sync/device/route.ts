@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq, isNull, not, like, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { deviceTokens, pairingCodes, users } from "@/lib/db/schema";
-import { getSessionUserId } from "@/lib/access";
+import { getLiveSessionUserId } from "@/lib/access";
 import { newDeviceToken, normalizeCode, sha256 } from "@/lib/activity";
 import { checkAuthRateLimit, clientIp } from "@/lib/rateLimit";
 
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
 
 /** Signed-in: list paired devices for this account. */
 export async function GET() {
-  const uid = await getSessionUserId();
+  const uid = await getLiveSessionUserId();
   if (!uid) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const rows = await db.select({ id: deviceTokens.id, label: deviceTokens.label, profileId: deviceTokens.profileId, createdAt: deviceTokens.createdAt, lastSeenAt: deviceTokens.lastSeenAt })
     .from(deviceTokens).where(and(eq(deviceTokens.ownerId, uid), eq(deviceTokens.revoked, false), or(isNull(deviceTokens.label), not(like(deviceTokens.label, "app:%")))));
@@ -38,7 +38,7 @@ export async function GET() {
 
 /** Signed-in: disconnect a device. */
 export async function DELETE(req: Request) {
-  const uid = await getSessionUserId();
+  const uid = await getLiveSessionUserId();
   if (!uid) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await readJson(req);
   if (typeof body?.id !== "string") return NextResponse.json({ error: "Missing id." }, { status: 400 });

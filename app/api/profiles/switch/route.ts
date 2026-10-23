@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ACTIVE_PROFILE_COOKIE, canAccessProfile, getSessionUserId } from "@/lib/access";
+import { ACTIVE_PROFILE_COOKIE, canAccessProfile, getLiveSessionUserId } from "@/lib/access";
 
 import { readJson } from "@/lib/sanitize";
 export async function POST(req: NextRequest) {
-  const me = await getSessionUserId();
+  const me = await getLiveSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   let id = "";
   try {

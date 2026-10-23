@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { pushSubscriptions, reminderSettings } from "@/lib/db/schema";
-import { getSessionUserId } from "@/lib/access";
+import { getLiveSessionUserId } from "@/lib/access";
 import { pushConfig } from "@/lib/push";
 import { sanitizeSettings } from "@/lib/reminders";
 import { isValidTz, DEFAULT_TZ } from "@/lib/tz";
@@ -23,13 +23,13 @@ async function load(ownerId: string) {
 }
 
 export async function GET() {
-  const me = await getSessionUserId();
+  const me = await getLiveSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   return NextResponse.json({ success: true, ...(await load(me)) });
 }
 
 export async function PUT(req: NextRequest) {
-  const me = await getSessionUserId();
+  const me = await getLiveSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   let body: any;
   try {

@@ -5,15 +5,18 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { signMobileJwt } from "@/lib/jwt";
 import { checkAuthRateLimit, clientIp } from "@/lib/rateLimit";
-import { cleanText, normalizeEmail, readJson, isUniqueViolation, EMAIL_RE } from "@/lib/sanitize";
+import { cleanText, normalizeEmail, readJson, isUniqueViolation, hasControlChars, EMAIL_RE } from "@/lib/sanitize";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const name = typeof body?.name === "string" ? body.name.trim().slice(0, 100) : "";
-    const email = typeof body?.email === "string" ? body.email.toLowerCase().trim() : "";
+    const body = await readJson(req);
+    const name = cleanText(body?.name, 100);
+    const email = normalizeEmail(body?.email);
     const password = typeof body?.password === "string" ? body.password : "";
 
+    if (typeof body?.email === "string" && hasControlChars(body.email)) {
+      return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
+    }
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }

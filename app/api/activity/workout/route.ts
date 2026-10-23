@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users, workouts } from "@/lib/db/schema";
-import { getActor } from "@/lib/access";
+import { getLiveActor } from "@/lib/access";
 import { estimateWorkoutKcal, isWorkoutKind, LIMITS } from "@/lib/activity";
 
 import { readJson, cleanText } from "@/lib/sanitize";
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 /** Manual workout for the active profile. kcal is estimated from kind, minutes and weight unless given. */
 export async function POST(req: Request) {
-  const actor = await getActor();
+  const actor = await getLiveActor();
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const b = await readJson(req);
   const minutes = Math.round(Number(b?.minutes));
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const actor = await getActor();
+  const actor = await getLiveActor();
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const b = await readJson(req);
   if (typeof b?.id !== "string") return NextResponse.json({ error: "Missing id." }, { status: 400 });

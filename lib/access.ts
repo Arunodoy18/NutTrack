@@ -27,6 +27,17 @@ export async function getSessionUserId(): Promise<string | null> {
 }
 
 /**
+ * Like getSessionUserId, but also proves the account still exists. A session cookie can outlive the account (deleted
+ * on another phone), and without this the old cookie would reach database writes and crash on a missing foreign key.
+ */
+export async function getLiveSessionUserId(): Promise<string | null> {
+  const id = await getSessionUserId();
+  if (!id) return null;
+  const row = await db.query.users.findFirst({ where: eq(users.id, id), columns: { id: true } });
+  return row ? id : null;
+}
+
+/**
  * May `sessionUserId` read/write data belonging to `targetId`?
  * Yes for itself and for managed profiles it owns — nothing else.
  */
@@ -101,6 +112,13 @@ export async function getActiveProfileId(sessionUserId: string): Promise<string>
     /* cookies() is unavailable outside a request */
   }
   return sessionUserId;
+}
+
+/** Same as getActor but the account must still exist (for API routes). */
+export async function getLiveActor(): Promise<{ sessionUserId: string; activeId: string } | null> {
+  const sessionUserId = await getLiveSessionUserId();
+  if (!sessionUserId) return null;
+  return { sessionUserId, activeId: await getActiveProfileId(sessionUserId) };
 }
 
 /** Convenience for server actions/pages: session user + active profile, or null when signed out. */

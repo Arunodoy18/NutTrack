@@ -4,7 +4,7 @@ import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { checkAuthRateLimit, clientIp } from "@/lib/rateLimit";
-import { cleanText, normalizeEmail, readJson, isUniqueViolation, EMAIL_RE } from "@/lib/sanitize";
+import { cleanText, normalizeEmail, readJson, isUniqueViolation, hasControlChars, EMAIL_RE } from "@/lib/sanitize";
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +13,9 @@ export async function POST(req: Request) {
     const email = normalizeEmail(body?.email); // "Asha@Gmail.com" and "asha@gmail.com " are the same person
     const password = typeof body?.password === "string" ? body.password : "";
 
+    if (typeof body?.email === "string" && hasControlChars(body.email)) {
+      return NextResponse.json({ error: "Please enter a valid email address" }, { status: 400 });
+    }
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }

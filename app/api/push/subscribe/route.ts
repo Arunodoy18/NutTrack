@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { and, count, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { pushSubscriptions } from "@/lib/db/schema";
-import { getSessionUserId } from "@/lib/access";
+import { getLiveSessionUserId } from "@/lib/access";
 
 import { readJson } from "@/lib/sanitize";
 const MAX_DEVICES = 8;
 
 export async function POST(req: NextRequest) {
-  const me = await getSessionUserId();
+  const me = await getLiveSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   let body: any;
   try {
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  const me = await getSessionUserId();
+  const me = await getLiveSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   let endpoint = "";
   try {

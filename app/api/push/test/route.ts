@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { pushSubscriptions } from "@/lib/db/schema";
-import { getSessionUserId } from "@/lib/access";
+import { getLiveSessionUserId } from "@/lib/access";
 import { pushConfig, sendPush } from "@/lib/push";
 import { checkAuthRateLimit } from "@/lib/rateLimit";
 
 /** Sends a test notification to every device on the signed-in account. */
 export async function POST() {
-  const me = await getSessionUserId();
+  const me = await getLiveSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!pushConfig().configured) return NextResponse.json({ error: "Notifications aren't set up on the server yet.", code: "not_configured" }, { status: 503 });
   if (!(await checkAuthRateLimit(`pushtest:${me}`))) return NextResponse.json({ error: "Too many tests. Try again in a few minutes." }, { status: 429 });

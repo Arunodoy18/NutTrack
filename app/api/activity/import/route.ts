@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { canAccessProfile, getActor } from "@/lib/access";
+import { canAccessProfile, getLiveActor } from "@/lib/access";
 import { cleanImport } from "@/lib/activity";
 import { authDevice, storeImport } from "@/lib/activityStore";
 
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     if (!dev) return NextResponse.json({ error: "Device not paired or revoked." }, { status: 401 });
     profileId = dev.profileId;
   } else {
-    const actor = await getActor();
+    const actor = await getLiveActor();
     if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     profileId = actor.activeId;
     if (!(await canAccessProfile(actor.sessionUserId, profileId))) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

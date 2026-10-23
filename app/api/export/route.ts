@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUserId, canAccessProfile } from "@/lib/access";
+import { getLiveSessionUserId, canAccessProfile } from "@/lib/access";
 import { collectExport } from "@/lib/exportCollector";
 import { buildJson, buildZip } from "@/lib/exportData";
 import { checkAuthRateLimit } from "@/lib/rateLimit";
@@ -16,7 +16,7 @@ const MAX_PHOTO_BYTES = 40_000_000;
  * account owns them. Responses are never cached.
  */
 export async function GET(req: NextRequest) {
-  const me = await getSessionUserId();
+  const me = await getLiveSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const p = req.nextUrl.searchParams;

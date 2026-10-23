@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import { count, eq, or } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
-import { ACTIVE_PROFILE_COOKIE, MAX_PROFILES, getSessionUserId, listProfiles } from "@/lib/access";
+import { ACTIVE_PROFILE_COOKIE, MAX_PROFILES, getLiveSessionUserId, listProfiles } from "@/lib/access";
 import { AVATARS, RELATIONS } from "@/lib/profileService";
 
 import { readJson, cleanText } from "@/lib/sanitize";
@@ -12,14 +12,14 @@ const cookieOpts = { httpOnly: true, sameSite: "lax" as const, secure: process.e
 
 /** List everyone this account can track. */
 export async function GET() {
-  const me = await getSessionUserId();
+  const me = await getLiveSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   return NextResponse.json({ success: true, profiles: await listProfiles(me), max: MAX_PROFILES });
 }
 
 /** Add a family member. Creates an empty managed profile and makes it the active one. */
 export async function POST(req: NextRequest) {
-  const me = await getSessionUserId();
+  const me = await getLiveSessionUserId();
   if (!me) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   // Only a real account can own family members (managed profiles can't nest).

@@ -44,3 +44,6 @@ export async function readJson(req: Request): Promise<any> {
 
 /** True for a Postgres "unique constraint" violation (two people claimed the same email at the same moment). */
 export const isUniqueViolation = (e: unknown) => /23505|duplicate key|unique constraint/i.test(String((e as any)?.code ?? "") + " " + String((e as any)?.message ?? "") + " " + String((e as any)?.cause?.message ?? ""));
+
+/** True if the text contains characters that never belong in an email or name (NUL, control codes, bidi overrides). */
+export const hasControlChars = (v: string) => new RegExp(BAD_CHARS.source).test(v);

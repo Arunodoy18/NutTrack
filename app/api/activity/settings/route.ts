@@ -2,13 +2,13 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { activitySettings, users } from "@/lib/db/schema";
-import { getActor } from "@/lib/access";
+import { getLiveActor } from "@/lib/access";
 
 import { readJson } from "@/lib/sanitize";
 export const dynamic = "force-dynamic";
 
 export async function PUT(req: Request) {
-  const actor = await getActor();
+  const actor = await getLiveActor();
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const body = await readJson(req);
   const enabled = body?.creditEnabled === true;

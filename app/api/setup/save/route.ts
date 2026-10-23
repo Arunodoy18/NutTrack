@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { getActor } from "@/lib/access";
+import { getLiveActor } from "@/lib/access";
 import { validateProfileInput } from "@/lib/profileValidation";
 import { saveProfileAndGoals } from "@/lib/profileService";
 
 import { readJson } from "@/lib/sanitize";
 /** Saves the profile of whoever is currently being tracked (the account holder or a family member). */
 export async function POST(req: NextRequest) {
-  const actor = await getActor();
+  const actor = await getLiveActor();
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: unknown;
