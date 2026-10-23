@@ -63,6 +63,8 @@ export interface OutboxOp {
   meal?: ManualMeal;
   /** Compressed JPEG data URL for queued photo scans. */
   image?: string;
+  /** meal_photo: small preview kept with the meal (the full image is only for the AI). */
+  thumb?: string;
   /** meal_text: what the person ate, in their own words. */
   text?: string;
   /** meal_barcode: EAN/UPC digits. */

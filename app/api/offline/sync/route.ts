@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
           summary: a.summary ?? a.name ?? "Meal",
           name: a.name,
           mealSession: a.mealSession ?? guessMealSession(eatenAt),
-          imageUrl: image,
+          imageUrl: kind === "meal_photo" && typeof op.thumb === "string" && op.thumb.startsWith("data:image/") && op.thumb.length <= 150_000 ? op.thumb : undefined,
           items: (a.items ?? []).map((i: any) => ({ ...i, estimatedQuantity: i.estimatedQuantity ?? "100g" })),
         },
         true,

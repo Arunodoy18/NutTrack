@@ -324,3 +324,14 @@ export const activitySettings = pgTable("activity_settings", {
   creditEnabled: boolean("credit_enabled").notNull().default(false),
   creditPct: integer("credit_pct").notNull().default(50),
 });
+
+/** What testers tell us from inside the app (bugs, ideas). Read with scripts/qa/feedback.mjs. */
+export const feedback = pgTable("feedback", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").references(() => users.id, { onDelete: "set null" }),
+  category: text("category").notNull().default("other"),
+  message: text("message").notNull(),
+  appVersion: text("app_version"),
+  screen: text("screen"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

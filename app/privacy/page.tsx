@@ -31,6 +31,7 @@ export default function PrivacyPolicyPage() {
               <li><b className="text-ink">Profile and body details</b> for you and any family members you add: age, sex, height, weight, activity level, diet, allergies or conditions you choose to enter, and goals. These are used to calculate nutrition targets.</li>
               <li><b className="text-ink">What you log:</b> meals and their nutrition, meal photos you choose to scan, water, weight, workouts, grocery lists and reminder settings.</li>
               <li><b className="text-ink">Health Connect data (only if you connect it):</b> steps, active calories, exercise sessions and weight, read from Health Connect after you pair a phone and grant access. Nura never writes to Health Connect.</li>
+              <li><b className="text-ink">Feedback you send us</b> from Profile → Send feedback: your message, its type, your app version and your account, so we can follow up.</li>
               <li><b className="text-ink">Device information:</b> a random token for each phone you pair (for reminders or Health Connect), your time zone, and the phone model name shown in your connected-devices list.</li>
             </ul>
           </S>

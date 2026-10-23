@@ -59,3 +59,20 @@ export async function compressDataUrl(dataUrl: string): Promise<string> {
   const img = await loadImage(dataUrl);
   return drawScaled(img, img.naturalWidth, img.naturalHeight);
 }
+
+/**
+ * A small preview (about 20–40 KB) to keep with a logged meal. The full-size photo is only needed for the AI to look at;
+ * keeping every full photo would fill the database (500 MB) after a few thousand meals.
+ */
+export async function makeThumb(dataUrl: string): Promise<string> {
+  const img = await loadImage(dataUrl);
+  const edge = 480;
+  const scale = Math.min(1, edge / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.max(1, Math.round(img.naturalWidth * scale)), h = Math.max(1, Math.round(img.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not process that image.");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", 0.6);
+}

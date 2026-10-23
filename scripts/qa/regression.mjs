@@ -99,6 +99,12 @@ try {
   // grocery
   r = await op(A.c, { id: "reg-groc-0001", userId: A.id, kind: "grocery_add", groceryItems: ["Paneer (200 g)", "paneer (200 g)", "Spinach"] });
   check("grocery: offline add dedupes (case-insensitive)", r.body.status === "ok" && (await q(`select count(*)::int c from grocery_list where user_id=$1`, [A.id]))[0].c === 2);
+  // feedback channel
+  check("feedback: signed-out is refused", (await rf(B + "/api/feedback", { method: "POST", headers: J, body: JSON.stringify({ message: "hello there" }) })).status === 401);
+  check("feedback: too-short message refused", (await A.c.post("/api/feedback", { message: "x" })).http === 400);
+  const fb = await A.c.post("/api/feedback", { category: "bug", message: "Regression test feedback \u0000 with a hidden character", screen: "/dashboard" });
+  const fbRow = (await q(`select category, message from feedback where user_id=$1`, [A.id]))[0];
+  check("feedback: saved with its category, hidden characters removed", fb.http === 200 && fbRow?.category === "bug" && !fbRow.message.includes("\u0000"));
   // export privacy
   const ex = await rf(B + "/api/export?format=json", { headers: { cookie: A.c.cookie() } });
   const exTxt = await ex.text(); const pw = (await q(`select password from "user" where id=$1`, [A.id]))[0].password;

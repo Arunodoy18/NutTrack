@@ -225,8 +225,12 @@ export default async function ProfilePage() {
             <span className="text-sm font-medium text-ink">Activity &amp; connected apps</span>
             <ChevronRight className="w-5 h-5 text-ink-soft" />
           </Link>
-          <Link href="/units" className="flex justify-between items-center p-5 hover:bg-surface-muted transition-colors">
+          <Link href="/units" className="flex justify-between items-center p-5 hover:bg-surface-muted transition-colors border-b border-surface-line">
             <span className="text-sm font-medium text-ink">Units &amp; measurements</span>
+            <ChevronRight className="w-5 h-5 text-ink-soft" />
+          </Link>
+          <Link href="/feedback" className="flex justify-between items-center p-5 hover:bg-surface-muted transition-colors">
+            <span className="text-sm font-medium text-ink">Send feedback</span>
             <ChevronRight className="w-5 h-5 text-ink-soft" />
           </Link>
         </div>

@@ -63,6 +63,7 @@ const FAQ = [
   { q: "Does it work without internet?", a: "Logging does. Meals you search or enter, water and weight are saved on the phone and sync later. AI photo and text analysis, and barcode lookups, wait until you are online and then run automatically." },
   { q: "Can I use it for my children?", a: "Yes, that is a core use. Each child gets their own profile with age-appropriate targets. Nura never sets a weight-loss deficit for anyone under 18 and does not let children “earn back” food with exercise." },
   { q: "Is Nura medical advice?", a: "No. It is a tracking and education tool, not a medical device. If you or your child has a medical condition, an eating disorder or special dietary needs, talk to a doctor or registered dietitian." },
+  { q: "I found a bug. How do I tell you?", a: "Nura is in testing and we read everything. In the app go to Profile → Send feedback and tell us what happened. It takes under a minute and helps a lot." },
   { q: "How do I delete my data?", a: "In the app: Profile → Your data to download everything, and Profile → Delete Account to remove your account and everything attached to it." },
 ];
 
@@ -111,7 +112,7 @@ export default async function DownloadPage() {
           <div className="relative mx-auto max-w-5xl px-5 pb-10 pt-10 text-center md:grid md:grid-cols-2 md:items-center md:gap-10 md:text-left">
             <div>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-brand/20 bg-white px-3 py-1 text-xs font-bold text-brand">
-                <Sparkles className="h-3.5 w-3.5" aria-hidden /> Free Android app{r.version ? ` · v${r.version}` : ""}
+                <Sparkles className="h-3.5 w-3.5" aria-hidden /> Free Android app{r.version ? ` · v${r.version}` : ""} · Beta
               </span>
               <h1 className="mt-4 font-display text-[40px] font-black leading-[1.05] tracking-tight sm:text-5xl">
                 Know what&apos;s on your plate. <span className="text-brand">For everyone at the table.</span>

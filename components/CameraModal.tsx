@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Webcam from 'react-webcam';
-import { compressImageFile, compressDataUrl } from '@/lib/imageCompress';
+import { compressImageFile, compressDataUrl, makeThumb } from '@/lib/imageCompress';
 import ManualMealForm from '@/components/ManualMealForm';
 import { showToast } from '@/components/OfflineStatusBar';
 import { enqueueOp } from '@/lib/offlineQueue';
@@ -235,7 +235,9 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
   const handleQueuePhoto = async () => {
     if (!base64Image || !localUserId) return;
     try {
-      await enqueueOp({ userId: localUserId, ownerId: accountUserId ?? localUserId, kind: 'meal_photo', eatenAt: Date.now(), image: base64Image });
+      let thumb: string | undefined;
+      try { thumb = await makeThumb(base64Image); } catch { /* no preview is fine */ }
+      await enqueueOp({ userId: localUserId, ownerId: accountUserId ?? localUserId, kind: 'meal_photo', eatenAt: Date.now(), image: base64Image, thumb });
       showToast("Photo saved — Nura will log it when you're back online");
       onClose();
       setTimeout(() => {
@@ -317,10 +319,12 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
     setMealSaveError(null);
     
     try {
+      let thumb: string | undefined;
+      try { thumb = base64Image ? await makeThumb(base64Image) : undefined; } catch { /* no preview is fine */ }
       const result = await saveMealAction(localUserId, {
         ...activeAnalysis,
         name: customMealName || activeAnalysis.name,
-        imageUrl: base64Image || undefined,
+        imageUrl: thumb,
       });
 
       if (result.success) {
