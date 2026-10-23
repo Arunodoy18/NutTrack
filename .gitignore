@@ -34,3 +34,9 @@ twa/build/
 twa/.gradle/
 twa/app/build/
 backups/
+
+# QA test tool build output
+scripts/qa/hcwriter/.gradle/
+scripts/qa/hcwriter/build/
+scripts/qa/hcwriter/app/build/
+scripts/qa/hcwriter/local.properties

@@ -14,6 +14,16 @@ android {
         versionName "1.2.3"
     }
     buildTypes {
+        // QA only (never published): the shipped release code, minified the same way, but inspectable and debug-signed.
+        qa {
+            initWith release
+            debuggable true
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.debug
+            matchingFallbacks = ['release']
+        }
         release {
             minifyEnabled true
             shrinkResources true
