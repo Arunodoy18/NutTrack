@@ -66,6 +66,7 @@ interface CameraModalProps {
 export default function CameraModal({ isOpen, onClose, userId, accountUserId, isPremiumUser, onMealSaved }: CameraModalProps) {
   const [activeModalMode, setActiveModalMode] = useState<'camera' | 'speak' | 'barcode' | 'manual'>('camera');
   const online = useOnline();
+  const [quota, setQuota] = useState<{ remaining: number; limit: number } | null>(null);
   const [networkFailed, setNetworkFailed] = useState(false);
   const [manualMode, setManualMode] = useState<'search' | 'numbers' | 'describe'>('search');
   // The scanner reports the same code on every frame (10/s): act on the first one only.
@@ -75,6 +76,13 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
   useEffect(() => { stableRead.current = createStableReader(); }, [isOpen, activeModalMode]);
   const [uploadStep, setUploadStep] = useState<number>(0); 
   useEffect(() => { barcodeLock.current = false; }, [activeModalMode, isOpen, uploadStep]);
+  // Free plan: how many AI scans are left today (refreshed when the scanner opens and after every analysis).
+  useEffect(() => {
+    if (!isOpen || !online) return;
+    let live = true;
+    fetch('/api/scans', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (live && j) setQuota({ remaining: j.remaining, limit: j.limit }); }).catch(() => {});
+    return () => { live = false; };
+  }, [isOpen, online, uploadStep]);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState<string | null>(null);
   const webcamRef = useRef<Webcam>(null);
@@ -394,9 +402,16 @@ export default function CameraModal({ isOpen, onClose, userId, accountUserId, is
             
             {/* Header - Floating Top */}
             <div className={`absolute top-0 inset-x-0 z-50 flex items-center justify-between p-6 ${activeModalMode === 'manual' ? 'bg-black' : 'bg-gradient-to-b from-black/70 via-black/40 to-transparent'}`}>
-              <h3 className="font-display text-white text-lg font-bold drop-shadow-md tracking-wide">
-                {uploadStep === 0 ? "Scanner" : uploadStep === 1 ? "Analyzing" : "Results"}
-              </h3>
+              <div>
+                <h3 className="font-display text-white text-lg font-bold drop-shadow-md tracking-wide">
+                  {uploadStep === 0 ? "Scanner" : uploadStep === 1 ? "Analyzing" : "Results"}
+                </h3>
+                {quota && uploadStep !== 1 && (
+                  <p className={`mt-0.5 text-[11px] font-bold drop-shadow ${quota.remaining === 0 ? 'text-amber-300' : 'text-white/80'}`} role="status">
+                    {quota.remaining === 0 ? 'No free AI scans left today · search & barcode still work' : `${quota.remaining} of ${quota.limit} free AI scans left today`}
+                  </p>
+                )}
+              </div>
               <button 
                 onClick={handleClose}
                 className="w-10 h-10 flex items-center justify-center text-white bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full transition-all"

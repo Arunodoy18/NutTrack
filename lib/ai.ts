@@ -50,3 +50,11 @@ export function aiErrorMessage(e: unknown): string {
   if (!raw || raw.startsWith("{") || raw.startsWith("[") || /"error"\s*:|googleapis|ApiError|\bat\s+\S+\s+\(/i.test(raw)) return "Something went wrong analysing that. Please try again.";
   return raw.slice(0, 220);
 }
+
+/** Thrown for problems found before the AI is ever called (empty text, wrong file type): the person is not charged a scan. */
+export class NotCharged extends Error {}
+
+/** Give the scan back when the person got nothing for it because of OUR side (provider down, invalid reply, bad input). A photo with no food in it still counts. */
+export function shouldRefundScan(err: unknown): boolean {
+  return err instanceof NotCharged || isTransientAiError(err) || /AI returned an invalid format|API_KEY is missing|Failed to get response|timed out/i.test(messageOf(err));
+}

@@ -43,7 +43,7 @@ export default function TermsOfServicePage() {
 
           <section>
             <h2 className="text-xl font-bold mb-3">4. Subscription and Payments</h2>
-            <p>Nura is currently free to use. We apply a fair-use limit of 200 AI scans per account per day. If we introduce paid plans in future, we will tell you in the app before any charge, and nothing is charged without your explicit action.</p>
+            <p>Nura is currently free to use. The free plan includes every feature, with a daily limit of 10 AI scans (photo, typed or spoken meals, and Fridge Raider) per account, which resets at midnight in your time zone. We plan to offer a paid Premium plan with unlimited AI scans. If we do, we will tell you in the app first, and nothing is ever charged without your explicit action.</p>
           </section>
 
           <section>

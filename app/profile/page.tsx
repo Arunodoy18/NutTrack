@@ -19,6 +19,8 @@ import { getUserTz } from "@/lib/tzServer";
 import FamilySection from "@/components/FamilySection";
 import WeightTracker from "@/components/WeightTracker";
 import ExportSection from "@/components/ExportSection";
+import PremiumInterest from "@/components/PremiumInterest";
+import { peekScans } from "@/lib/scanQuota";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +33,7 @@ export default async function ProfilePage() {
   
   const accountId = session.user.id;
   const userId = await getActiveProfileId(accountId); // who is being tracked
+  const scanQuota = await peekScans(accountId, await getUserTz()); // the allowance belongs to the account
   const profiles = await listProfiles(accountId);
   
   // Fetch user data
@@ -205,12 +208,13 @@ export default async function ProfilePage() {
         <div className="bg-gradient-to-br from-[#fc5c16] to-[#e63e00] rounded-[32px] p-6 text-white shadow-xl shadow-brand/20 mb-6 relative overflow-hidden">
           <div className="flex items-center gap-2 mb-3 relative z-10">
             <Zap className="w-4 h-4" fill="currentColor" />
-            <span className="text-[10px] font-black tracking-widest uppercase">Nura</span>
+            <span className="text-[10px] font-black tracking-widest uppercase">Nura Free</span>
           </div>
-          <h2 className="text-2xl font-black mb-2 relative z-10">Free for everyone</h2>
+          <h2 className="text-2xl font-black mb-2 relative z-10">{scanQuota.remaining} of {scanQuota.limit} AI scans left today</h2>
           <p className="text-sm text-white/90 font-medium relative z-10">
-            Every feature is included at no cost. Fair use: up to 200 AI scans a day.
+            Every feature is yours to use. Photo, typing/voice and fridge scans are limited each day; search, barcode, recipes, plans, water and weight are unlimited.
           </p>
+          <div className="mt-4 relative z-10"><PremiumInterest /></div>
           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
           <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
         </div>

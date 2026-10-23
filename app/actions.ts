@@ -8,7 +8,9 @@ import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit, checkChatRateLimit } from "@/lib/rateLimit";
 import { FREE_FOR_ALL } from "@/lib/plan";
 import { cleanText } from "@/lib/sanitize";
-import { withAiRetry, aiErrorMessage } from "@/lib/ai";
+import { withAiRetry, aiErrorMessage, NotCharged, shouldRefundScan } from "@/lib/ai";
+import { consumeScan, refundScan, limitMessage } from "@/lib/scanQuota";
+import { FREE_DAILY_AI_SCANS } from "@/lib/plan";
 import { canAccessProfile, ownerOf, getActiveProfileId } from "@/lib/access";
 import { getUserTz } from "@/lib/tzServer";
 import { startOfDayInTz, startOfDayDaysAgo, dateKeyInTz, weekdayInTz } from "@/lib/tz";
@@ -63,7 +65,10 @@ function computePremium(owner?: { isPremium: boolean | null; createdAt: Date | n
   return { isPremium, isTrialActive };
 }
 
-async function checkAiAccess(overrideUserId?: string) {
+/** What a scan hands back so the allowance can be returned if the AI failed on our side. */
+type ScanTicket = { refund: () => Promise<void> };
+
+async function checkAiAccess(overrideUserId?: string): Promise<ScanTicket> {
   const session = await getServerSession(authOptions);
   let userId = overrideUserId;
   if (!userId) {
@@ -76,20 +81,22 @@ async function checkAiAccess(overrideUserId?: string) {
 
   // Scans, trial and plan belong to the ACCOUNT, so adding family members can't multiply free scans.
   const ownerId = await ownerOf(userId);
-  const ownerRecord = await db.query.users.findFirst({ where: eq(users.id, ownerId) });
-  const { isPremium } = computePremium(ownerRecord);
+  const tz = await getUserTz();
 
-  const { allowed } = await checkScanRateLimit(ownerId, isPremium);
-
-  if (!allowed) {
-    if (isPremium) {
-      throw new Error("You've reached today's fair-use limit of 200 AI scans. It resets tomorrow.");
-    } else {
-      throw new Error("Rate limit exceeded (5 scans/hour). Please upgrade to premium for more scans.");
-    }
+  if (FREE_FOR_ALL) {
+    // Free plan: N AI scans per account per (local) day.
+    const q = await consumeScan(ownerId, tz, FREE_DAILY_AI_SCANS);
+    if (!q.allowed) throw new Error(limitMessage(FREE_DAILY_AI_SCANS));
+    return { refund: () => refundScan(ownerId, tz) };
   }
 
-  return true;
+  const ownerRecord = await db.query.users.findFirst({ where: eq(users.id, ownerId) });
+  const { isPremium } = computePremium(ownerRecord);
+  const { allowed } = await checkScanRateLimit(ownerId, isPremium);
+  if (!allowed) {
+    throw new Error(isPremium ? "You've reached today's fair-use limit of 200 AI scans. It resets tomorrow." : "Rate limit exceeded (5 scans/hour). Please upgrade to premium for more scans.");
+  }
+  return { refund: async () => {} };
 }
 
 export async function saveDailyGoalsAction(
@@ -427,15 +434,16 @@ function getFallbackInsight(
 }
 
 export async function analyzeMealImageAction(base64Image: string, overrideUserId?: string) {
+  let ticket: ScanTicket | undefined;
   try {
-    await checkAiAccess(overrideUserId);
+    ticket = await checkAiAccess(overrideUserId);
 
     if (base64Image) {
       const sizeInMB = (base64Image.length * 3) / 4 / 1024 / 1024;
-      if (sizeInMB > 10) throw new Error("Image exceeds 10MB limit");
+      if (sizeInMB > 10) throw new NotCharged("Image exceeds 10MB limit");
       
       if (base64Image.startsWith("data:") && !base64Image.startsWith("data:image/")) {
-        throw new Error("Invalid file type. Only images are allowed.");
+        throw new NotCharged("Invalid file type. Only images are allowed.");
       }
     }
 
@@ -587,17 +595,19 @@ OUTPUT FORMAT (strict JSON):
     };
   } catch (err) {
     console.error("AI scan action error:", err);
+    if (shouldRefundScan(err)) await ticket?.refund();
     return { success: false, error: aiErrorMessage(err) };
   }
 }
 
 export async function analyzeMealTextAction(text: string, overrideUserId?: string) {
+  let ticket: ScanTicket | undefined;
   try {
-    await checkAiAccess(overrideUserId);
+    ticket = await checkAiAccess(overrideUserId);
 
     // Bound free-text input (cost control + prompt-injection surface)
     text = String(text ?? "").trim().slice(0, 500);
-    if (!text) return { success: false, error: "Please describe what you ate." };
+    if (!text) { await ticket?.refund(); return { success: false, error: "Please describe what you ate." }; }
 
     const apiKey = process.env.GROQ_API_KEY;
 
@@ -708,6 +718,7 @@ OUTPUT FORMAT:
     };
   } catch (err) {
     console.error("AI text scan error:", err);
+    if (shouldRefundScan(err)) await ticket?.refund();
     return { success: false, error: aiErrorMessage(err) };
   }
 }
@@ -897,15 +908,16 @@ export async function deleteGroceryItemAction(itemId: string) {
 }
 
 export async function analyzeFridgeImageAction(base64Image: string, overrideUserId?: string) {
+  let ticket: ScanTicket | undefined;
   try {
-    await checkAiAccess(overrideUserId);
+    ticket = await checkAiAccess(overrideUserId);
 
     if (base64Image) {
       const sizeInMB = (base64Image.length * 3) / 4 / 1024 / 1024;
-      if (sizeInMB > 10) throw new Error("Image exceeds 10MB limit");
+      if (sizeInMB > 10) throw new NotCharged("Image exceeds 10MB limit");
       
       if (!base64Image.startsWith("data:image/")) {
-        throw new Error("Invalid file type. Only images are allowed.");
+        throw new NotCharged("Invalid file type. Only images are allowed.");
       }
     }
 
@@ -1007,6 +1019,7 @@ OUTPUT FORMAT:
     };
   } catch (err) {
     console.error("AI Fridge scan error:", err);
+    if (shouldRefundScan(err)) await ticket?.refund();
     return { success: false, error: aiErrorMessage(err) };
   }
 }

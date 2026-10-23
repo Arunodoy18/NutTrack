@@ -7,7 +7,7 @@ import { readJson, cleanText } from "@/lib/sanitize";
 import { APP_UA } from "@/lib/appGate";
 
 export const dynamic = "force-dynamic";
-const CATEGORIES = ["bug", "idea", "other"] as const;
+const CATEGORIES = ["bug", "idea", "other", "premium"] as const;
 
 /** A tester sends a note from inside the app. */
 export async function POST(req: NextRequest) {

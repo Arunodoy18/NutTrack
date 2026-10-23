@@ -55,7 +55,7 @@ const SCREENS = [
 ];
 
 const FAQ = [
-  { q: "Is Nura really free?", a: "Yes. Every feature is free. To keep the AI bill fair there is a limit of 200 AI photo or text scans per account per day, which resets daily. Searching foods, barcodes, recipes, plans, water and weight are not counted." },
+  { q: "Is Nura really free?", a: "Yes. Download it and use every feature for free. The three features that cost real money to run — AI photo scan, AI typing/voice and Fridge Raider — are limited to 10 a day on the free plan, and the counter resets at your midnight. Search, barcodes, recipes, meal plans, water, weight, reminders and exports are never limited. A Premium plan with unlimited AI scans is coming soon." },
   { q: "Why isn't it on the Play Store?", a: "It is coming. Until then you install it directly from this page. The file is signed by us and its checksum is shown below so you can verify it. Android may ask you to allow installs from your browser once." },
   { q: "Is the APK safe to install?", a: "Nura asks only for what its features need: camera (to scan), microphone (voice input), notifications (reminders) and, only if you connect it, Health Connect read access. You can compare the SHA-256 shown on this page with the file you downloaded." },
   { q: "Which phones does it work on?", a: "Android 10 or newer. It is built as a small native app (under 4 MB). Health Connect sync is built in on Android 14 and newer; on Android 9 to 13 you also need Google's free Health Connect app." },
@@ -127,7 +127,7 @@ export default async function DownloadPage() {
               </div>
               <PlatformNotice qrSvg={qrSvg} />
               <ul className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-bold text-ink-soft md:justify-start">
-                {["Free to use", "No ads", "Works offline", "Safe for kids"].map((t) => (
+                {["Free to start", "No ads", "Works offline", "Safe for kids"].map((t) => (
                   <li key={t} className="inline-flex items-center gap-1"><Check className="h-3.5 w-3.5 text-emerald-600" aria-hidden />{t}</li>
                 ))}
               </ul>
@@ -278,7 +278,7 @@ export default async function DownloadPage() {
           <div className="mx-auto max-w-3xl rounded-[32px] bg-ink p-8 text-center text-white sm:p-10">
             <img src="/icon-192.png" alt="" width={64} height={64} className="mx-auto h-16 w-16 rounded-2xl" />
             <h2 className="mt-4 font-display text-3xl font-black tracking-tight">Start with your next meal</h2>
-            <p className="mx-auto mt-2 max-w-sm text-sm font-medium text-white/70">Free, small and ready in a minute.</p>
+            <p className="mx-auto mt-2 max-w-sm text-sm font-medium text-white/70">Free to start, small and ready in a minute.</p>
             <div className="mt-6 flex justify-center"><Cta /></div>
           </div>
         </section>

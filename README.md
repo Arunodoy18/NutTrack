@@ -16,7 +16,7 @@ There is no website version: the web address only hosts the download page and th
 | Download page | `app/download/`, `components/landing/` | Includes a live demo that runs the real food DB, nutrition engine and meal planner in the browser. |
 | Reminders | `lib/reminders.ts`, `app/api/device/*`, `twa/.../ReminderAlarms.java` | The server says when to wake the phone; Android alarms (not background jobs, which Android throttles for unopened apps) fetch what is due and show it. |
 | Rate limiting | `lib/rateLimit.ts` | Upstash Redis. Without it every limit fails open (check `/api/health`). |
-| Plans | `lib/plan.ts` | `FREE_FOR_ALL = true`: everything free, 200 AI scans/day fair use, payment endpoints return 410. |
+| Plans | `lib/plan.ts`, `lib/scanQuota.ts` | Free plan: every feature, **10 AI scans/day per account** (photo, typed/voice, fridge; resets at the user's midnight; given back if the AI fails on our side). `FREE_DAILY_AI_SCANS` is the one number to change. No purchase flow yet: Profile shows "Premium coming soon" + a "tell me" button (recorded as feedback category `premium`). Payment endpoints return 410. |
 
 ## Environment (names only, set in Netlify and `.env.local`)
 `DATABASE_URL`, `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `RESEND_API_KEY`,
@@ -51,6 +51,6 @@ back-to-back runs. Device testing helpers: `scripts/qa/driver.mjs` (DevTools dri
 The signing key lives in `~/nura-signing/` (outside the repo). **Back it up**: losing it means no more updates on Google Play.
 
 ## Not done yet
-- Freemium limits + RevenueCat / Play Billing (and an iOS app for the App Store) — see conversation notes; app is currently fully free.
+- Premium: RevenueCat / Play Billing purchase flow (the limits themselves are done; see Plans) and an iOS app for the App Store.
 - Rotate the Neon database password (an old one is in git history); remove the unused `OPENAI_API_KEY`.
 - Build-time-only npm advisories in the `next-pwa`/workbox chain, and `drizzle-orm` (identifier-injection advisory, not reachable: user text is never used as a SQL identifier).
