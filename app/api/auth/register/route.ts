@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { checkAuthRateLimit, clientIp } from "@/lib/rateLimit";
+import { checkRegisterRateLimit, clientIp } from "@/lib/rateLimit";
 import { cleanText, normalizeEmail, readJson, isUniqueViolation, hasControlChars, EMAIL_RE } from "@/lib/sanitize";
 
 export async function POST(req: Request) {
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     if (password.length < 8 || password.length > 128) {
       return NextResponse.json({ error: "Password must be 8-128 characters" }, { status: 400 });
     }
-    if (!(await checkAuthRateLimit(`register:${clientIp(req)}`))) {
+    if (!(await checkRegisterRateLimit(`register:${clientIp(req)}`))) {
       return NextResponse.json({ error: "Too many attempts. Please try again later." }, { status: 429 });
     }
 

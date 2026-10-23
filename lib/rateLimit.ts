@@ -44,6 +44,25 @@ const authLimiter = redis ? new Ratelimit({
   prefix: "dietbuddy:auth",
 }) : null;
 
+// Sign-ups get their own, roomier limit: lots of real people share one internet address (a hostel, an office, a phone
+// carrier), and bcrypt already makes each sign-up expensive for a bot. Sign-in and code guessing stay strict.
+const registerLimiter = redis ? new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(40, "15 m"),
+  prefix: "dietbuddy:register",
+}) : null;
+
+export async function checkRegisterRateLimit(key: string) {
+  if (!registerLimiter) return true;
+  try {
+    const { success } = await registerLimiter.limit(key);
+    return success;
+  } catch (err) {
+    console.error("[rateLimit] register limiter unavailable, allowing:", (err as Error).message);
+    return true;
+  }
+}
+
 export async function checkAuthRateLimit(key: string) {
   if (!authLimiter) return true;
   try {
