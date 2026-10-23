@@ -112,6 +112,7 @@ try {
 } finally {
   const ids = (await q(`select id from "user" where email like $1`, [`nura.e2e.reg.%.${rand}@example.com`])).map((r) => r.id);
   await q(`delete from "user" where parent_id = any($1) or id = any($1)`, [ids]);
+  await q(`delete from feedback where message like 'Regression test feedback%'`);
   console.log(`\n${results.filter(Boolean).length}/${results.length} passed; leftovers: ${(await q(`select count(*)::int c from "user" where email like $1`, [`%.${rand}@example.com`]))[0].c}`);
   await db.end();
 }
