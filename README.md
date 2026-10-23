@@ -1,19 +1,19 @@
 # Nura — nutrition tracking for the whole family
 
-Free Android app (photo / barcode / text logging, offline-first, child-safe targets, meal plans, reminders, Health Connect sync)
-with a Next.js backend.
+Nura is an **Android app** (photo / barcode / text logging, offline-first, child-safe targets, meal plans, reminders, Health Connect sync).
+There is no website version: the web address only hosts the download page and the app's backend.
 
-- **Website & download page:** https://dietbuddy.buildc3.tech (browsers see the landing page + live demo; the app itself only opens inside the Android app)
-- **Latest app file:** https://dietbuddy.buildc3.tech/nura.apk — version and SHA-256 are in [`public/app-release.json`](public/app-release.json)
+- **Download page:** https://dietbuddy.buildc3.tech — the only thing a browser ever shows is this page (info, live demo, the APK). Nura itself is an Android app and opens only inside it.
+- **Latest app (APK):** https://dietbuddy.buildc3.tech/nura.apk — version and SHA-256 are in [`public/app-release.json`](public/app-release.json)
 - **Health check:** https://dietbuddy.buildc3.tech/api/health → `{ ok, rateLimit, commit }` (which commit is live, and whether Redis rate limiting is connected)
 
 ## How it fits together
 | Part | Where | Notes |
 |---|---|---|
-| Web app + API | `app/`, `components/`, `lib/` | Next.js 16 (webpack build for `next-pwa`), React 18, Drizzle ORM → Neon Postgres, NextAuth (JWT). Deployed by Netlify on every push to `main`. |
-| Android app | `twa/` | Native WebView shell (Java + one Kotlin file), minSdk 29. Adds `NuraApp/<version>` to the user agent and sets a `nura_app` cookie: the website serves its screens only to that. Native extras: camera/mic, voice input bridge, downloads, alarm-based reminders, Health Connect sync. |
+| Server + app screens | `app/`, `components/`, `lib/` | The backend and the screens the Android app displays. Next.js 16 (webpack build for `next-pwa`), React 18, Drizzle ORM → Neon Postgres, NextAuth (JWT). Deployed by Netlify on every push to `main`. |
+| Android app | `twa/` | Native WebView shell (Java + one Kotlin file), minSdk 29. Adds `NuraApp/<version>` to the user agent and sets a `nura_app` cookie: the server serves the app's screens only to that. Native extras: camera/mic, voice input bridge, downloads, alarm-based reminders, Health Connect sync. |
 | Gate | `middleware.ts`, `lib/appGate.ts` | Browsers get `/download`; the app (UA or cookie) gets the real screens. APIs are not gated (they require auth). |
-| Landing page | `app/download/`, `components/landing/` | Includes a live demo that runs the real food DB, nutrition engine and meal planner in the browser. |
+| Download page | `app/download/`, `components/landing/` | Includes a live demo that runs the real food DB, nutrition engine and meal planner in the browser. |
 | Reminders | `lib/reminders.ts`, `app/api/device/*`, `twa/.../ReminderAlarms.java` | The server says when to wake the phone; Android alarms (not background jobs, which Android throttles for unopened apps) fetch what is due and show it. |
 | Rate limiting | `lib/rateLimit.ts` | Upstash Redis. Without it every limit fails open (check `/api/health`). |
 | Plans | `lib/plan.ts` | `FREE_FOR_ALL = true`: everything free, 200 AI scans/day fair use, payment endpoints return 410. |

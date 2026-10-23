@@ -146,7 +146,7 @@ export default async function DownloadPage() {
           <div className="mx-auto max-w-5xl px-5 text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-brand">Try it live</span>
             <h2 id="try-h" className="mt-3 font-display text-3xl font-black tracking-tight sm:text-4xl">Don&apos;t take our word for it. Tap around.</h2>
-            <p className="mx-auto mt-2 max-w-lg text-sm font-medium text-ink-soft">This is Nura&apos;s real food database, nutrition engine and meal planner running in your browser. Watch the tour, or take over.</p>
+            <p className="mx-auto mt-2 max-w-lg text-sm font-medium text-ink-soft">This is Nura&apos;s real food database, nutrition engine and meal planner, running right here on this page. Watch the tour, or take over.</p>
           </div>
           <div className="mt-8"><LiveDemoLoader /></div>
         </section>

@@ -9,11 +9,6 @@ export const metadata: Metadata = {
   title: "Nura - Intelligent Nutrition Tracking",
   description: "Track your meals effortlessly with Nura AI",
   formatDetection: { telephone: false, email: false, address: false },
-  appleWebApp: {
-    capable: true,
-    title: "Nura",
-    statusBarStyle: "default",
-  },
 };
 
 export const viewport = {
