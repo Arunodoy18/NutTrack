@@ -3,12 +3,12 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ChevronRight, Target, Flame, Camera, ChevronLeft, ScanLine, Dumbbell } from "lucide-react";
+import { ChevronRight, Target, Flame, Camera, ChevronLeft, ScanLine, Users } from "lucide-react";
 
 const SLIDES = [
   {
     eyebrow: "CONSISTENCY",
-    title: "EARN EVERY BITE.",
+    title: "EVERY BITE COUNTS.",
     subcopy: "",
   },
   {
@@ -22,9 +22,9 @@ const SLIDES = [
     subcopy: "See exactly how much protein, fat, and fiber you eat.",
   },
   {
-    eyebrow: "PROGRESS",
-    title: "CRUSH YOUR GOALS",
-    subcopy: "Stay accountable and hit your targets effortlessly.",
+    eyebrow: "FAMILY",
+    title: "BUILT FOR EVERYONE",
+    subcopy: "Safe targets for kids, adults and grandparents. Log anywhere, even offline.",
   }
 ];
 
@@ -36,15 +36,20 @@ export default function OnboardingCarousel() {
     setOnbSlide((prev) => (prev + 1) % 4);
   };
 
+  const seen = () => { try { document.cookie = 'nura_welcomed=1; Max-Age=31536000; Path=/; SameSite=Lax; Secure'; } catch { /* ignore */ } };
+
   const handleSkip = () => {
+    seen();
     router.push('/auth/signup');
   };
 
   const handleJoin = () => {
+    seen();
     router.push('/auth/signup');
   };
 
   const handleLogin = () => {
+    seen();
     router.push('/auth/login');
   };
 
@@ -89,10 +94,10 @@ export default function OnboardingCarousel() {
                 {/* Floating Chips */}
                 <div className="flex items-center gap-3 mt-6">
                   <div className="bg-transparent px-4 py-2 rounded-full border border-surface-line flex items-center justify-center">
-                    <span className="text-[10px] sm:text-xs font-bold text-brand tracking-widest uppercase">+240 XP</span>
+                    <span className="text-[10px] sm:text-xs font-bold text-brand tracking-widest uppercase">Log in seconds</span>
                   </div>
                   <div className="bg-transparent px-4 py-2 rounded-full border border-surface-line flex items-center justify-center">
-                    <span className="text-[10px] sm:text-xs font-bold text-ink tracking-widest uppercase">Badge Unlocked</span>
+                    <span className="text-[10px] sm:text-xs font-bold text-ink tracking-widest uppercase">Keep your streak</span>
                   </div>
                 </div>
               </div>
@@ -184,13 +189,13 @@ export default function OnboardingCarousel() {
               <div className="relative">
                 <div className="w-32 h-32 bg-white rounded-[32px] rotate-12 shadow-xl shadow-brand/20 border-4 border-white flex items-center justify-center overflow-hidden">
                    <div className="w-full h-full bg-brand/10 flex items-center justify-center">
-                      <Dumbbell className="w-12 h-12 text-brand" />
+                      <Users className="w-12 h-12 text-brand" />
                    </div>
                 </div>
                 
                 <div className="absolute -top-6 -right-6 bg-ink text-white px-4 py-3 rounded-2xl shadow-xl rotate-[-5deg]">
-                  <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-0.5">Goal Hit</div>
-                  <div className="text-xl font-black">92%</div>
+                  <div className="text-[10px] font-bold text-white/50 uppercase tracking-widest mb-0.5">1 account</div>
+                  <div className="text-xl font-black">6 people</div>
                 </div>
               </div>
             </div>

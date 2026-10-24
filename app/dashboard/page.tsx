@@ -2,13 +2,14 @@ import React from 'react';
 import { redirect } from 'next/navigation';
 import Dashboard from "@/components/Dashboard";
 import { getSessionUserId, loadFamilyForDashboard } from "@/lib/access";
+import { signedOutHome } from "@/lib/welcome";
 import { dailyWaterGoalMl } from "@/lib/hydration";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const sessionUserId = await getSessionUserId();
-  if (!sessionUserId) redirect("/auth/login");
+  if (!sessionUserId) redirect(await signedOutHome());
 
   // App Shell architecture: render instantly; the client component reads its cache and syncs in the background.
   const fam = await loadFamilyForDashboard(sessionUserId);

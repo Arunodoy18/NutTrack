@@ -42,6 +42,14 @@ try {
   g = await get("/dashboard", { ...html, ...ua("Mozilla/5.0 Chrome/126"), cookie: "nura_app=1.2.2" });
   check("gate: the app (cookie, as sent by its service worker) is let through", !/Download for Android/.test(g.t));
   g = await get("/privacy", { ...html, ...ua("Mozilla/5.0 Chrome") }); check("gate: privacy page stays public", g.r.status === 200 && !/Download for Android/.test(g.t));
+  // first-run flow: welcome screens → sign-in; returning signed-out people skip the welcome
+  const appUa = { ...html, ...ua("Mozilla/5.0 (Linux; Android 11) NuraApp/1.2.4") };
+  let w = await rf(B + "/dashboard", { redirect: "manual", headers: appUa });
+  check("first open (signed out, never welcomed) → welcome screens", w.status >= 300 && w.status < 400 && /\/onboarding$/.test(w.headers.get("location") || ""), w.headers.get("location"));
+  w = await rf(B + "/dashboard", { redirect: "manual", headers: { ...appUa, cookie: "nura_welcomed=1" } });
+  check("later opens (welcome already seen) → straight to sign-in", /\/auth\/login$/.test(w.headers.get("location") || ""), w.headers.get("location"));
+  w = await rf(B + "/", { redirect: "manual", headers: appUa });
+  check("the root address also starts with the welcome screens", /\/onboarding$/.test(w.headers.get("location") || ""), w.headers.get("location"));
   const apk = await rf(B + "/nura.apk", { method: "HEAD" }); check("download: APK is served", apk.status === 200 && /android/.test(apk.headers.get("content-type") || ""), apk.headers.get("content-length"));
   const h = await rf(B + "/api/health"); check("health endpoint ok + never cached", h.status === 200 && /no-store/.test(h.headers.get("cache-control") || ""));
   const csp = (await rf(B + "/download")).headers.get("content-security-policy") || "";
