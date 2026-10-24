@@ -44,10 +44,14 @@ try {
   g = await get("/privacy", { ...html, ...ua("Mozilla/5.0 Chrome") }); check("gate: privacy page stays public", g.r.status === 200 && !/Download for Android/.test(g.t));
   // first-run flow: welcome screens → sign-in; returning signed-out people skip the welcome
   const appUa = { ...html, ...ua("Mozilla/5.0 (Linux; Android 11) NuraApp/1.2.4") };
+  // /dashboard streams its redirect (200 + refresh) instead of a 3xx, so accept either form
+  const wentTo = async (r) => (r.headers.get("location") || (await r.text()).match(/NEXT_REDIRECT;replace;([^;]+);/)?.[1] || "");
   let w = await rf(B + "/dashboard", { redirect: "manual", headers: appUa });
-  check("first open (signed out, never welcomed) → welcome screens", w.status >= 300 && w.status < 400 && /\/onboarding$/.test(w.headers.get("location") || ""), w.headers.get("location"));
+  const w1 = await wentTo(w);
+  check("first open (signed out, never welcomed) → welcome screens", /\/onboarding$/.test(w1), w1);
   w = await rf(B + "/dashboard", { redirect: "manual", headers: { ...appUa, cookie: "nura_welcomed=1" } });
-  check("later opens (welcome already seen) → straight to sign-in", /\/auth\/login$/.test(w.headers.get("location") || ""), w.headers.get("location"));
+  const w2 = await wentTo(w);
+  check("later opens (welcome already seen) → straight to sign-in", /\/auth\/login$/.test(w2), w2);
   w = await rf(B + "/", { redirect: "manual", headers: appUa });
   check("the root address also starts with the welcome screens", /\/onboarding$/.test(w.headers.get("location") || ""), w.headers.get("location"));
   const apk = await rf(B + "/nura.apk", { method: "HEAD" }); check("download: APK is served", apk.status === 200 && /android/.test(apk.headers.get("content-type") || ""), apk.headers.get("content-length"));
