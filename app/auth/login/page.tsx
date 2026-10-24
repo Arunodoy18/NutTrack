@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
 
 function LoginContent() {
   const router = useRouter();
@@ -48,13 +47,7 @@ function LoginContent() {
   return (
     <div className="max-w-md mx-auto px-6 py-6">
       
-      {/* Top Nav */}
-      <div className="flex items-center mb-8">
-        <Link href="/" className="flex items-center gap-1 text-sm font-bold text-ink-soft hover:text-ink transition-colors">
-          <ChevronLeft className="w-4 h-4" />
-          Back
-        </Link>
-      </div>
+      <div className="h-6" aria-hidden />{/* the app has no screen before sign-in, so no Back arrow */}
 
       {/* Logo */}
       <div className="text-xl font-black tracking-tight flex items-center mb-6">
