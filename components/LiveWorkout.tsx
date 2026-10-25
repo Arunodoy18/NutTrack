@@ -88,28 +88,28 @@ export default function LiveWorkout({ weightKg, heightCm, onSaved }: { weightKg:
       {!running ? (
         <>
           <p className="mt-1 text-xs text-ink-soft leading-relaxed">Keep your phone with you (hand, pocket or bag). Nura counts your steps and works out calories as you go.</p>
-          <div className="mt-3 flex gap-2">
-            <select value={kind} onChange={(e) => setKind(e.target.value as WorkoutKind)} className="flex-1 rounded-xl border border-surface-line bg-surface px-3 py-3 text-sm font-medium" aria-label="Workout type">
+          <div className="mt-3 grid grid-cols-1 gap-2">
+            <select value={kind} onChange={(e) => setKind(e.target.value as WorkoutKind)} className="w-full min-w-0 rounded-xl border border-surface-line bg-surface px-3 py-3 text-sm font-medium" aria-label="Workout type">
               {WORKOUT_KINDS.map((w) => <option key={w.kind} value={w.kind}>{w.label}</option>)}
             </select>
-            <button onClick={start} className="rounded-2xl bg-brand text-white font-bold px-5 flex items-center gap-2 active:scale-[0.98]"><Play className="w-4 h-4" /> Start</button>
+            <button onClick={start} className="w-full rounded-2xl bg-brand text-white font-bold py-3 flex items-center justify-center gap-2 shadow-lg shadow-brand/30 active:scale-[0.98] transition-transform"><Play className="w-4 h-4" /> Start workout</button>
           </div>
-          {note && <p className="mt-3 text-xs font-medium text-red-600">{note}</p>}
+          {note && <p className="mt-3 text-xs font-medium text-red-600 leading-relaxed">{note}</p>}
         </>
       ) : (
         <>
-          <div className="mt-3 text-center">
+          <div className="mt-4 text-center">
             <div className="text-[11px] font-black tracking-widest text-ink-soft uppercase">{WORKOUT_KINDS.find((w) => w.kind === kind)?.label} in progress</div>
             <div className="font-display text-5xl font-black text-ink tabular-nums mt-1" aria-live="off">{clock(seconds)}</div>
           </div>
-          <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-            <div className="rounded-2xl bg-emerald-50 py-3"><Footprints className="w-4 h-4 mx-auto text-emerald-600" /><div className="text-2xl font-black text-ink tabular-nums">{stats.steps.toLocaleString()}</div><div className="text-[10px] font-bold tracking-widest text-ink-soft uppercase">Steps</div></div>
-            <div className="rounded-2xl bg-orange-50 py-3"><Flame className="w-4 h-4 mx-auto text-orange-500" /><div className="text-2xl font-black text-ink tabular-nums">{stats.kcal}</div><div className="text-[10px] font-bold tracking-widest text-ink-soft uppercase">kcal</div></div>
-            <div className="rounded-2xl bg-sky-50 py-3"><Route className="w-4 h-4 mx-auto text-sky-600" /><div className="text-2xl font-black text-ink tabular-nums">{stats.distanceKm.toFixed(2)}</div><div className="text-[10px] font-bold tracking-widest text-ink-soft uppercase">km</div></div>
+          <div className="mt-5 grid grid-cols-3 gap-2 text-center">
+            <div className="min-w-0 rounded-2xl bg-emerald-50 px-1 py-3"><Footprints className="w-4 h-4 mx-auto text-emerald-600" /><div className="mt-1 text-xl font-black text-ink tabular-nums truncate">{stats.steps.toLocaleString()}</div><div className="text-[10px] font-bold tracking-widest text-ink-soft uppercase">Steps</div></div>
+            <div className="min-w-0 rounded-2xl bg-orange-50 px-1 py-3"><Flame className="w-4 h-4 mx-auto text-orange-500" /><div className="mt-1 text-xl font-black text-ink tabular-nums truncate">{stats.kcal}</div><div className="text-[10px] font-bold tracking-widest text-ink-soft uppercase">kcal</div></div>
+            <div className="min-w-0 rounded-2xl bg-sky-50 px-1 py-3"><Route className="w-4 h-4 mx-auto text-sky-600" /><div className="mt-1 text-xl font-black text-ink tabular-nums truncate">{stats.distanceKm.toFixed(2)}</div><div className="text-[10px] font-bold tracking-widest text-ink-soft uppercase">km</div></div>
           </div>
-          <p className="mt-3 text-[11px] text-ink-soft text-center flex items-center justify-center gap-1"><Timer className="w-3 h-3" /> {stats.speedKmh} km/h{stepKind ? ` · from your steps, height and weight${weightKg ? "" : " (add your weight in Profile for a closer figure)"}` : " · calories from time and the activity you chose"}</p>
-          <button onClick={stop} disabled={busy} className="mt-4 w-full rounded-2xl bg-ink text-white font-bold py-3 flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.98]"><Square className="w-4 h-4" /> {busy ? "Saving…" : "Finish & save"}</button>
-          <p className="mt-2 text-[10px] text-ink-faint text-center">You can close Nura or lock the screen. Steps keep counting; open Nura again to finish.</p>
+          <p className="mt-3 text-[11px] text-ink-soft text-center leading-relaxed"><Timer className="inline w-3 h-3 -mt-0.5 mr-1" />{stats.speedKmh} km/h{stepKind ? ` · from your steps, height and weight${weightKg ? "" : " (add your weight in Profile for a closer figure)"}` : " · calories from time and the activity you chose"}</p>
+          <button onClick={stop} disabled={busy} className="mt-4 w-full rounded-2xl bg-ink text-white font-bold py-3 flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.98] transition-transform"><Square className="w-4 h-4" /> {busy ? "Saving…" : "Finish & save"}</button>
+          <p className="mt-3 text-[11px] text-ink-faint text-center leading-relaxed">You can close Nura or lock the screen. Steps keep counting; open Nura again to finish.</p>
         </>
       )}
     </section>
