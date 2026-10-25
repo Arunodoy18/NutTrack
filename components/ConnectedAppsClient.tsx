@@ -5,12 +5,13 @@ import Link from "next/link";
 import { ArrowLeft, Activity, Smartphone, Trash2, Link2 } from "lucide-react";
 import { WORKOUT_KINDS, estimateWorkoutKcal, type WorkoutKind } from "@/lib/activity";
 import { showToast } from "@/components/OfflineStatusBar";
+import LiveWorkout from "@/components/LiveWorkout";
 
-interface Wk { id: string; startedAt: string; minutes: number; kcal: number; kind: string; title: string | null; source: string }
+interface Wk { id: string; startedAt: string; minutes: number; kcal: number; steps: number | null; kind: string; title: string | null; source: string }
 interface Dev { id: string; label: string | null; profileId: string; createdAt: string; lastSeenAt: string | null }
 const ago = (iso: string | null) => (iso ? new Date(iso).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "never");
 
-export default function ConnectedAppsClient({ name, age, profiles }: { name: string; age: number | null; profiles: { id: string; name: string }[] }) {
+export default function ConnectedAppsClient({ name, age, weightKg, heightCm, profiles }: { name: string; age: number | null; weightKg: number | null; heightCm: number | null; profiles: { id: string; name: string }[] }) {
   const [days, setDays] = useState<{ day: string; steps: number; activeKcal: number }[]>([]);
   const [wks, setWks] = useState<Wk[]>([]);
   const [settings, setSettings] = useState({ creditEnabled: false, creditPct: 50 });
@@ -61,7 +62,7 @@ export default function ConnectedAppsClient({ name, age, profiles }: { name: str
     load();
   };
   const personName = (id: string) => profiles.find((p) => p.id === id)?.name ?? "—";
-  const est = estimateWorkoutKcal(kind, Math.max(0, Math.round(Number(minutes)) || 0), 60);
+  const est = estimateWorkoutKcal(kind, Math.max(0, Math.round(Number(minutes)) || 0), weightKg ?? 60);
 
   return (
     <div className="space-y-5">
@@ -70,8 +71,10 @@ export default function ConnectedAppsClient({ name, age, profiles }: { name: str
         <div><h1 className="font-display text-2xl font-black">Activity &amp; connected apps</h1><p className="text-xs font-medium text-ink-soft">For {name}</p></div>
       </div>
 
+      <LiveWorkout weightKg={weightKg} heightCm={heightCm} onSaved={load} />
+
       <section className="bg-white rounded-[32px] p-5 shadow-sm border border-surface-line">
-        <h2 className="font-black text-ink flex items-center gap-2"><Activity className="w-5 h-5 text-emerald-600" /> Log a workout</h2>
+        <h2 className="font-black text-ink flex items-center gap-2"><Activity className="w-5 h-5 text-emerald-600" /> Add a workout you already did</h2>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <select value={kind} onChange={(e) => setKind(e.target.value as WorkoutKind)} className="rounded-xl border border-surface-line bg-surface px-3 py-3 text-sm font-medium" aria-label="Activity">
             {WORKOUT_KINDS.map((k) => <option key={k.kind} value={k.kind}>{k.label}</option>)}
@@ -119,8 +122,8 @@ export default function ConnectedAppsClient({ name, age, profiles }: { name: str
             ))}
             {wks.map((w) => (
               <li key={w.id} className="py-2 flex items-center justify-between text-sm gap-2">
-                <span className="min-w-0 truncate">{w.title || WORKOUT_KINDS.find((k) => k.kind === w.kind)?.label || "Workout"} · {w.minutes} min · {w.kcal} kcal<span className="text-ink-soft"> · {new Date(w.startedAt).toLocaleDateString([], { day: "numeric", month: "short" })}</span></span>
-                {w.source === "manual" && <button onClick={() => delWorkout(w.id)} aria-label="Delete workout" className="text-ink-soft p-2"><Trash2 className="w-4 h-4" /></button>}
+                <span className="min-w-0 truncate">{w.title || WORKOUT_KINDS.find((k) => k.kind === w.kind)?.label || "Workout"} · {w.minutes} min{w.steps ? ` · ${w.steps.toLocaleString()} steps` : ""} · {w.kcal} kcal<span className="text-ink-soft"> · {new Date(w.startedAt).toLocaleDateString([], { day: "numeric", month: "short" })}</span></span>
+                {(w.source === "manual" || w.source === "nura-phone") && <button onClick={() => delWorkout(w.id)} aria-label="Delete workout" className="text-ink-soft p-2"><Trash2 className="w-4 h-4" /></button>}
               </li>
             ))}
           </ul>

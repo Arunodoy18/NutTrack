@@ -48,7 +48,7 @@ import java.util.List;
 /** Nura's one screen: the app's UI rendered in a locked-down WebView, plus the native pieces the web can't do. */
 public class MainActivity extends Activity {
     private static final String HOST = "dietbuddy.buildc3.tech";
-    private static final int REQ_FILE = 11, REQ_PERMS = 12, REQ_NOTIF = 13, REQ_CAPTURE = 14, REQ_MIC = 15;
+    private static final int REQ_FILE = 11, REQ_PERMS = 12, REQ_NOTIF = 13, REQ_CAPTURE = 14, REQ_MIC = 15, REQ_ACT = 16;
 
     private WebView web;
     private final Handler ui = new Handler(Looper.getMainLooper());
@@ -343,6 +343,35 @@ public class MainActivity extends Activity {
         });
     }
 
+    /* ── live workout: step counting (called from NativeBridge, only for our own site) ── */
+    private WorkoutTracker tracker;
+    private boolean wantWorkout;
+    private WorkoutTracker tracker() { if (tracker == null) tracker = new WorkoutTracker(this); return tracker; }
+    private boolean hasActivityPermission() { return checkSelfPermission(Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED; }
+
+    String workoutStart() {
+        if (!fromOurSite()) return "{}";
+        if (!tracker().available()) return tracker().state().toString();
+        if (!hasActivityPermission()) { wantWorkout = true; ui.post(() -> requestPermissions(new String[]{Manifest.permission.ACTIVITY_RECOGNITION}, REQ_ACT)); return stateJson(true); }
+        tracker().start();
+        return tracker().state().toString();
+    }
+    String workoutState() {
+        if (!fromOurSite()) return "{}";
+        return stateJson(false);
+    }
+    String workoutStop() {
+        if (!fromOurSite()) return "{}";
+        return tracker().stop().toString();
+    }
+    private String stateJson(boolean asking) {
+        try {
+            org.json.JSONObject o = tracker().state();
+            o.put("permission", hasActivityPermission()).put("asking", asking || wantWorkout);
+            return o.toString();
+        } catch (Exception e) { return "{}"; }
+    }
+
     void speechStop() { ui.post(() -> { if (recognizer != null) recognizer.stopListening(); }); }
 
     private void speechEvent(String type, String key, String value) {
@@ -381,6 +410,7 @@ public class MainActivity extends Activity {
     @Override public void onRequestPermissionsResult(int code, String[] perms, int[] res) {
         super.onRequestPermissionsResult(code, perms, res);
         if (code == REQ_MIC) { boolean ok = res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED; if (wantSpeech && ok) beginSpeech(); else if (wantSpeech) speechEvent("error", "message", "Allow the microphone for Nura to use voice input."); wantSpeech = false; return; }
+        if (code == REQ_ACT) { boolean ok = res.length > 0 && res[0] == PackageManager.PERMISSION_GRANTED; if (wantWorkout && ok) tracker().start(); wantWorkout = false; return; }
         if (code == REQ_PERMS && pendingWebPermission != null) { grantAllowed(pendingWebPermission); pendingWebPermission = null; }
     }
 
@@ -428,7 +458,7 @@ public class MainActivity extends Activity {
 
     @Override public void onBackPressed() { if (web.canGoBack()) web.goBack(); else super.onBackPressed(); }
     @Override protected void onResume() {
-        super.onResume(); web.onResume();
+        super.onResume(); web.onResume(); tracker().resume();
         try { if (new HealthStore(this).reminderToken() != null) { ReminderWorker.runNow(this); new Thread(() -> ReminderAlarms.sync(getApplicationContext())).start(); } } catch (Exception ignore) { /* secure storage unavailable */ }
     }
     @Override protected void onPause() { CookieManager.getInstance().flush(); web.onPause(); super.onPause(); }

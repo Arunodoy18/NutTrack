@@ -25,6 +25,48 @@ export function estimateWorkoutKcal(kind: WorkoutKind, minutes: number, weightKg
   return Math.max(0, Math.round(kcal));
 }
 
+/* ─────────── live workouts: steps from the phone's step sensor → distance, speed, calories ─────────── */
+
+export const STEP_KINDS: readonly WorkoutKind[] = ["walking", "running"];
+const DEFAULT_HEIGHT_CM = 165;
+
+export interface LiveStats { steps: number; distanceKm: number; speedKmh: number; met: number; kcal: number; fromSteps: boolean }
+
+/**
+ * Calories for a workout the phone counted steps for. Walking/running use the ACSM equations:
+ *   stride  ≈ height × 0.415 (walking), longer as cadence climbs (running)
+ *   VO2     = 0.1 × speed(m/min) + 3.5   (walking)   |   0.2 × speed(m/min) + 3.5   (running)
+ *   MET     = VO2 / 3.5          kcal = (MET − 1) × kg × hours   (active calories, like a watch)
+ * Other activities (cycling, yoga…) can't be measured by steps, so they use the MET table for the chosen
+ * activity and the time spent. Always an estimate; never more than the daily plausibility ceiling.
+ */
+export function liveWorkoutStats(o: { kind: WorkoutKind; steps: number; seconds: number; weightKg: number; heightCm?: number | null }): LiveStats {
+  const seconds = Math.max(0, Math.round(o.seconds) || 0);
+  const steps = Math.max(0, Math.round(o.steps) || 0);
+  const kg = Math.min(300, Math.max(10, o.weightKg || 60));
+  const minutes = seconds / 60;
+  const cadence = minutes > 0 ? steps / minutes : 0; // steps per minute
+  const height = Math.min(230, Math.max(90, o.heightCm || DEFAULT_HEIGHT_CM));
+  const strideFactor = cadence <= 130 ? 0.415 : Math.min(0.65, 0.415 + (cadence - 130) * 0.0035);
+  const distanceM = steps * (height / 100) * strideFactor;
+  const mPerMin = minutes > 0 ? distanceM / minutes : 0;
+  const speedKmh = mPerMin * 0.06;
+  const hours = seconds / 3600;
+
+  if (!STEP_KINDS.includes(o.kind) || steps === 0) {
+    const met = WORKOUT_KINDS.find((w) => w.kind === o.kind)?.met ?? 4;
+    const kcal = steps === 0 && STEP_KINDS.includes(o.kind) ? 0 : Math.max(0, Math.round((met - 1) * kg * hours));
+    return { steps, distanceKm: round2(distanceM / 1000), speedKmh: round1(speedKmh), met, kcal, fromSteps: false };
+  }
+  const running = speedKmh >= 7.5 || cadence >= 150;
+  const vo2 = (running ? 0.2 : 0.1) * mPerMin + 3.5;
+  const met = Math.min(running ? 16 : 8, vo2 / 3.5);
+  const kcal = Math.min(LIMITS.maxWorkoutKcal, Math.max(0, Math.round((met - 1) * kg * hours)));
+  return { steps, distanceKm: round2(distanceM / 1000), speedKmh: round1(speedKmh), met: round1(met), kcal, fromSteps: true };
+}
+const round1 = (n: number) => Math.round(n * 10) / 10;
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 /* ─────────── how active calories count toward the day ─────────── */
 
 export const MAX_CREDIT_KCAL = 500;
@@ -47,7 +89,7 @@ export interface ImportWorkout { externalId: string; startedAt: string; minutes:
 export interface ImportWeight { at: string; kg: number }
 export interface CleanImport { source: string; days: ImportDay[]; workouts: ImportWorkout[]; weights: ImportWeight[]; warnings: string[] }
 
-export const LIMITS = { days: 400, workouts: 400, weights: 400, maxStepsPerDay: 100_000, maxKcalPerDay: 12_000, maxWorkoutMinutes: 1_440, maxWorkoutKcal: 10_000 };
+export const LIMITS = { days: 400, workouts: 400, weights: 400, maxStepsPerDay: 100_000, maxKcalPerDay: 12_000, maxWorkoutMinutes: 1_440, maxWorkoutKcal: 10_000, maxWorkoutSteps: 100_000 };
 
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 const SOURCE_RE = /^[a-z0-9][a-z0-9_.-]{1,31}$/;

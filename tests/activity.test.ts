@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { cleanImport, creditKcal, estimateWorkoutKcal, pickDay, workoutId, weightId, newPairingCode, newDeviceToken, normalizeCode, sha256, LIMITS, MAX_CREDIT_KCAL } from "../lib/activity";
+import { cleanImport, creditKcal, estimateWorkoutKcal, liveWorkoutStats, pickDay, workoutId, weightId, newPairingCode, newDeviceToken, normalizeCode, sha256, LIMITS, MAX_CREDIT_KCAL } from "../lib/activity";
 
 const NOW = Date.parse("2026-10-11T12:00:00Z");
 
@@ -93,4 +93,41 @@ test("device tokens are long, random and only their hash is meant to be stored",
   const a = newDeviceToken(), b = newDeviceToken();
   assert.notEqual(a, b); assert.ok(a.length >= 40 && a.startsWith("nds_"));
   assert.match(sha256(a), /^[0-9a-f]{64}$/); assert.notEqual(sha256(a), a);
+});
+
+test("live workout: a 30-minute brisk walk gives believable steps → distance, speed, calories", () => {
+  // 3,300 steps in 30 min = 110/min, 70 kg, 170 cm
+  const r = liveWorkoutStats({ kind: "walking", steps: 3300, seconds: 1800, weightKg: 70, heightCm: 170 });
+  assert.equal(r.fromSteps, true);
+  assert.ok(r.distanceKm > 2.2 && r.distanceKm < 2.6, `distance ${r.distanceKm}`);
+  assert.ok(r.speedKmh > 4.4 && r.speedKmh < 5.2, `speed ${r.speedKmh}`);
+  assert.ok(r.kcal > 70 && r.kcal < 95, `kcal ${r.kcal}`); // MET ≈ 3.2 at ~4.7 km/h → (3.2 − 1) × 70 kg × 0.5 h ≈ 78 active kcal
+});
+
+test("live workout: running burns more than walking for the same time; heavier people burn more", () => {
+  const walk = liveWorkoutStats({ kind: "walking", steps: 3300, seconds: 1800, weightKg: 70, heightCm: 170 });
+  const run = liveWorkoutStats({ kind: "running", steps: 5100, seconds: 1800, weightKg: 70, heightCm: 170 }); // 170/min
+  assert.ok(run.kcal > walk.kcal * 2, `${run.kcal} vs ${walk.kcal}`);
+  assert.ok(run.speedKmh > 7.5);
+  const heavy = liveWorkoutStats({ kind: "walking", steps: 3300, seconds: 1800, weightKg: 100, heightCm: 170 });
+  assert.ok(heavy.kcal > walk.kcal);
+});
+
+test("live workout: no steps or no time = no calories; non-step activities use the MET table; bad input is clamped", () => {
+  assert.equal(liveWorkoutStats({ kind: "walking", steps: 0, seconds: 1800, weightKg: 70 }).kcal, 0);
+  assert.equal(liveWorkoutStats({ kind: "walking", steps: 500, seconds: 0, weightKg: 70 }).kcal, 0);
+  const yoga = liveWorkoutStats({ kind: "yoga", steps: 40, seconds: 3600, weightKg: 60 });
+  assert.equal(yoga.fromSteps, false);
+  assert.equal(yoga.kcal, Math.round(1.5 * 60)); // (2.5 − 1) × 60 kg × 1 h
+  const odd = liveWorkoutStats({ kind: "walking", steps: Number.NaN, seconds: -5, weightKg: Number.NaN, heightCm: null });
+  assert.equal(odd.kcal, 0);
+  assert.ok(Number.isFinite(odd.distanceKm) && Number.isFinite(odd.speedKmh));
+  const absurd = liveWorkoutStats({ kind: "running", steps: 100_000, seconds: 60, weightKg: 300, heightCm: 230 });
+  assert.ok(absurd.kcal <= LIMITS.maxWorkoutKcal && absurd.met <= 16);
+});
+
+test("live workout: a child's shorter legs mean shorter strides, so less distance for the same steps", () => {
+  const kid = liveWorkoutStats({ kind: "walking", steps: 3000, seconds: 1800, weightKg: 30, heightCm: 130 });
+  const adult = liveWorkoutStats({ kind: "walking", steps: 3000, seconds: 1800, weightKg: 70, heightCm: 175 });
+  assert.ok(kid.distanceKm < adult.distanceKm);
 });

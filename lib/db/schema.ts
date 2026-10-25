@@ -297,6 +297,7 @@ export const workouts = pgTable("workouts", {
   kind: text("kind").notNull().default("other"),
   title: text("title"),
   source: text("source").notNull(),
+  steps: integer("steps"), // counted by the phone during a live workout; null when not measured
 });
 
 /** A phone/watch app paired to an ACCOUNT, syncing data for one PROFILE. Only the token's hash is stored. */
