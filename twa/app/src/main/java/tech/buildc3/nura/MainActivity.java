@@ -124,9 +124,10 @@ public class MainActivity extends Activity {
             @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) { return route(r.getUrl()); }
             @Override public void onPageStarted(WebView v, String url, Bitmap f) {
                 // Leaving the signed-in area: stop reminders for this account on this phone.
+                pageHost = hostOf(url);
                 super.onPageStarted(v, url, f);
             }
-            @Override public void onPageFinished(WebView v, String url) { CookieManager.getInstance().flush(); }
+            @Override public void onPageFinished(WebView v, String url) { pageHost = hostOf(url); CookieManager.getInstance().flush(); }
             @Override public void onReceivedError(WebView v, WebResourceRequest r, WebResourceError e) {
                 if (!r.isForMainFrame()) return;
                 v.loadDataWithBaseURL(null, offlineHtml(), "text/html", "utf-8", null);
@@ -330,10 +331,10 @@ public class MainActivity extends Activity {
     }
 
     /* ── voice input (called from NativeBridge, only for our own site) ── */
-    private boolean fromOurSite() {
-        String u = web.getUrl();
-        return u != null && Uri.parse(u).getHost() != null && HOST.equals(Uri.parse(u).getHost());
-    }
+    // Bridge calls arrive on a background thread, where WebView.getUrl() is not allowed: use the host remembered on the UI thread.
+    private volatile String pageHost = "";
+    private static String hostOf(String u) { try { String h = u == null ? null : Uri.parse(u).getHost(); return h == null ? "" : h; } catch (Exception e) { return ""; } }
+    private boolean fromOurSite() { return HOST.equals(pageHost); }
 
     void speechStart() {
         ui.post(() -> {
