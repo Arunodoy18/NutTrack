@@ -78,6 +78,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // No email service configured: say so instead of pretending a code was sent.
+    if (!process.env.RESEND_API_KEY && process.env.NODE_ENV === "production") {
+      console.error("[send-otp] RESEND_API_KEY is not set; cannot send email");
+      return NextResponse.json({ error: "Password reset by email isn't available right now. Please try again later." }, { status: 503 });
+    }
+
     // Generate a 6-digit OTP
     const otp = randomInt(100000, 1000000).toString();
 
@@ -103,7 +109,7 @@ export async function POST(req: Request) {
     // Send the email via Resend
     if (process.env.RESEND_API_KEY) {
       const { error: resendError } = await resend.emails.send({
-        from: "Nura <onboarding@resend.dev>", // Verified sender onboarding on free plans
+        from: process.env.MAIL_FROM || "Nura <onboarding@resend.dev>", // onboarding@resend.dev only delivers to the Resend account owner; set MAIL_FROM to an address on a verified domain
         to: [cleanEmail],
         subject: type === "RESET_PASSWORD" ? "Your Nura Password Reset OTP" : "Verify Your Nura Account",
         html: `
@@ -125,8 +131,8 @@ export async function POST(req: Request) {
       if (resendError) {
         console.error("[send-otp] Resend error:", resendError);
         return NextResponse.json(
-          { error: "Failed to send email. Please try again in a moment." },
-          { status: 500 }
+          { error: "We couldn't send the email right now. Please try again later." },
+          { status: 502 }
         );
       }
     } else {
