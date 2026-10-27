@@ -10,11 +10,13 @@ export default function SignupPage() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [exists, setExists] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setExists(false);
     
     try {
       const res = await fetch('/api/auth/register', {
@@ -23,9 +25,12 @@ export default function SignupPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.message || 'Registration failed');
+        const why: string = data.error || data.message || '';
+        if (/already exists/i.test(why)) { setExists(true); throw new Error('This email already has a Nura account. Sign in instead, or use "Forgot password?" on the sign-in screen.'); }
+        if (res.status === 429) throw new Error('Too many sign-up attempts from this network. Please wait a few minutes and try again.');
+        throw new Error(why || 'We couldn\'t create your account. Check your connection and try again.');
       }
 
       // Auto sign-in then redirect to profile setup
@@ -98,6 +103,7 @@ export default function SignupPage() {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 mb-6 text-sm font-medium">
             {error}
+            {exists && <Link href="/auth/login" className="mt-2 block font-bold text-brand">Go to Sign in →</Link>}
           </div>
         )}
 
