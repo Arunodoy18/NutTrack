@@ -9,7 +9,7 @@ export const APP_COOKIE = "nura_app";
 export const hasAppCookie = (cookieHeader: string | null | undefined) => !!cookieHeader && /(?:^|;\s*)nura_app=\d+\.\d+\.\d+/.test(cookieHeader);
 
 /** Pages a plain browser may still see (the download page, legal pages the Play Store links to). */
-const PUBLIC_PAGES = new Set(["/download", "/privacy", "/terms"]);
+const PUBLIC_PAGES = new Set(["/download", "/privacy", "/terms", "/delete-account"]);
 export const isPublicPage = (path: string) => PUBLIC_PAGES.has(path.replace(/\/+$/, "") || "/");
 
 /** Should this request be answered with the download page instead of the requested app screen? */
