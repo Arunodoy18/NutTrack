@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { withAiRetry, aiErrorMessage, isTransientAiError, AI_BUSY_MESSAGE } from "../lib/ai";
+import { withAiRetry, aiErrorMessage, isTransientAiError, AI_BUSY_MESSAGE, NoFood, errorRef, shouldRefundScan } from "../lib/ai";
 
 test("a brief provider hiccup is retried and the person never notices", async () => {
   let n = 0;
@@ -24,4 +24,21 @@ test("errors shown to people: plain language, ours pass through, provider junk i
   assert.match(aiErrorMessage(new Error('{"weird":"json"}')), /Something went wrong/);
   assert.equal(aiErrorMessage(new Error("You've reached today's fair-use limit of 200 AI scans. It resets tomorrow.")), "You've reached today's fair-use limit of 200 AI scans. It resets tomorrow.");
   assert.ok(isTransientAiError({ status: 429 }) && isTransientAiError(new Error("socket hang up")) && !isTransientAiError(new Error("Invalid meal image.")));
+});
+
+test("a scan is given back for every failure except a photo with no food in it", () => {
+  assert.equal(shouldRefundScan(new NoFood("No foods could be detected in the image.")), false);
+  assert.equal(shouldRefundScan(new Error('{"error":{"code":400,"status":"INVALID_ARGUMENT"}}')), true);
+  assert.equal(shouldRefundScan(Object.assign(new Error("boom"), { status: 404 })), true);
+  assert.equal(shouldRefundScan(new Error("AI request timed out")), true);
+});
+
+test("an unrecognised provider error tells the person their scan wasn't used and carries a short ref", () => {
+  const e = Object.assign(new Error('{"error":{"code":400,"message":"bad","status":"INVALID_ARGUMENT"}}'), { status: 400, name: "ApiError" });
+  assert.match(errorRef(e), /^400-INVALID_ARGUMENT-ApiError$/);
+  const msg = aiErrorMessage(e);
+  assert.match(msg, /Something went wrong analysing that/);
+  assert.match(msg, /scan wasn't used/);
+  assert.match(msg, /\(ref 400-INVALID_ARGUMENT-ApiError\)/);
+  assert.ok(!msg.includes("{"), "raw provider text never reaches the screen");
 });

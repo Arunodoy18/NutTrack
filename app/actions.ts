@@ -8,7 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit, checkChatRateLimit } from "@/lib/rateLimit";
 import { FREE_FOR_ALL } from "@/lib/plan";
 import { cleanText } from "@/lib/sanitize";
-import { withAiRetry, aiErrorMessage, NotCharged, shouldRefundScan } from "@/lib/ai";
+import { withAiRetry, aiErrorMessage, NotCharged, NoFood, shouldRefundScan } from "@/lib/ai";
 import { consumeScan, refundScan, limitMessage } from "@/lib/scanQuota";
 import { FREE_DAILY_AI_SCANS } from "@/lib/plan";
 import { canAccessProfile, ownerOf, getActiveProfileId } from "@/lib/access";
@@ -544,12 +544,12 @@ OUTPUT FORMAT (strict JSON):
     }
     
     if (parsed.error) {
-      throw new Error(parsed.message || "Invalid meal image.");
+      throw new NoFood(parsed.message || "Invalid meal image.");
     }
 
     const detectedFoods = parsed.items || [];
     if (detectedFoods.length === 0) {
-      throw new Error("No foods could be detected in the image.");
+      throw new NoFood("No foods could be detected in the image.");
     }
 
     const items = detectedFoods.map((food: any) => ({
@@ -669,7 +669,7 @@ OUTPUT FORMAT:
     }
     
     if (parsed.error === "no_food_detected" || parsed.error) {
-      throw new Error(parsed.message || "No recognizable food items found in the text.");
+      throw new NoFood(parsed.message || "No recognizable food items found in the text.");
     }
     
     const detectedFoods = parsed.items || [];
