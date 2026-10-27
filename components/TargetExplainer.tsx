@@ -19,7 +19,7 @@ export default function TargetExplainer({ basis, shown, onClose, onEdit }: { bas
   const Step = ({ n, title, value, body }: { n: number; title: string; value: string; body: string }) => (
     <li className="flex gap-3">
       <span className="w-7 h-7 shrink-0 rounded-full bg-brand/10 text-brand text-xs font-black flex items-center justify-center mt-0.5">{n}</span>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-3"><span className="font-bold text-ink text-sm">{title}</span><span className="font-black text-ink tabular-nums text-sm shrink-0">{value}</span></div>
         <p className="mt-0.5 text-xs text-ink-soft leading-relaxed">{body}</p>
       </div>
