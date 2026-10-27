@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import HumanHero from './HumanHero';
+import TargetExplainer, { type TargetBasis } from './TargetExplainer';
 import DailyCarousel from './DailyCarousel';
 import { gradeMeal } from '@/lib/grading';
 import { useOfflineSync } from '@/lib/useOfflineSync';
@@ -84,6 +85,8 @@ export interface DashboardProps {
   accountUserId?: string;
   profiles?: ProfileSummary[];
   userAge?: number;
+  /** What the daily calorie target was worked out from (shown in "How is this worked out?"). */
+  targetBasis?: TargetBasis;
   /** Personal daily water target (ml), computed on the server. */
   waterGoalMl?: number;
   isPremiumUser?: boolean;
@@ -128,6 +131,7 @@ export default function Dashboard({
   accountUserId,
   profiles = [],
   userAge,
+  targetBasis,
   waterGoalMl = 2200,
   isPremiumUser = false,
   dailyGoals = { calories: 2000, protein: 80, fat: 65, carbs: 250, fiber: 30, sodium: 2300, potassium: 4700, iron: 18, calcium: 1000, vitaminC: 90, vitaminE: 15, vitaminB12: 2 },
@@ -142,6 +146,7 @@ export default function Dashboard({
 
   const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showWhy, setShowWhy] = useState(false);
   const [activeMetric, setActiveMetric] = useState<'Calories' | 'Protein' | 'Fats' | 'Carbs' | 'Fiber'>('Calories');
 
   // === NATIVE-APP CACHING LAYER ===
@@ -702,6 +707,9 @@ export default function Dashboard({
                 <span className="text-[10px] font-bold text-ink-soft mt-3 uppercase tracking-widest bg-surface-muted px-3 py-1 rounded-full border border-surface-line">
                   {calsLeft} kcal left &middot; {calPercent}% fueled
                 </span>
+                {targetBasis && (
+                  <button onClick={() => setShowWhy(true)} className="mt-3 text-xs font-bold text-brand active:opacity-70">How is {dailyGoals.calories} worked out?</button>
+                )}
               </div>
             </div>
 
@@ -870,6 +878,7 @@ export default function Dashboard({
       <BottomNav onCameraClick={() => { setIsUploadModalOpen(true); setActiveModalMode('camera'); }} />
 
       {/* Target Nutritional Goals Setup Modal */}
+      {showWhy && targetBasis && <TargetExplainer basis={targetBasis} shown={dailyGoals.calories} onClose={() => setShowWhy(false)} onEdit={() => { setShowWhy(false); setIsModalOpen(true); }} />}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="w-full max-w-md overflow-hidden bg-surface-muted border border-surface-line rounded-[28px] shadow-2xl">

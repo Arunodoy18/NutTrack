@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { withAiRetry, aiErrorMessage, isTransientAiError, AI_BUSY_MESSAGE, NoFood, errorRef, shouldRefundScan } from "../lib/ai";
+import { withAiRetry, aiErrorMessage, isTransientAiError, AI_BUSY_MESSAGE, NoFood, errorRef, shouldRefundScan, withFallback } from "../lib/ai";
 
 test("a brief provider hiccup is retried and the person never notices", async () => {
   let n = 0;
@@ -41,4 +41,28 @@ test("an unrecognised provider error tells the person their scan wasn't used and
   assert.match(msg, /scan wasn't used/);
   assert.match(msg, /\(ref 400-INVALID_ARGUMENT-ApiError\)/);
   assert.ok(!msg.includes("{"), "raw provider text never reaches the screen");
+});
+
+test("fallback: if the first AI route fails the next one answers, and the person never sees the failure", async () => {
+  const calls: string[] = [];
+  const out = await withFallback([
+    async () => { calls.push("a"); throw Object.assign(new Error("model gone"), { status: 404 }); },
+    async () => { calls.push("b"); throw Object.assign(new Error("busy"), { status: 503 }); },
+    async () => { calls.push("c"); return "ok"; },
+  ], { timeoutMs: 500 });
+  assert.equal(out, "ok");
+  assert.deepEqual(calls.filter((c, i) => i === 0 || c !== calls[i - 1]), ["a", "b", "c"]);
+});
+
+test("fallback: when every route fails the last error is thrown (and the scan is refunded)", async () => {
+  await assert.rejects(withFallback([
+    async () => { throw new Error("first"); },
+    async () => { throw new Error("second"); },
+  ], { timeoutMs: 500 }), /second/);
+  assert.equal(shouldRefundScan(new Error("second")), true);
+});
+
+test("fallback: a route that hangs is cut off and the next one is used", async () => {
+  const out = await withFallback([() => new Promise<string>(() => {}), async () => "fast"], { timeoutMs: 80, tries: 1 });
+  assert.equal(out, "fast");
 });

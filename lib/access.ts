@@ -83,7 +83,7 @@ export async function listProfiles(sessionUserId: string): Promise<ProfileSummar
 export async function loadFamilyForDashboard(sessionUserId: string) {
   const rows = await db.query.users.findMany({
     where: or(eq(users.id, sessionUserId), eq(users.parentId, sessionUserId)),
-    columns: { id: true, name: true, avatar: true, relation: true, age: true, gender: true, activityLevel: true, parentId: true, profileComplete: true, createdAt: true },
+    columns: { id: true, name: true, avatar: true, relation: true, age: true, gender: true, activityLevel: true, weightKg: true, heightCm: true, primaryGoal: true, parentId: true, profileComplete: true, createdAt: true },
     orderBy: (u, { asc }) => [asc(u.createdAt)],
   });
   const owner = rows.find((r) => r.id === sessionUserId);

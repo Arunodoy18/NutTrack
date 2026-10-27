@@ -8,7 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { checkScanRateLimit, checkChatRateLimit } from "@/lib/rateLimit";
 import { FREE_FOR_ALL } from "@/lib/plan";
 import { cleanText } from "@/lib/sanitize";
-import { withAiRetry, aiErrorMessage, NotCharged, NoFood, shouldRefundScan } from "@/lib/ai";
+import { withAiRetry, withFallback, aiErrorMessage, NotCharged, NoFood, shouldRefundScan } from "@/lib/ai";
 import { consumeScan, refundScan, limitMessage } from "@/lib/scanQuota";
 import { FREE_DAILY_AI_SCANS } from "@/lib/plan";
 import { canAccessProfile, ownerOf, getActiveProfileId } from "@/lib/access";
@@ -44,6 +44,8 @@ const GROQ_MODEL = "openai/gpt-oss-120b";
 // across repeated tests and still reads images correctly - safer choice
 // for a launched app than the newest-but-flakier release.
 const GEMINI_VISION_MODEL = "gemini-3.6-flash";
+// If the first model is busy or refuses, the next one answers instead (a model that no longer exists just fails fast and is skipped).
+const GEMINI_MODELS = [GEMINI_VISION_MODEL, "gemini-3.7-flash", "gemini-flash-latest"];
 
 /** Premium state for an ACCOUNT (family members share their parent's plan and free trial). */
 function computePremium(owner?: { isPremium: boolean | null; createdAt: Date | null; premiumSince: Date | null } | null) {
@@ -507,8 +509,8 @@ OUTPUT FORMAT (strict JSON):
     const rawBase64 = imageDataMatch ? imageDataMatch[2] : base64Image;
     const imageMimeType = imageDataMatch ? imageDataMatch[1] : "image/jpeg";
 
-    const response = await withAiRetry(() => gemini.models.generateContent({
-      model: GEMINI_VISION_MODEL,
+    const response = await withFallback(GEMINI_MODELS.map((model) => () => gemini.models.generateContent({
+      model,
       contents: [
         {
           role: "user",
@@ -518,7 +520,7 @@ OUTPUT FORMAT (strict JSON):
           ]
         }
       ]
-    }));
+    })));
 
     const rawText = response.text;
     if (!rawText) {
@@ -643,12 +645,12 @@ OUTPUT FORMAT:
   "assumptions": ["Used 2 large eggs as stated", "1 tsp butter assumed for toast"]
 }`;
 
-    const completion = await withAiRetry(() => groq.chat.completions.create({
-      model: GROQ_MODEL,
-      messages: [{ role: "user", content: prompt }]
-    }));
-
-    let rawText = completion.choices[0].message.content || "";
+    // Groq answers first; if it is down or refuses, Gemini reads the same prompt so the scan still works.
+    let rawText = await withFallback<string>([
+      async () => (await groq.chat.completions.create({ model: GROQ_MODEL, messages: [{ role: "user", content: prompt }] })).choices[0].message.content || "",
+      ...GEMINI_MODELS.map((model) => async () => (await gemini.models.generateContent({ model, contents: prompt })).text || ""),
+    ]);
+    if (!rawText) throw new Error("Failed to get response from the AI");
 
     // Clean JSON string using regex to handle conversational filler
     let cleaned = rawText.trim();
@@ -975,8 +977,8 @@ OUTPUT FORMAT:
   ]
 }`;
 
-    const response = await withAiRetry(() => gemini.models.generateContent({
-      model: GEMINI_VISION_MODEL,
+    const response = await withFallback(GEMINI_MODELS.map((model) => () => gemini.models.generateContent({
+      model,
       contents: [
         {
           role: "user",
@@ -986,7 +988,7 @@ OUTPUT FORMAT:
           ]
         }
       ]
-    }));
+    })));
 
     const rawText = response.text;
 

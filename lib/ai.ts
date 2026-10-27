@@ -49,6 +49,26 @@ export function errorRef(e: unknown): string {
 /** The AI answered fine, the picture just has no food in it (so the scan counts). */
 export class NoFood extends Error {}
 
+/**
+ * Try several ways of getting the same answer (a second model, then a third, or another provider) before giving up.
+ * Each way is retried briefly on its own; no new way is started once `deadlineMs` has passed, so a bad day at one
+ * provider costs a few seconds, not a minute. The first success wins; if all fail, the LAST error is thrown.
+ */
+export async function withFallback<T>(attempts: Array<() => Promise<T>>, opts: { deadlineMs?: number; timeoutMs?: number; tries?: number } = {}): Promise<T> {
+  const start = Date.now(), deadline = opts.deadlineMs ?? 75_000;
+  let last: unknown = new Error("No AI route available");
+  for (let i = 0; i < attempts.length; i++) {
+    if (i > 0 && Date.now() - start > deadline) break;
+    try {
+      return await withAiRetry(attempts[i], { tries: opts.tries ?? (i === 0 ? 2 : 1), timeoutMs: opts.timeoutMs ?? 28_000 });
+    } catch (e) {
+      last = e;
+      console.error(`[ai] route ${i + 1}/${attempts.length} failed (${errorRef(e)}):`, messageOf(e).slice(0, 200));
+    }
+  }
+  throw last;
+}
+
 export const AI_BUSY_MESSAGE = "Nura's AI is very busy right now. Please try again in a minute, or log this meal by search or barcode instead.";
 
 /**

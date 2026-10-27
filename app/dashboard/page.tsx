@@ -23,6 +23,7 @@ export default async function DashboardPage() {
       accountUserId={sessionUserId}
       userAge={profile.age ?? undefined}
       waterGoalMl={dailyWaterGoalMl(profile.age ?? 30, profile.gender ?? "Male", profile.activityLevel)}
+      targetBasis={profile.weightKg && profile.heightCm && profile.age && profile.gender ? { weightKg: profile.weightKg, heightCm: profile.heightCm, age: profile.age, gender: profile.gender, activityLevel: profile.activityLevel ?? "Moderately active", goal: profile.primaryGoal ?? "Maintain" } : undefined}
       profiles={profiles}
     />
   );
