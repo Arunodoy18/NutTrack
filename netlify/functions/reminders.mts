@@ -1,4 +1,5 @@
-// Runs every 10 minutes on Netlify and asks the app to send any reminders that are due.
+// Runs hourly on Netlify and asks the app to send any WEB-push reminders that are due. The Android app schedules its own
+// reminders natively, so this job is not needed for it; running it often kept the database awake and burned its free quota.
 // Needs CRON_SECRET (same value in the app) and uses Netlify's built-in URL variable.
 import type { Config } from "@netlify/functions";
 
@@ -13,4 +14,4 @@ export default async () => {
   console.log("reminders run:", res.status, (await res.text()).slice(0, 300));
 };
 
-export const config: Config = { schedule: "*/10 * * * *" };
+export const config: Config = { schedule: "0 * * * *" };
