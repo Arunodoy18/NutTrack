@@ -2,13 +2,12 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users, otpTokens } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
-import { Resend } from "resend";
+import { sendMail, mailConfigured } from "@/lib/mailer";
 import { randomInt } from "crypto";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 import { readJson } from "@/lib/sanitize";
-const resend = new Resend(process.env.RESEND_API_KEY || "re_dummy_key");
 
 // Safe initialization of Upstash Redis rate limiter to prevent local dev crashes
 const redis = (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
@@ -79,8 +78,8 @@ export async function POST(req: Request) {
     }
 
     // No email service configured: say so instead of pretending a code was sent.
-    if (!process.env.RESEND_API_KEY && process.env.NODE_ENV === "production") {
-      console.error("[send-otp] RESEND_API_KEY is not set; cannot send email");
+    if (!mailConfigured() && process.env.NODE_ENV === "production") {
+      console.error("[send-otp] no email service configured (SMTP_USER/SMTP_PASS or RESEND_API_KEY); cannot send email");
       return NextResponse.json({ error: "Password reset by email isn't available right now. Please try again later." }, { status: 503 });
     }
 
@@ -106,13 +105,13 @@ export async function POST(req: Request) {
       type,
     });
 
-    // Send the email via Resend
-    if (process.env.RESEND_API_KEY) {
-      const { error: resendError } = await resend.emails.send({
-        from: process.env.MAIL_FROM || "Nura <onboarding@resend.dev>", // onboarding@resend.dev only delivers to the Resend account owner; set MAIL_FROM to an address on a verified domain
-        to: [cleanEmail],
-        subject: type === "RESET_PASSWORD" ? "Your Nura Password Reset OTP" : "Verify Your Nura Account",
-        html: `
+    // Send the email (SMTP or Resend, see lib/mailer.ts)
+    if (mailConfigured()) {
+      try {
+        await sendMail({
+          to: cleanEmail,
+          subject: type === "RESET_PASSWORD" ? "Your Nura Password Reset OTP" : "Verify Your Nura Account",
+          html: `
           <div style="font-family:Inter,sans-serif;max-width:400px;margin:0 auto;padding:32px;">
             <h2 style="font-size:24px;font-weight:700;margin-bottom:8px;">
               ${type === "RESET_PASSWORD" ? "Reset your password" : "Verify your account"}
@@ -126,14 +125,10 @@ export async function POST(req: Request) {
             <p style="font-size:12px;color:#94A3B8;">If you didn't request this, ignore this email. Your credentials will not change.</p>
           </div>
         `,
-      });
-
-      if (resendError) {
-        console.error("[send-otp] Resend error:", resendError);
-        return NextResponse.json(
-          { error: "We couldn't send the email right now. Please try again later." },
-          { status: 502 }
-        );
+        });
+      } catch (mailError: any) {
+        console.error("[send-otp] email send failed:", mailError?.message || mailError);
+        return NextResponse.json({ error: "We couldn't send the email right now. Please try again later." }, { status: 502 });
       }
     } else {
       console.log(`[DEV MODE] OTP for ${cleanEmail}: ${otp}`);
